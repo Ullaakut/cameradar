@@ -30,10 +30,17 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 
 ## Installation
 
+### Dependencies
+
+To install Cameradar you will need these packages
+
+* cmake (`cmake`)
+* gstreamer1.x (`libgstreamer1.0-dev`)
+
 The simplest way would be to follow these steps :
 
 1. `git clone git@github.com:EtixLabs/cameradar.git`
-2. Go into the Cameradar repository, create a directory named `build`
+2. Go into the Cameradar repository, create a directory named `build` and go in it
 3. In the build directory, run `cmake ..` This will generate the Makefiles you need to build Cameradar
 4. Run the command `make`
 5. This should compile Cameradar. Go into the `cameradar_standalone` directory
