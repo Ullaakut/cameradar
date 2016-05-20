@@ -32,6 +32,9 @@ set(CMAKE_MACOSX_RPATH 1)
 # list of all cache managers
 set (CAMERADAR_CACHE_MANAGERS "")
 
+# dependencies directory
+set(DEPS_DIR ${CMAKE_SOURCE_DIR}/deps)
+
 # output path for cache managers
 set (CCTV_CACHE_MANAGER_OUTPUT_FOLDER cache_managers)
 set (CCTV_CACHE_MANAGER_OUTPUT_PATH ${CMAKE_BINARY_DIR}/${CCTV_CACHE_MANAGER_OUTPUT_FOLDER})
@@ -44,5 +47,6 @@ include_directories (
 )
 
 #build cache managers
+add_subdirectory (deps)
 add_subdirectory (cameradar_standalone)
 add_subdirectory (cache_managers)
