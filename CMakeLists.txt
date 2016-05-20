@@ -43,7 +43,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include_directories (
         "cameradar_standalone/include"
-        "../cctv_server2/deps/jsoncpp/src/deps.jsoncpp/include"
+        "deps/jsoncpp/src/deps.jsoncpp/include"
 )
 
 #build cache managers
