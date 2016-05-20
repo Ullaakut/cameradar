@@ -1,0 +1,7 @@
+cameradar:
+  build: .
+  dockerfile: Dockerfile
+  env_file: env_file
+  volumes:
+    - "./conf:/tmp/conf:ro"
+    - "./cameradar_thumbnails:/tmp/cameradar_thumbnails"

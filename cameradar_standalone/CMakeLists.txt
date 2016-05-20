@@ -13,7 +13,7 @@
 ## limitations under the License.
 
 cmake_minimum_required (VERSION 2.8.1)
-cmake_policy(SET CMP0042 NEW)
+cmake_policy(SET CMP0048 OLD)
 
 project(cameradar CXX)
 
@@ -23,11 +23,15 @@ include(FindPkgConfig)
 pkg_search_module(GSTREAMER REQUIRED gstreamer-1.0)
 find_library(LIB_GSTREAMER NAMES ${GSTREAMER_LIBRARIES} HINTS ${GSTREAMER_LIBRARY_DIRS})
 
-include_directories (${GSTREAMER_INCLUDE_DIRS})
+include_directories (
+  ${GSTREAMER_INCLUDE_DIRS}
+	${PROJECT_SOURCE_DIR}/include
+	${VERSION_INCLUDE_DIR}
+)
 
 link_directories (
         ${GSTREAMER_LIBRARY_DIRS}
-        "../../cctv_server2/deps/jsoncpp/src/deps.jsoncpp/src/lib_json"
+        "../deps/jsoncpp/src/deps.jsoncpp/src/lib_json"
 )
 
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
@@ -52,4 +56,5 @@ add_custom_command(TARGET cameradar PRE_BUILD
                  ${CMAKE_SOURCE_DIR}/cameradar_standalone/conf $<TARGET_FILE_DIR:cameradar>/conf/)
 
 set (BINARIES_NAME ${PROJECT_BINARY_DIR}/cameradar)
-list (APPEND CCTV_BINARIES ${BINARIES_NAME})
+list (APPEND CAMERADAR_BINARIES ${BINARIES_NAME})
+set (CAMERADAR_BINARIES ${CAMERADAR_BINARIES} PARENT_SCOPE)
