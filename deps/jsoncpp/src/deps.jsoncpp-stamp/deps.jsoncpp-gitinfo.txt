@@ -1,3 +1,0 @@
-repository='https://github.com/open-source-parsers/jsoncpp.git'
-module=''
-tag=''
