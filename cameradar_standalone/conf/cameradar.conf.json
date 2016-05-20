@@ -1,0 +1,14 @@
+{
+  "subnets" : "172.16.100.13,localhost",
+
+  // If not specified, will scan all ports (1-65535)
+  "ports" : "554,8554",
+  "rtsp_url_file" : "conf/url.json",
+  "rtsp_ids_file" : "conf/ids.json",
+
+  // You must give an accessible path to an already existing directory
+  "thumbnail_storage_path" : "/tmp",
+
+  "cache_manager_path" : "../cache_managers/dumb_cache_manager",
+  "cache_manager_name" : "dumb"
+}
