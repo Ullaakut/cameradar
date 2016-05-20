@@ -46,7 +46,7 @@ The only dependencies are `docker` and `docker-compose`.
 
 ### Five steps guide
 
-1. `https://github.com/EtixLabs/cameradar.git`
+1. `git clone https://github.com/EtixLabs/cameradar.git`
 2. Go into the Cameradar repository, then to the `deployment` directory
 3. Tweak the `conf/cameradar.conf.json` as you need (see [the onfiguration guide here](#configuration) for more information)
 4. Run `docker-compose build cameradar` to build the cameradar container
@@ -68,14 +68,6 @@ To install Cameradar you will need these packages
 * libcurl (`libcurl4-openssl-dev`)
 
 ### Steps
-
-### Dependencies
-
-To install Cameradar you will need these packages
-
-* cmake (`cmake`)
-* gstreamer1.x (`libgstreamer1.0-dev`)
-* ffmpeg (`ffmpeg`)
 
 The simplest way would be to follow these steps :
 
