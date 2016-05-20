@@ -75,6 +75,7 @@ To install Cameradar you will need these packages
 
 * cmake (`cmake`)
 * gstreamer1.x (`libgstreamer1.0-dev`)
+* ffmpeg (`ffmpeg`)
 
 The simplest way would be to follow these steps :
 
@@ -213,7 +214,7 @@ If you have other cool ideas, feel free to share them with me at brendan.leglaun
 ## Next improvements
 
 - [x] Add a docker deployment to avoid the current deps hell
-- [ ] Development of a MySQL cache manager
+- [x] Development of a MySQL cache manager
 - [ ] Development of a JSON file cache manager
 - [ ] Development of an XML file cache manager
 
