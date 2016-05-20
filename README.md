@@ -38,7 +38,7 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 
 ## Quick install
 
-The quick install uses docker to build Cameradar without polluting your machine with dependencies and makes it easy to deploy Cameradar in a few commands. *However, it may require networking knowledge, as your docker containers will need access to the cameras subnetwork.*
+The quick install uses docker to build Cameradar without polluting your machine with dependencies and makes it easy to deploy Cameradar in a few commands. **However, it may require networking knowledge, as your docker containers will need access to the cameras subnetwork.**
 
 ### Dependencies
 
@@ -46,7 +46,7 @@ The only dependencies are `docker` and `docker-compose`.
 
 ### Five steps guide
 
-1. `https://github.com/EtixLabs/cameradar.git`
+1. `git clone https://github.com/EtixLabs/cameradar.git`
 2. Go into the Cameradar repository, then to the `deployment` directory
 3. Tweak the `conf/cameradar.conf.json` as you need (see [the onfiguration guide here](#configuration) for more information)
 4. Run `docker-compose build cameradar` to build the cameradar container
@@ -71,7 +71,7 @@ To install Cameradar you will need these packages
 
 The simplest way would be to follow these steps :
 
-1. `https://github.com/EtixLabs/cameradar.git`
+1. `git clone https://github.com/EtixLabs/cameradar.git`
 2. Go into the Cameradar repository, create a directory named `build` and go in it
 3. In the build directory, run `cmake ..` This will generate the Makefiles you need to build Cameradar
 4. Run the command `make`
@@ -206,7 +206,7 @@ If you have other cool ideas, feel free to share them with me at brendan.leglaun
 ## Next improvements
 
 - [x] Add a docker deployment to avoid the current deps hell
-- [ ] Development of a MySQL cache manager
+- [x] Development of a MySQL cache manager
 - [ ] Development of a JSON file cache manager
 - [ ] Development of an XML file cache manager
 
