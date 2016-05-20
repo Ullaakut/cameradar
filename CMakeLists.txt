@@ -86,6 +86,7 @@ configure_file (
 include_directories (
         "cameradar_standalone/include"
         "deps/jsoncpp/src/deps.jsoncpp/include"
+        "deps/boost/src/deps.boost/include"
 )
 
 #build cache managers
