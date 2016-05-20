@@ -16,8 +16,8 @@ cmake_minimum_required (VERSION 2.8.1)
 cmake_policy(SET CMP0042 NEW)
 
 # set temporarly the ouput path for all server plugins
-set (LIBRARY_OUTPUT_PATH ${CCTV_CAMERA_MANAGER_OUTPUT_PATH})
+set (LIBRARY_OUTPUT_PATH ${CAMERADAR_CACHE_MANAGER_OUTPUT_PATH})
 
 add_subdirectory(dumb_cache_manager)
 
-set (CCTV_CACHE_MANAGERS ${CCTV_CACHE_MANAGERS} PARENT_SCOPE)
+set (CAMERADAR_CACHE_MANAGERS ${CAMERADAR_CACHE_MANAGERS} PARENT_SCOPE)

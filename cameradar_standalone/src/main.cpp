@@ -15,8 +15,17 @@
 #include <fs.h>         // fs::home
 #include <opt_parse.h>  // parsing opt
 #include <dispatcher.h> // program loop
+#include <iostream>     // iostream
+#include "version.h"    // versionning
 
 namespace cmrdr = etix::cameradar;
+
+void
+print_version() {
+    std::cout << "Cameradar version " << CAMERADAR_VERSION << std::endl;
+    std::cout << "Build " << CAMERADAR_VERSION_BUILD << std::endl;
+    std::cout << "Git commit " << CAMERADAR_VERSION_GIT_SHA1 << std::endl;
+}
 
 // Command line parsing
 std::pair<bool, etix::tool::opt_parse>
@@ -37,7 +46,7 @@ parse_cmdline(int argc, char* argv[]) {
         opt_parse.print_help();
         return std::make_pair(false, opt_parse);
     } else if (opt_parse.exist("-v")) {
-        std::cout << "Cameradar 0.1" << std::endl;
+        print_version();
         return std::make_pair(false, opt_parse);
     } else if (opt_parse.has_error()) {
         std::cout << "Usage: ./cameradar [option]\n\toptions:\n" << std::endl;
@@ -76,6 +85,7 @@ main(int argc, char* argv[]) {
     auto args = parse_cmdline(argc, argv);
     if (not args.first) return EXIT_FAILURE;
 
+    print_version();
     // configure file configuration path
     auto conf_path = std::string{};
     if (not args.second.exist("-c")) {
