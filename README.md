@@ -71,7 +71,7 @@ To install Cameradar you will need these packages
 
 The simplest way would be to follow these steps :
 
-1. `git clone `https://github.com/EtixLabs/cameradar.git``
+1. `git clone https://github.com/EtixLabs/cameradar.git`
 2. Go into the Cameradar repository, create a directory named `build` and go in it
 3. In the build directory, run `cmake ..` This will generate the Makefiles you need to build Cameradar
 4. Run the command `make`
