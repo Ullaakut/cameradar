@@ -17,7 +17,7 @@ cmake_minimum_required (VERSION 2.8.1)
 # Lib subdirectory
 
 include (jsoncpp)
-# include (boost)
+include (boost)
 
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM ON)
-set (CCTV_INSTALL_DEPENDENCIES ${CCTV_INSTALL_DEPENDENCIES} PARENT_SCOPE)
+set (CAMERADAR_INSTALL_DEPENDENCIES ${CAMERADAR_INSTALL_DEPENDENCIES} PARENT_SCOPE)

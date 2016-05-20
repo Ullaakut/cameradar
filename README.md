@@ -18,7 +18,15 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 
 ## Table of content
 
-- [Installation](#installation)
+- [Quick install](#quick-install)
+  - [Dependencies](#quick-install###dependencies)
+  - [Five steps guide](#quick-install###five-steps-guide)
+- [Manual installation](#manual-installation)
+  - [Dependencies](#manual-installation###dependencies)
+  - [Steps](#manual-installation###Steps)
+- [Advanced docker deployment](#advanced-docker-deployment)
+  - [Dependencies](#advanced-docker-deployment###dependencies)
+  - [Deploy a custom version of Cameradar](#advanced-docker-deployment###deploy-a-custom-version-of-cameradar)
 - [Configuration](#configuration)
 - [Output](#output)
 - [Check camera access](#check-camera-access)
@@ -28,7 +36,27 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 - [Next improvements](#next-improvements)
 - [License](#license)
 
-## Installation
+## Quick install
+
+The quick install uses docker to build Cameradar without polluting your machine with dependencies and makes it easy to deploy Cameradar in a few commands.
+
+### Dependencies
+
+The only dependencies are `docker` and `docker-compose`.
+
+### Five steps guide
+
+1. `git clone git@github.com:EtixLabs/cameradar.git`
+2. Go into the Cameradar repository, then to the `deployment` directory
+3. Tweak the `conf/cameradar.conf.json` as you need (see [the onfiguration guide here](#configuration) for more information)
+4. Run `docker-compose build cameradar` to build the cameradar container
+5. Run `docker-compose up cameradar` to launch Cameradar
+
+If you want to deploy your custom version of Cameradar using the same method, you should check the [advanced docker deployment](#advanced-docker-deployment) tutorial here.
+
+## Manual installation
+
+The manual installation is recommended if you want to tweak Cameradar and quickly test them using CMake and running Cameradar in command-line. If you just want to use Cameradar, it is recommended to use the [quick install](#quick-install) instead.
 
 ### Dependencies
 
@@ -37,6 +65,9 @@ To install Cameradar you will need these packages
 * cmake (`cmake`)
 * gstreamer1.x (`libgstreamer1.0-dev`)
 * ffmpeg (`ffmpeg`)
+* libcurl (`libcurl4-openssl-dev`)
+
+### Steps
 
 The simplest way would be to follow these steps :
 
@@ -47,6 +78,22 @@ The simplest way would be to follow these steps :
 5. This should compile Cameradar. Go into the `cameradar_standalone` directory
 6. You can now customize the `conf/cameradar.conf.json` file to set the subnetworks and specific ports you want to scan, as well as the thumbnail generation path. More information will be given about the configuration file in another part of this document.
 7. You are now ready to launch Cameradar by launching `./cameradar` in the cameradar_standalone directory.
+
+## Advanced Docker deployment
+
+### Dependencies
+
+The only dependencies are `docker` and `docker-compose`.
+
+### Deploy a custom version of Cameradar
+
+2. Go into the Cameradar repository, create a directory named `build` and go in it
+3. In the build directory, run `cmake .. -DCMAKE_BUILD_TYPE=Release` This will generate the Makefiles you need to build Cameradar
+4. Run the command `make package` to compile it into a package
+5. Copy your package into the `deployment` directory
+6. Run `docker-compose build cameradar` to build the cameradar container using your custom package
+5. Run `docker-compose up cameradar` to launch Cameradar
+
 
 ### Configuration
 
