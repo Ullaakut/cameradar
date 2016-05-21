@@ -14,11 +14,15 @@
 
 #pragma once
 
+#include <assert.h> // assert
 #include <csignal>  // sigint
 #include <iostream> // stc::cout
-#include <assert.h> // assert
+
+// To avoid an unused warning for the asserted in handle_signal
+#define _unused(x) ((void)(x))
 
 namespace etix {
+
 namespace cameradar {
 
 enum class stop_priority { running, stop, force_stop };
@@ -30,6 +34,7 @@ public:
     virtual int
     handle_signal(int signum) {
         assert(signum == SIGINT);
+        _unused(signum);
         std::cout << "\b\b\b\033[K";
         if (this->ss == stop_priority::running)
             this->ss = stop_priority::stop;

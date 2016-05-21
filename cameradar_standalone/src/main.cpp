@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fs.h>         // fs::home
-#include <opt_parse.h>  // parsing opt
-#include <dispatcher.h> // program loop
-#include <iostream>     // iostream
 #include "version.h"    // versionning
+#include <dispatcher.h> // program loop
+#include <fs.h>         // fs::home
+#include <iostream>     // iostream
+#include <opt_parse.h>  // parsing opt
 
 namespace cmrdr = etix::cameradar;
 

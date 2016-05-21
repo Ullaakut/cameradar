@@ -60,7 +60,7 @@ dumb_cache_manager::update_stream(const etix::cameradar::stream_model& newmodel)
 
 //! Gets all cached streams
 std::vector<etix::cameradar::stream_model>
-dumb_cache_manager::get_streams() const {
+dumb_cache_manager::get_streams() {
     std::vector<stream_model> ret;
     for (const auto& it : this->streams) {
         if (not it.service_name.compare("rtsp") && not it.state.compare("open")) ret.push_back(it);
@@ -70,7 +70,7 @@ dumb_cache_manager::get_streams() const {
 
 //! Gets all valid streams
 std::vector<etix::cameradar::stream_model>
-dumb_cache_manager::get_valid_streams() const {
+dumb_cache_manager::get_valid_streams() {
     std::vector<stream_model> ret;
     for (const auto& it : this->streams) {
         if ((not it.service_name.compare("rtsp") && not it.state.compare("open")) && it.ids_found &&
