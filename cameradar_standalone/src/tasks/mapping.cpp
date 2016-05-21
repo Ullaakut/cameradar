@@ -28,9 +28,12 @@ namespace cameradar {
 //! problem.
 bool
 nmap_is_ok() {
-    return (launch_command("test `dpkg -l | cut -c 5-9 | grep nmap` = nmap")
-    // && launch_command("test `nmap --version | cut -c 14-18  | head -n2 | tail -n1` = 6.47")
-    && launch_command("mkdir -p scans")); // Creates the directory in which the scans will be stored
+    return (
+        launch_command("test `dpkg -l | cut -c 5-9 | grep nmap` = nmap")
+        // && launch_command("test `nmap --version | cut -c 14-18  | head -n2 | tail -n1` = 6.47")
+        &&
+        launch_command(
+            "mkdir -p scans")); // Creates the directory in which the scans will be stored
 }
 
 //! Launches and checks the return of the nmap command
@@ -44,6 +47,7 @@ mapping::run() const {
         LOG_INFO_("Beginning mapping task. This may take a while.", "mapping");
         std::string cmd =
             "nmap -T4 -A " + subnets + " -p " + this->conf.ports + " -oX " + nmap_output;
+        LOG_DEBUG_("Launching nmap : " + cmd, "mapping");
         bool ret = launch_command(cmd);
         if (ret)
             LOG_INFO_("Nmap XML output successfully generated in file: " + nmap_output, "mapping");

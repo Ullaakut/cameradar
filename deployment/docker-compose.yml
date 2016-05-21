@@ -5,3 +5,12 @@ cameradar:
   volumes:
     - "./conf:/tmp/conf:ro"
     - "./cameradar_thumbnails:/tmp/cameradar_thumbnails"
+  links:
+   - ext_cctv_mysql
+ext_cctv_mysql:
+  image: mysql:5.7
+  environment:
+   MYSQL_ROOT_PASSWORD: root
+   MYSQL_DATABASE: cmrdr
+  ports:
+   - "3306:3306"

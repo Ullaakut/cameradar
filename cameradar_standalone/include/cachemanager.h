@@ -14,10 +14,10 @@
 
 #pragma once
 
-#include <vector>
+#include <configuration.h>
 #include <memory>
 #include <stream_model.h>
-#include <configuration.h>
+#include <vector>
 
 namespace etix {
 namespace cameradar {
@@ -42,10 +42,10 @@ public:
     virtual void update_stream(const etix::cameradar::stream_model& newmodel) = 0;
 
     //! Gets all cached streams
-    virtual std::vector<etix::cameradar::stream_model> get_streams() const = 0;
+    virtual std::vector<etix::cameradar::stream_model> get_streams() = 0;
 
     //! Gets all valid streams which have been accessed
-    virtual std::vector<etix::cameradar::stream_model> get_valid_streams() const = 0;
+    virtual std::vector<etix::cameradar::stream_model> get_valid_streams() = 0;
 };
 
 class cache_manager_base : public cache_manager_iface {
@@ -68,10 +68,10 @@ public:
     virtual void update_stream(const etix::cameradar::stream_model& newmodel) = 0;
 
     //! Gets all cached streams
-    virtual std::vector<etix::cameradar::stream_model> get_streams() const = 0;
+    virtual std::vector<etix::cameradar::stream_model> get_streams() = 0;
 
     //! Gets all valid streams which have been accessed
-    virtual std::vector<etix::cameradar::stream_model> get_valid_streams() const = 0;
+    virtual std::vector<etix::cameradar::stream_model> get_valid_streams() = 0;
 
     //! Get the manager's instance
     cache_manager_base& get_instance();

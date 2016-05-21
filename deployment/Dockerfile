@@ -10,7 +10,9 @@ RUN apt-get update && apt-get install -y \
     libgstreamer1.0-dev \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-good \
-    libcurl4-openssl-dev
+    libcurl4-openssl-dev \
+    libmysqlclient18 \
+    mysql-client
 
 ADD cameradar_*_Release_Linux.tar.gz /
 RUN mv cameradar_*_Release_Linux cameradar

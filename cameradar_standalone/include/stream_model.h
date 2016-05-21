@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <string>
 #include <json/value.h>
+#include <string>
 
 namespace etix {
 namespace cameradar {
@@ -24,7 +24,7 @@ struct stream_model {
     // Ex : "172.16.100.113"
     std::string address;
     // Ex : 8554
-    unsigned short port;
+    unsigned int port;
     // Ex : "admin"
     std::string username = "";
     // Ex : "123456"

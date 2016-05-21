@@ -17,6 +17,7 @@ cmake_minimum_required (VERSION 2.8.1)
 # Lib subdirectory
 
 include (jsoncpp)
+include (mysql_connector)
 
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM ON)
 set (CAMERADAR_INSTALL_DEPENDENCIES ${CAMERADAR_INSTALL_DEPENDENCIES} PARENT_SCOPE)

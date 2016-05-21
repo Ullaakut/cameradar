@@ -14,12 +14,11 @@
 
 #pragma once
 
-#include <cameradar_task.h>                // task interface
-#include <boost/algorithm/string/find.hpp> // boost::find
-#include <iostream>                        // std::ofstream
-#include <fstream>                         // std::ofstream
-#include <stream_model.h>                  // data model
-#include <cachemanager.h>                  // cacheManager
+#include <cachemanager.h>   // cacheManager
+#include <cameradar_task.h> // task interface
+#include <fstream>          // std::ofstream
+#include <iostream>         // std::ofstream
+#include <stream_model.h>   // data model
 
 namespace etix {
 namespace cameradar {

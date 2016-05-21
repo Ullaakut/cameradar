@@ -16,26 +16,57 @@
 
 #include <cachemanager.h>
 #include <configuration.h>
+#include <db_conn.h>
+#include <fmt.h>
 #include <logger.h>
 #include <stream_model.h>
 #include <vector>
 
 namespace etix {
+
 namespace cameradar {
 
-class dumb_cache_manager : public cache_manager_base {
+struct mysql_configuration {
+    unsigned int port;
+    std::string host;
+    std::string db_name;
+    std::string user;
+    std::string password;
+
+    mysql_configuration() = default;
+
+    mysql_configuration(unsigned int port,
+                        const std::string& host,
+                        const std::string& db_name,
+                        const std::string& user = "",
+                        const std::string& password = "")
+    : port(port), host(host), db_name(db_name), user(user), password(password) {}
+};
+
+class mysql_cache_manager : public cache_manager_base {
 private:
     static const std::string name;
     std::vector<etix::cameradar::stream_model> streams;
     std::shared_ptr<etix::cameradar::configuration> configuration;
+    etix::cameradar::mysql_configuration db_conf;
+    etix::cameradar::mysql::db_connection connection;
+
+    static const std::string create_table_query;
+    static const std::string insert_with_id_query;
+    static const std::string exist_query;
+    static const std::string get_results_query;
+    static const std::string update_result_query;
 
 public:
     using cache_manager_base::cache_manager_base;
-    ~dumb_cache_manager();
+    ~mysql_cache_manager();
+
+    // Specific to MySQL
+    bool execute_query(const std::string& query);
 
     const std::string& get_name() const override;
     static const std::string& static_get_name();
-    bool load_dumb_conf(std::shared_ptr<etix::cameradar::configuration> configuration);
+    bool load_mysql_conf(std::shared_ptr<etix::cameradar::configuration> configuration);
     bool configure(std::shared_ptr<etix::cameradar::configuration> configuration) override;
 
     void set_streams(std::vector<etix::cameradar::stream_model> model);

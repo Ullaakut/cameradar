@@ -15,7 +15,7 @@
 cmake_minimum_required (VERSION 2.8.1)
 cmake_policy(SET CMP0042 NEW)
 
-project(dumb_cache_manager CXX)
+project(mysql_cache_manager CXX)
 
 find_package(PkgConfig)
 
@@ -24,10 +24,10 @@ include_directories (${PROJECT_SOURCE_DIR}/include ${CAMERADAR_INCLUDES})
 include (find_sources)
 find_sources ("src" "include")
 
-add_library (dumb_cache_manager SHARED ${SOURCES})
+add_library (mysql_cache_manager SHARED ${SOURCES})
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
-target_link_libraries (dumb_cache_manager)
+target_link_libraries (mysql_cache_manager jsoncpp mysqlcppconn pthread)
 
-set (CACHE_MANAGER_NAME ${CAMERADAR_CACHE_MANAGER_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}dumb_cache_manager${CMAKE_SHARED_LIBRARY_SUFFIX})
+set (CACHE_MANAGER_NAME ${CAMERADAR_CACHE_MANAGER_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}mysql_cache_manager${CMAKE_SHARED_LIBRARY_SUFFIX})
 list (APPEND CAMERADAR_CACHE_MANAGERS ${CACHE_MANAGER_NAME})
 set (CAMERADAR_CACHE_MANAGERS ${CAMERADAR_CACHE_MANAGERS} PARENT_SCOPE)
