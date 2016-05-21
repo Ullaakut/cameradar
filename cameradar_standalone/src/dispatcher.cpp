@@ -20,12 +20,20 @@ namespace cameradar {
 // The main loop of the binary
 void
 dispatcher::run() {
+    if (not(*cache)->configure(std::make_shared<configuration>(conf))) {
+        LOG_ERR_(
+            "There was a problem with the cache manager, Cameradar can't work properly without "
+            "cache management",
+            "dispatcher");
+        return;
+    }
     std::thread worker(&dispatcher::do_stuff, this);
     using namespace std::chrono_literals;
-    // catch CTRL+C signal
+
+    // Catch CTRL+C signal
     signal_handler::instance();
 
-    // wait for event or end
+    // Wait for event or end
     while (signal_handler::instance().should_stop() not_eq stop_priority::stop &&
            current != task::finished) {
         std::this_thread::sleep_for(30ms);
@@ -36,7 +44,7 @@ dispatcher::run() {
         LOG_INFO_("Press CTRL+C again to force stop", "dispatcher");
     }
 
-    // waiting for task to cleanup / force stop command
+    // Waiting for task to cleanup / force stop command
     while ((signal_handler::instance().should_stop() not_eq stop_priority::force_stop) and
            doing_stuff()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
@@ -76,7 +84,8 @@ dispatcher::do_stuff() {
         if (queue.front()->run())
             queue.pop_front();
         else {
-            LOG_ERR_("An error occured in one of the tasks, Cameradar will now stop.", "dispatcher");
+            LOG_ERR_("An error occured in one of the tasks, Cameradar will now stop.",
+                     "dispatcher");
             break;
         }
     }

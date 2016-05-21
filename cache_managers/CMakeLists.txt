@@ -19,5 +19,7 @@ cmake_policy(SET CMP0042 NEW)
 set (LIBRARY_OUTPUT_PATH ${CAMERADAR_CACHE_MANAGER_OUTPUT_PATH})
 
 add_subdirectory(dumb_cache_manager)
+add_subdirectory(mysql_cache_manager)
 
+message (${CAMERADAR_CACHE_MANAGERS})
 set (CAMERADAR_CACHE_MANAGERS ${CAMERADAR_CACHE_MANAGERS} PARENT_SCOPE)
