@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <configuration.h> // configuration
 #include <fstream>         // std::ifstream
 #include <unistd.h>        // access, F_OK
-#include <configuration.h> // configuration
 
 namespace etix {
 
@@ -22,9 +22,9 @@ namespace cameradar {
 
 const std::string configuration::name_ = "configuration";
 
-// read a file at the path "path"
-// if the file is available we return the whole content as an std::string inside
-// a pair
+// Read a file at the path "path"
+// If the file is available we return the whole content as
+// an std::string inside a pair
 // otherwise return false and an empty string inside a pair
 std::pair<bool, std::string>
 read_file(const std::string& path) {
@@ -107,14 +107,6 @@ configuration::load_url() {
         auto root = Json::Value();
         auto reader = Json::Reader();
         reader.parse(content, root);
-        //    auto result = tool::json::check_fields(
-        //        {{"urls", Json::arrayValue, root["urls"]}}, "general
-        //        configuration");
-
-        //    if (not result.first) {
-        //      LOG_ERR_(result.second, "general configuration");
-        //      return false;
-        //    }
 
         for (unsigned int i = 0; i < root["urls"].size(); i++) {
             if (not root["urls"][i].isString()) {
@@ -194,7 +186,6 @@ load(const std::string& path) {
     }
     // Deserialize the json to a configuration struct
     // and return
-    // REPLACE THIS WITH JSONCPP
     std::pair<bool, configuration> conf = serialize(root);
     conf.second.raw_conf = root;
     conf.first &= conf.second.load_url();

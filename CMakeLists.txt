@@ -21,7 +21,7 @@ project (${PROJECT_NAME})
 
 set (${PROJECT_NAME}_VERSION_MAJOR 0)
 set (${PROJECT_NAME}_VERSION_MINOR 1)
-set (${PROJECT_NAME}_VERSION_PATCH 0)
+set (${PROJECT_NAME}_VERSION_PATCH 1)
 set (${PROJECT_NAME}_SUFFIX "-beta")
 set (${PROJECT_NAME}_VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}${${PROJECT_NAME}_SUFFIX}")
 
@@ -83,28 +83,35 @@ configure_file (
     "${PROJECT_BINARY_DIR}/version.h"
 )
 
+# add all deps libraries to the link directories path
+link_directories (
+    # third party libraries
+    "deps/jsoncpp/src/deps.jsoncpp/src/lib_json"
+    "deps/boost/src/deps.boost/libs"
+    "deps/mysql-connector/lib"
+)
+
 include_directories (
         "cameradar_standalone/include"
         "deps/jsoncpp/src/deps.jsoncpp/include"
         "deps/boost/src/deps.boost/include"
+        "deps/mysql-connector/include"
 )
+
+set (${CAMERADAR_BINARIES} "")
+set (${CAMERADAR_LIBRARIES} "")
 
 #build cache managers
 add_subdirectory (deps)
 add_subdirectory (cameradar_standalone)
 add_subdirectory (cache_managers)
 
-set (${CAMERADAR_BINARIES} "")
-install (PROGRAMS ${CAMERADAR_BINARIES} DESTINATION bin)
-
-install (FILES ${CAMERADAR_CACHE_MANAGERS} DESTINATION cache_managers)
-
-set (${CAMERADAR_LIBRARIES} "")
 list (APPEND CAMERADAR_LIBRARIES ${CAMERADAR_INSTALL_DEPENDENCIES} ${CAMERADAR_LIBRARIES})
+
+install (PROGRAMS ${CAMERADAR_BINARIES} DESTINATION bin)
+install (FILES ${CAMERADAR_CACHE_MANAGERS} DESTINATION cache_managers)
 install (FILES ${CAMERADAR_LIBRARIES} DESTINATION libraries)
-
 install (DIRECTORY ${CMAKE_SOURCE_DIR}/deps/licenses DESTINATION libraries)
-
 
 # cpack configuration
 include (InstallRequiredSystemLibraries)

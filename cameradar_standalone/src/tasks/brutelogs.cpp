@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tasks/brutelogs.h>
 #include <cachemanager.h>
+#include <tasks/brutelogs.h>
 
 namespace etix {
 namespace cameradar {
@@ -36,10 +36,10 @@ brutelogs::test_ids(const etix::cameradar::stream_model& stream,
     std::string path = stream.service_name + "://";
     if (username != "" || password != "") { path += username + ":" + password + "@"; }
     path += stream.address + ":" + std::to_string(stream.port);
-    LOG_DEBUG_("Testing ids : " + path, "bruteforce");
+    LOG_DEBUG_("Testing ids : " + path, "brutelogs");
     try {
         if (curl_describe(path, true)) {
-            LOG_DEBUG_("[FOUND IDS] : " + path, "bruteforce");
+            LOG_DEBUG_("[FOUND IDS] : " + path, "brutelogs");
             found = true;
             stream_model newstream{
                 stream.address, stream.port,         username,       password,
@@ -55,7 +55,7 @@ brutelogs::test_ids(const etix::cameradar::stream_model& stream,
             (*cache)->update_stream(newstream);
         }
     } catch (const std::runtime_error& e) {
-        LOG_DEBUG_("Ids already tested : " + std::string(e.what()), "bruteforce");
+        LOG_DEBUG_("Ids already tested : " + std::string(e.what()), "brutelogs");
     }
     return found;
 }
@@ -75,7 +75,7 @@ brutelogs::run() const {
     LOG_INFO_(
         "Beginning bruteforce of the usernames and passwords task, it may "
         "take a while.",
-        "bruteforce");
+        "brutelogs");
     std::vector<etix::cameradar::stream_model> streams = (*cache)->get_streams();
     bool doubleskip;
     size_t found = 0;
@@ -88,7 +88,7 @@ brutelogs::run() const {
                           " : This camera's ids were already discovered in "
                           "the database. Skipping to "
                           "the next camera.",
-                      "bruteforce");
+                      "brutelogs");
             ++found;
         } else {
             for (const auto& username : conf.usernames) {
@@ -110,12 +110,12 @@ brutelogs::run() const {
         }
     }
     if (!found) {
-        LOG_WARN_(no_ids_warning_, "bruteforce");
+        LOG_WARN_(no_ids_warning_, "brutelogs");
         return false;
     } else
         LOG_INFO_("Found " + std::to_string(found) + " ids for " + std::to_string(streams.size()) +
                       " cameras",
-                  "bruteforce");
+                  "brutelogs");
     return true;
 }
 }

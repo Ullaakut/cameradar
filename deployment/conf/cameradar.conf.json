@@ -1,5 +1,13 @@
 {
-  "subnets" : "172.16.100.13,localhost",
+  "mysql_db" : {
+    "host" : "__MYSQL_ADDR__",
+    "port" : __MYSQL_PORT__,
+    "user": "root",
+    "password": "root",
+    "db_name": "cmrdr"
+  },
+
+  "subnets" : "localhost",
 
   // If not specified, will scan all ports (1-65535)
   "ports" : "554,8554",
@@ -9,6 +17,9 @@
   // You must give an accessible path to an already existing directory
   "thumbnail_storage_path" : "/tmp",
 
+  // This is the path that will be used in the Docker container
+  // if you're not familiar with Docker, only change the
+  // cache_manager_name value
   "cache_manager_path" : "/cameradar/cache_managers",
-  "cache_manager_name" : "dumb"
+  "cache_manager_name" : "mysql"
 }
