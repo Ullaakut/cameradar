@@ -38,7 +38,7 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 
 ## Quick install
 
-The quick install uses docker to build Cameradar without polluting your machine with dependencies and makes it easy to deploy Cameradar in a few commands.
+The quick install uses docker to build Cameradar without polluting your machine with dependencies and makes it easy to deploy Cameradar in a few commands. *However, it may require networking knowledge, as your docker containers will need access to the cameras subnetwork.*
 
 ### Dependencies
 
