@@ -20,8 +20,8 @@ set (PROJECT_NAME cameradar)
 project (${PROJECT_NAME})
 
 set (${PROJECT_NAME}_VERSION_MAJOR 0)
-set (${PROJECT_NAME}_VERSION_MINOR 1)
-set (${PROJECT_NAME}_VERSION_PATCH 1)
+set (${PROJECT_NAME}_VERSION_MINOR 2)
+set (${PROJECT_NAME}_VERSION_PATCH 0)
 set (${PROJECT_NAME}_SUFFIX "-beta")
 set (${PROJECT_NAME}_VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}${${PROJECT_NAME}_SUFFIX}")
 
@@ -92,10 +92,10 @@ link_directories (
 )
 
 include_directories (
-        "cameradar_standalone/include"
-        "deps/jsoncpp/src/deps.jsoncpp/include"
-        "deps/boost/src/deps.boost/include"
-        "deps/mysql-connector/include"
+    "cameradar_standalone/include"
+    "deps/jsoncpp/src/deps.jsoncpp/include"
+    "deps/boost/src/deps.boost/include"
+    "deps/mysql-connector/include"
 )
 
 set (${CAMERADAR_BINARIES} "")

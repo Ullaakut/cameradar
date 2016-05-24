@@ -63,9 +63,6 @@ The manual installation is recommended if you want to tweak Cameradar and quickl
 To install Cameradar you will need these packages
 
 * cmake (`cmake`)
-* gstreamer1.x (`libgstreamer1.0-dev`)
-* ffmpeg (`ffmpeg`)
-* libcurl (`libcurl4-openssl-dev`)
 
 ### Steps
 
@@ -100,6 +97,13 @@ The only dependencies are `docker` and `docker-compose`.
 Here is the basic content of the configuration file with simple placeholders :
 ```json
 {
+  "mysql_db" : {
+     "host" : "MYSQL_SERVER_IP_ADDRESS",
+     "port" : MYSQL_SERVER_PORT,
+     "user": "root",
+     "password": "root",
+     "db_name": "cmrdr"
+  },
   "subnets" : "SUBNET1,SUBNET2,SUBNET3,[...]",
   "ports" : "PORT1,PORT2,[...]",
   "rtsp_url_file" : "conf/url.json",
