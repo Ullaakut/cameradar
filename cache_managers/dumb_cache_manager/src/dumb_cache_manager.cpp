@@ -53,8 +53,10 @@ dumb_cache_manager::set_streams(std::vector<etix::cameradar::stream_model> model
 //! Inserts a single stream to the cache
 void
 dumb_cache_manager::update_stream(const etix::cameradar::stream_model& newmodel) {
-    for (auto& it : this->streams) {
-        if (it.address == newmodel.address && it.port == newmodel.port) { it = newmodel; }
+    for (auto& stream : this->streams) {
+        if (stream.address == newmodel.address && stream.port == newmodel.port) {
+            stream = newmodel;
+        }
     }
 }
 
@@ -62,8 +64,9 @@ dumb_cache_manager::update_stream(const etix::cameradar::stream_model& newmodel)
 std::vector<etix::cameradar::stream_model>
 dumb_cache_manager::get_streams() {
     std::vector<stream_model> ret;
-    for (const auto& it : this->streams) {
-        if (not it.service_name.compare("rtsp") && not it.state.compare("open")) ret.push_back(it);
+    for (const auto& stream : this->streams) {
+        if (not stream.service_name.compare("rtsp") && not stream.state.compare("open"))
+            ret.push_back(stream);
     }
     return ret;
 }
@@ -72,10 +75,10 @@ dumb_cache_manager::get_streams() {
 std::vector<etix::cameradar::stream_model>
 dumb_cache_manager::get_valid_streams() {
     std::vector<stream_model> ret;
-    for (const auto& it : this->streams) {
-        if ((not it.service_name.compare("rtsp") && not it.state.compare("open")) && it.ids_found &&
-            it.path_found)
-            ret.push_back(it);
+    for (const auto& stream : this->streams) {
+        if ((not stream.service_name.compare("rtsp") && not stream.state.compare("open")) &&
+            stream.ids_found && stream.path_found)
+            ret.push_back(stream);
     }
     return ret;
 }
