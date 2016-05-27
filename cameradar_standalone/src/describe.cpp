@@ -71,12 +71,15 @@ curl_describe(const std::string& path, bool logs) {
     curl_easy_cleanup(csession);
     fclose(protofile);
     curl_global_cleanup();
+    LOG_DEBUG_("Response code : " + std::to_string(rc), "describe");
     if (logs) {
-        if (rc != 401 && pos == std::string::npos)
+        // Some cameras return 400 instead of 401, don't know why.
+        // Some cameras timeout and then curl considers the status as 0
+        if (rc != 401 && rc != 400 && rc && pos == std::string::npos)
             LOG_INFO_("Unprotected camera discovered.", "brutelogs");
-        return ((res == CURLE_OK) && rc != 401);
+        return ((res == CURLE_OK) && rc != 401 && rc != 400 && rc);
     }
-    return ((res == CURLE_OK) && rc != 404);
+    return ((res == CURLE_OK) && rc != 404 && rc != 400 && rc);
 }
 }
 }
