@@ -42,7 +42,7 @@ The quick install uses docker to build Cameradar without polluting your machine 
 
 ### Dependencies
 
-The only dependencies are `docker` and `docker-compose`.
+The only dependencies are `docker`, `docker-tools`, `git` and `make`.
 
 ### Five steps guide
 
@@ -63,6 +63,7 @@ The manual installation is recommended if you want to tweak Cameradar and quickl
 To install Cameradar you will need these packages
 
 * cmake (`cmake`)
+* git (`git`)
 * gstreamer1.x (`libgstreamer1.0-dev`)
 * ffmpeg (`ffmpeg`)
 * libcurl (`libcurl4-openssl-dev`)
