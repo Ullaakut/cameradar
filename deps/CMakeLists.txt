@@ -17,6 +17,7 @@ cmake_minimum_required (VERSION 2.8.1)
 # Lib subdirectory
 
 include (jsoncpp)
+include (boost)
 include (mysql_connector)
 
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM ON)
