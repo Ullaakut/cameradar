@@ -21,5 +21,5 @@
   // if you're not familiar with Docker, only change the
   // cache_manager_name value
   "cache_manager_path" : "../cache_managers",
-  "cache_manager_name" : "mysql"
+  "cache_manager_name" : "dumb"
 }

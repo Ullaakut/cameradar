@@ -27,10 +27,16 @@ echo -e $COL_GREEN"ok"$COL_RESET
 # container. The container has to be linked in docker-compose.yml for cameradar
 # to be able to interact with it.
 echo -n "replacing mysql host and port in configuration "
-sed -i s#__MYSQL_ADDR__#ext_cctv_mysql#g $CONF
+sed -i s#__MYSQL_ADDR__#mysql#g $CONF
 
 # Reaplce 3306 with the port of your DB
 sed -i s#__MYSQL_PORT__#3306#g $CONF
+echo -e $COL_GREEN"ok"$COL_RESET
+
+echo -n "waiting for mysql to be ready "
+while ! mysqladmin ping -h"mysql" -P3306 --silent; do
+    sleep 1
+done
 echo -e $COL_GREEN"ok"$COL_RESET
 
 /cameradar/bin/cameradar -l 1 -c /conf/cameradar.conf.json &
