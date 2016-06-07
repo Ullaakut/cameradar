@@ -2,6 +2,10 @@
 
 ## An RTSP surveillance camera access multitool
 
+[![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg)](#license)
+[![Latest release](https://img.shields.io/badge/release-0.2.2-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
+
+
 #### Cameradar allows you to:
 
 * **Detect open RTSP hosts** on any accessible subnetwork
