@@ -1,0 +1,18 @@
+{
+    "Output": "cameratest.log.xml",
+    "Cameradar" : {
+    "Path": "/cctv/bin/cameradar",
+    "Args": "-l 1 -c tmp_config",
+    "Ports": "554,5554,8554,5548",
+    "IdsPath": "/conf/ids.json",
+    "RoutesPath": "/conf/url.json",
+    "ThumbPath": "/thumbnails",
+    "dbHost": "mysql_cameradar",
+    "dbPort": 3306,
+    "dbUser": "root",
+    "dbPassword": "root",
+    "dbName": "cctv",
+    "Console": false
+    },
+    "Tests" : __CAMERAS__
+}

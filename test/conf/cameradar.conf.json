@@ -1,0 +1,14 @@
+{
+  "mysql_db" : {
+    "host" : "0.0.0.0",
+    "port" : 3306,
+    "user": "root",
+    "password": "root",
+    "db_name": "cctv"
+  },
+  "subnets" : "172.16.100.13 localhost",
+  "ports" : "554,8554", // if not specified, default will be 1-65535
+  "rtsp_url_file" : "conf/url.json",
+  "rtsp_ids_file" : "conf/ids.json",
+  "thumbnail_storage_path" : "/ce/que/tu/veux"
+}

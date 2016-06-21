@@ -1,0 +1,14 @@
+FROM ubuntu:15.10
+MAINTAINER brendan.leglaunec@etixgroup.com
+
+RUN useradd -m vlc; \
+    apt-get update; \
+    apt-get install -y vlc-nox
+
+RUN sed -i s/geteuid/getppid/g /usr/bin/vlc
+
+ADD ./docker/screen.png /vlc/screen.png
+COPY ./docker/run_vlc.sh /start.sh
+COPY ./etix_rtsp_server /etix_rtsp_server
+
+EXPOSE 8554
