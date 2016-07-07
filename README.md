@@ -3,7 +3,7 @@
 ## An RTSP surveillance camera access multitool
 
 [![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg)](#license)
-[![Latest release](https://img.shields.io/badge/release-1.0.0-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
+[![Latest release](https://img.shields.io/badge/release-1.0.1-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 
 #### Cameradar allows you to:
@@ -70,6 +70,7 @@ To install Cameradar you will need these packages
 * git (`git`)
 * gstreamer1.x (`libgstreamer1.0-dev`)
 * ffmpeg (`ffmpeg`)
+* boost (`libboost-all-dev`)
 * libcurl (`libcurl4-openssl-dev`)
 
 ### Steps
