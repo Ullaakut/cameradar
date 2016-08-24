@@ -149,28 +149,33 @@ void
 mysql_cache_manager::set_streams(std::vector<etix::cameradar::stream_model> models) {
     LOG_DEBUG_("Beginning stream list DB insertion", "mysql_cache_manager");
     for (const auto& model : models) {
-        auto query = tool::fmt(
-            this->exist_query, this->connection.get_db_name().c_str(), model.address.c_str());
-        auto result = this->connection.query(query);
-        // If an entry already exists for this address in the database,
-        // no need to insert it.
-        if (result.data->next()) return;
+        if (!model.service_name.compare("rtsp") && !model.state.compare("open")) {
+          auto query = tool::fmt(
+              this->exist_query, this->connection.get_db_name().c_str(), model.address.c_str());
+          auto result = this->connection.query(query);
+          // If an entry already exists for this address in the database,
+          // no need to insert it.
 
-        query = tool::fmt(this->insert_with_id_query,
-                          this->connection.get_db_name().c_str(),
-                          model.address.c_str(),
-                          model.password.c_str(),
-                          model.product.c_str(),
-                          model.protocol.c_str(),
-                          model.route.c_str(),
-                          model.service_name.c_str(),
-                          model.state.c_str(),
-                          model.thumbnail_path.c_str(),
-                          model.username.c_str(),
-                          std::to_string(model.port).c_str(),
-                          std::to_string(model.ids_found).c_str(),
-                          std::to_string(model.path_found).c_str());
-        execute_query(query);
+          // TODO : Update an entry if it already exists.
+
+          if (result.data->next()) return;
+
+          query = tool::fmt(this->insert_with_id_query,
+                            this->connection.get_db_name().c_str(),
+                            model.address.c_str(),
+                            model.password.c_str(),
+                            model.product.c_str(),
+                            model.protocol.c_str(),
+                            model.route.c_str(),
+                            model.service_name.c_str(),
+                            model.state.c_str(),
+                            model.thumbnail_path.c_str(),
+                            model.username.c_str(),
+                            std::to_string(model.port).c_str(),
+                            std::to_string(model.ids_found).c_str(),
+                            std::to_string(model.path_found).c_str());
+          execute_query(query);
+      }
     }
 }
 
@@ -219,6 +224,18 @@ mysql_cache_manager::get_streams() {
                 result.data->getString("state"),       result.data->getBoolean("ids_found"),
                 result.data->getBoolean("path_found"), result.data->getString("thumbnail_path")
             };
+            LOG_DEBUG_("Got a result whose address was " + s.address, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose port was " + std::to_string(s.port), "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose username was " + s.username, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose password was " + s.password, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose route was " + s.route, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose service name was " + s.service_name, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose product was " + s.product, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose protocol was " + s.protocol, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose state was " + s.state, "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose ids found was " + std::to_string(s.ids_found), "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose path found was " + std::to_string(s.path_found), "mysql_cache_manager");
+            LOG_DEBUG_("Got a result whose thumbnail was " + s.thumbnail_path, "mysql_cache_manager");
             lst.push_back(s);
         }
     }

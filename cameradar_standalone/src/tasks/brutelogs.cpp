@@ -42,16 +42,16 @@ brutelogs::test_ids(const etix::cameradar::stream_model& stream,
             LOG_DEBUG_("[FOUND IDS] : " + path, "brutelogs");
             found = true;
             stream_model newstream{
-                stream.address, stream.port,         username,       password,
-                stream.route,   stream.service_name, stream.product, stream.protocol,
-                stream.state,   stream.path_found,   true,           stream.thumbnail_path
+                stream.address, stream.port,         username,          password,
+                stream.route,   stream.service_name, stream.product,    stream.protocol,
+                stream.state,   true,                stream.path_found, stream.thumbnail_path
             };
             (*cache)->update_stream(newstream);
         } else {
-            stream_model newstream{ stream.address,    stream.port,     username,
-                                    password,          stream.route,    stream.service_name,
-                                    stream.product,    stream.protocol, stream.state,
-                                    stream.path_found, false,           stream.thumbnail_path };
+            stream_model newstream{ stream.address,    stream.port,       username,
+                                    password,          stream.route,      stream.service_name,
+                                    stream.product,    stream.protocol,   stream.state,
+                                    false,             stream.path_found, stream.thumbnail_path };
             (*cache)->update_stream(newstream);
         }
     } catch (const std::runtime_error& e) {
@@ -77,6 +77,7 @@ brutelogs::run() const {
         "take a while.",
         "brutelogs");
     std::vector<etix::cameradar::stream_model> streams = (*cache)->get_streams();
+    LOG_DEBUG_("Found " + std::to_string(streams.size()) + " streams in the cache", "brutelogs");
     bool doubleskip;
     size_t found = 0;
     for (const auto& stream : streams) {

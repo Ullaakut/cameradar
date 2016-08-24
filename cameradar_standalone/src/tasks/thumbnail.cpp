@@ -48,7 +48,12 @@ bool
 thumbnail::run() const {
     std::vector<stream_model> streams = (*cache)->get_valid_streams();
     LOG_INFO_("Started thumbnail generation, it may take a while", "thumbnail");
+    if (not streams.size()) {
+      LOG_WARN_("There were no valid streams to generate thumbnails from. Cameradar will stop.", "thumbnail_generation");
+      return false;
+    }
     for (const auto& stream : streams) {
+      LOG_DEBUG_("Generating thumbnail for " + stream.address, "thumbnail_generation");
         if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
             break;
         std::string ffmpeg_cmd =
