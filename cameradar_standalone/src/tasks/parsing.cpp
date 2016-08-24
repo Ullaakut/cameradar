@@ -27,9 +27,9 @@ static const std::string no_hosts_found_ =
 //! Avoids segfaults on unknown xml structure
 std::string
 xml_safe_get(const TiXmlElement* elem, const std::string& attr) {
-    if (elem == nullptr) return "Closed";
+    if (elem == nullptr) return "closed";
     if (elem->Attribute(attr.c_str()) != nullptr) return std::string(elem->Attribute(attr.c_str()));
-    return "Closed";
+    return "closed";
 }
 
 //! Parse a single host node (generally containing only one camera)
@@ -51,8 +51,8 @@ parsing::parse_camera(TiXmlElement* xml_host, std::vector<stream_model>& data) c
             stream.service_name = xml_safe_get(service, "name");
             stream.product = xml_safe_get(service, "product");
         } else {
-            stream.service_name = "Closed";
-            stream.product = "Closed";
+            stream.service_name = "closed";
+            stream.product = "closed";
         }
         data.push_back(stream);
     }
