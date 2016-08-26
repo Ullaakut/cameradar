@@ -224,18 +224,6 @@ mysql_cache_manager::get_streams() {
                 result.data->getString("state"),       result.data->getBoolean("ids_found"),
                 result.data->getBoolean("path_found"), result.data->getString("thumbnail_path")
             };
-            LOG_DEBUG_("Got a result whose address was " + s.address, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose port was " + std::to_string(s.port), "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose username was " + s.username, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose password was " + s.password, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose route was " + s.route, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose service name was " + s.service_name, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose product was " + s.product, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose protocol was " + s.protocol, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose state was " + s.state, "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose ids found was " + std::to_string(s.ids_found), "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose path found was " + std::to_string(s.path_found), "mysql_cache_manager");
-            LOG_DEBUG_("Got a result whose thumbnail was " + s.thumbnail_path, "mysql_cache_manager");
             lst.push_back(s);
         }
     }
