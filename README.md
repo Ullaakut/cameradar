@@ -128,7 +128,8 @@ The subnetworks should be passed separated by commas only, and their subnet form
 "subnets" : "172.100.16.0/24,172.100.17.0/24,localhost,192.168.1.13"
 ```
 
-The **RTSP ports for most cameras are 554**, so you should probably specify 554 as one of the ports you scan. Not giving any ports in the configuration will scan every port of every host found on the subnetworks..How is formatted Cameradar's result
+The **RTSP ports for most cameras are 554**, so you should probably specify 554 as one of the ports you scan. Not giving any ports in the configuration will scan every port of every host found on the subnetworks.
+
 You **can use your own files for the ids and routes dictionaries** used to bruteforce the cameras, but the Cameradar repo already gives you a good base that works with most cameras.
 
 The thumbnail storage path should be a **valid and accessible directory** in which the thumbnails will be stored.
