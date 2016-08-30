@@ -39,12 +39,15 @@ stream_check::run() const {
         pipeline =
             gst_parse_launch("rtspsrc name=source ! rtph264depay ! h264parse ! fakesink", &error);
 
+        std::string location = "rtsp://";
+        location += stream.username + ":" + stream.password + "@" + stream.address + ":" + std::to_string(stream.port);
         if (pipeline == NULL) {
             LOG_ERR_("[" + stream.address + "] Can't configure pipeline", "stream_check");
             return false;
         } else {
             elem = gst_bin_get_by_name(GST_BIN(pipeline), "source");
-            g_object_set(G_OBJECT(elem), "location", stream.address, "latency", 20, NULL);
+            LOG_DEBUG_("Launching gstreamer check on rtsp://" + stream.username + ":" + stream.password + "@" + stream.address + ":" + std::to_string(stream.port), "gstreamer check");
+            g_object_set(G_OBJECT(elem), "location", location.c_str(), "latency", 20, NULL);
 
             if (gst_element_set_state(pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
                 LOG_ERR_(
