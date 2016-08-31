@@ -17,6 +17,8 @@
 namespace etix {
 namespace cameradar {
 
+  using namespace std::chrono_literals;
+
 // The main loop of the binary
 void
 dispatcher::run() {
@@ -47,7 +49,7 @@ dispatcher::run() {
     // Waiting for task to cleanup / force stop command
     while ((signal_handler::instance().should_stop() not_eq stop_priority::force_stop) and
            doing_stuff()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+             std::this_thread::sleep_for(30ms);
     }
     worker.join();
 }
@@ -88,6 +90,7 @@ dispatcher::do_stuff() {
                      "dispatcher");
             break;
         }
+        std::this_thread::sleep_for(30ms);
     }
     this->current = task::finished;
 }
