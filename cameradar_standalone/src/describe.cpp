@@ -75,6 +75,7 @@ curl_describe(const std::string& path, bool logs) {
     if (logs) {
         // Some cameras return 400 instead of 401, don't know why.
         // Some cameras timeout and then curl considers the status as 0
+        // GST-RTSP-SERVER returns 404 instead of 401, then 401 instead of 404.
         if (rc != 401 && rc != 400 && rc && pos == std::string::npos)
             LOG_INFO_("Unprotected camera discovered.", "brutelogs");
         return ((res == CURLE_OK) && rc != 401 && rc != 400 && rc);
