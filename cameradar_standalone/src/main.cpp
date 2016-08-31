@@ -124,7 +124,7 @@ main(int argc, char* argv[]) {
     auto plug = std::make_shared<etix::cameradar::cache_manager>(conf.second.cache_manager_path,
                                                                  conf.second.cache_manager_name);
 
-    if (not plug->make_instance()) {
+    if (not plug || not plug->make_instance()) {
         LOG_ERR_(std::string("Invalid cache manager "), "cameradar");
         return false;
     }

@@ -158,7 +158,7 @@ mysql_cache_manager::set_streams(std::vector<etix::cameradar::stream_model> mode
 
           // TODO : Update an entry if it already exists.
 
-          if (result.data->next()) return;
+          if (result.data->next()) continue;
 
           query = tool::fmt(this->insert_with_id_query,
                             this->connection.get_db_name().c_str(),
