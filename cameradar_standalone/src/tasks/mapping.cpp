@@ -29,11 +29,8 @@ namespace cameradar {
 bool
 nmap_is_ok() {
     return (
-        launch_command("test `dpkg -l | cut -c 5-9 | grep nmap` = nmap")
-        // && launch_command("test `nmap --version | cut -c 14-18  | head -n2 | tail -n1` = 6.47")
-        &&
-        launch_command(
-            "mkdir -p scans")); // Creates the directory in which the scans will be stored
+        (system("dpkg -l | cut -c 5-9 | grep nmap") == 0)
+        && launch_command("mkdir -p /tmp/scans")); // Creates the directory in which the scans will be stored
 }
 
 //! Launches and checks the return of the nmap command

@@ -64,7 +64,7 @@ public:
                const std::pair<bool, etix::tool::opt_parse>& opts)
     : busy(false)
     , current(task::init)
-    , nmap_output("scans/scan" + std::to_string(std::chrono::system_clock::to_time_t(
+    , nmap_output("/tmp/scans/scan" + std::to_string(std::chrono::system_clock::to_time_t(
                                std::chrono::system_clock::now())) +
                   ".xml")
     , conf(conf)
