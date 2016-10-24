@@ -20,6 +20,8 @@
 
 Of course, you can also call for individual tasks if you plug in a Database to Cameradar, but for now this repo only contains a basic cache manager. You can however create your own by following the simple example of the **dumb cache manager**.
 
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/Cameradar.png" width="350"/></p>
+
 ## Table of content
 
 - [Quick install](#quick-install)
