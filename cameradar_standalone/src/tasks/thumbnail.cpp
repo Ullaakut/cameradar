@@ -41,61 +41,74 @@ thumbnail::build_output_file_path(const std::string& path) const {
     return ss.str();
 }
 
-//! Gets all the discovered streams with good routes and logs
-//! And launches an ffmpeg command to generate a thumbnail
-//! In order to check for the stream validity
+bool
+thumbnail::generate_thumbnail(const stream_model& stream) const {
+    LOG_INFO_("Generating thumbnail for " + stream.address, "thumbnail_generation");
+    if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
+        return false;
+    std::string ffmpeg_cmd =
+        "mkdir -p %s ; "
+        "ffmpeg "
+        "-rtsp_transport tcp "
+        "-y "
+        "-nostdin "
+        "-loglevel quiet " // no logs
+        "-i '%s' "         // input
+        "-vcodec mjpeg "   // jpeg codec
+        "-vframes 1 "      // only take one frame
+        "-an "             // disable audio
+        "-f image2 "       // force image
+        "-s 240x180 "      // force size
+        "'%s'";
+    std::string fullpath = make_path(stream);
+    std::string output = build_output_file_path(stream.address);
+    ffmpeg_cmd = tool::fmt(ffmpeg_cmd.c_str(),
+                           output.substr(0, output.find_last_of("/")).c_str(),
+                           fullpath.c_str(),
+                           output.c_str());
+    if (!launch_command(ffmpeg_cmd)) {
+        LOG_WARN_("The following command [" + ffmpeg_cmd +
+                      "] didn't work. That can either mean that the stream is "
+                      "not valid or "
+                      "that there is a problem with the camera.",
+                  "thumbnail_generation");
+        return false;
+    } else {
+        LOG_DEBUG_("Generated thumbnail : " + ffmpeg_cmd, "thumbnail_generation");
+        try {
+            stream_model result{ stream.address,    stream.port,      stream.username,
+                                 stream.password,   stream.route,     stream.service_name,
+                                 stream.product,    stream.protocol,  stream.state,
+                                 stream.path_found, stream.ids_found, output };
+            (*cache)->update_stream(result);
+
+        } catch (const std::exception& e) { LOG_DEBUG_(e.what(), "thumbnail_generation"); }
+    }
+    return true;
+}
+
+// Gets all the discovered streams with good routes and logs
+// And launches an ffmpeg command to generate a thumbnail
+// In order to check for the stream validity
 bool
 thumbnail::run() const {
+    std::vector<std::future<bool>> futures;
     std::vector<stream_model> streams = (*cache)->get_valid_streams();
+
     LOG_INFO_("Started thumbnail generation, it may take a while", "thumbnail");
     if (not streams.size()) {
-      LOG_WARN_("There were no valid streams to generate thumbnails from. Cameradar will stop.", "thumbnail_generation");
-      return false;
+        LOG_WARN_("There were no valid streams to generate thumbnails from. Cameradar will stop.",
+                  "thumbnail_generation");
+        return false;
     }
+    int done = 0;
     for (const auto& stream : streams) {
-      LOG_DEBUG_("Generating thumbnail for " + stream.address, "thumbnail_generation");
-        if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
-            break;
-        std::string ffmpeg_cmd =
-            "mkdir -p %s ; "
-            "ffmpeg "
-            "-y "
-            "-nostdin "
-            "-loglevel quiet "
-            "-i '%s' "
-            "-vcodec mjpeg "
-            "-vframes 1 "
-            "-an "
-            "-f image2 "
-            "-s 320x240 "
-            "'%s'";
-        std::string fullpath = make_path(stream);
-        std::string output = build_output_file_path(stream.address);
-        ffmpeg_cmd = tool::fmt(ffmpeg_cmd.c_str(),
-                               output.substr(0, output.find_last_of("/")).c_str(),
-                               fullpath.c_str(),
-                               output.c_str());
-        if (!launch_command(ffmpeg_cmd)) {
-            LOG_WARN_("The following command [" + ffmpeg_cmd +
-                          "] didn't work. That can either mean that the stream is "
-                          "not valid or "
-                          "that there is a problem with the camera.",
-                      "thumbnail_generation");
-        } else {
-            LOG_DEBUG_("Generated thumbnail : " + ffmpeg_cmd, "thumbnail_generation");
-            try {
-                stream_model result{ stream.address,    stream.port,      stream.username,
-                                     stream.password,   stream.route,     stream.service_name,
-                                     stream.product,    stream.protocol,  stream.state,
-                                     stream.path_found, stream.ids_found, output };
-                (*cache)->update_stream(result);
-
-            } catch (std::exception& e) { LOG_DEBUG_(e.what(), "thumbnail_generation"); }
-        }
+        futures.push_back(
+            std::async(std::launch::async, &thumbnail::generate_thumbnail, this, stream));
     }
-    LOG_INFO_("All thumbnails have been successfully generated in " +
-                  this->conf.thumbnail_storage_path,
-              "thumbnail_generation");
+    for (auto& fit : futures) {
+        if (fit.get()) { ++done; }
+    }
     return true;
 }
 }

@@ -17,7 +17,7 @@
 namespace etix {
 namespace cameradar {
 
-//! Launches a command and checks for the return value
+// Launches a command and checks for the return value
 bool
 launch_command(const std::string& cmd) {
     int status = system(cmd.c_str());

@@ -14,13 +14,14 @@
 
 #pragma once
 
+#include <cachemanager.h>   // cacheManager
 #include <cameradar_task.h> // task interface
+#include <fmt.h>            // fmt
+#include <future>           // std::async & std::future
 #include <launch_command.h> // launch_command
+#include <rtsp_path.h>      // make_path
 #include <signal_handler.h> // signals
 #include <stream_model.h>   // data model
-#include <cachemanager.h>   // cacheManager
-#include <fmt.h>            // fmt
-#include <rtsp_path.h>      // make_path
 
 namespace etix {
 namespace cameradar {
@@ -41,6 +42,7 @@ public:
     virtual bool run() const;
 
     std::string build_output_file_path(const std::string& path) const;
+    bool generate_thumbnail(const stream_model& stream) const;
 };
 }
 }

@@ -34,8 +34,8 @@ bool create_folder(const std::string& folder);
 bool create_recursive_folder(const std::string& folder);
 std::string home();
 
-//! this functions take a copy because we need to make some operations on the string
-//! for example, we need to apply std::string::pop_back
+// this functions take a copy because we need to make some operations on the string
+// for example, we need to apply std::string::pop_back
 std::string get_file_folder(std::string full_file_path);
 
 bool copy(const std::string& src, const std::string& dst);

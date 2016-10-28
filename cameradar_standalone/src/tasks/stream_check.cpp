@@ -17,9 +17,9 @@
 namespace etix {
 namespace cameradar {
 
-//! Gets all the discovered streams with good routes and logs
-//! And launches an ffmpeg command to generate a thumbnail
-//! In order to check for the stream validity
+// Gets all the discovered streams with good routes and logs
+// And launches an ffmpeg command to generate a thumbnail
+// In order to check for the stream validity
 bool
 stream_check::run() const {
     GstElement* pipeline;
@@ -30,8 +30,8 @@ stream_check::run() const {
     std::vector<stream_model> streams = (*cache)->get_valid_streams();
 
     if (not streams.size()) {
-      LOG_WARN_("There were no valid streams to check. Cameradar will stop.", "stream_check");
-      return false;
+        LOG_WARN_("There were no valid streams to check. Cameradar will stop.", "stream_check");
+        return false;
     }
     for (const auto& stream : streams) {
         GError* error = NULL;
@@ -40,13 +40,17 @@ stream_check::run() const {
             gst_parse_launch("rtspsrc name=source ! rtph264depay ! h264parse ! fakesink", &error);
 
         std::string location = "rtsp://";
-        location += stream.username + ":" + stream.password + "@" + stream.address + ":" + std::to_string(stream.port);
+        location += stream.username + ":" + stream.password + "@" + stream.address + ":" +
+                    std::to_string(stream.port);
         if (pipeline == NULL) {
             LOG_ERR_("[" + stream.address + "] Can't configure pipeline", "stream_check");
             return false;
         } else {
             elem = gst_bin_get_by_name(GST_BIN(pipeline), "source");
-            LOG_DEBUG_("Launching gstreamer check on rtsp://" + stream.username + ":" + stream.password + "@" + stream.address + ":" + std::to_string(stream.port), "gstreamer check");
+            LOG_DEBUG_("Launching gstreamer check on rtsp://" + stream.username + ":" +
+                           stream.password + "@" + stream.address + ":" +
+                           std::to_string(stream.port),
+                       "gstreamer check");
             g_object_set(G_OBJECT(elem), "location", location.c_str(), "latency", 20, NULL);
 
             if (gst_element_set_state(pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
@@ -63,7 +67,9 @@ stream_check::run() const {
                 (*cache)->update_stream(invalidstream);
                 return false;
             }
-            LOG_INFO_("[" + stream.address + "] Set pipeline to playing", "stream_check");
+            LOG_INFO_("[" + stream.address +
+                          "] This stream is accessible and seems to be functional",
+                      "stream_check");
         }
     }
     LOG_INFO_("All streams could be accessed with GStreamer", "stream_check");

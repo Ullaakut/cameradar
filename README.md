@@ -3,7 +3,7 @@
 ## An RTSP surveillance camera access multitool
 
 [![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg)](#license)
-[![Latest release](https://img.shields.io/badge/release-1.0.4-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
+[![Latest release](https://img.shields.io/badge/release-1.1.0-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 
 #### Cameradar allows you to:
@@ -95,13 +95,13 @@ The only dependencies are `docker` and `docker-compose`.
 
 ### Deploy a custom version of Cameradar
 
+1. `git clone https://github.com/EtixLabs/cameradar.git`
 2. Go into the Cameradar repository, create a directory named `build` and go in it
 3. In the build directory, run `cmake .. -DCMAKE_BUILD_TYPE=Release` This will generate the Makefiles you need to build Cameradar
 4. Run the command `make package` to compile it into a package
 5. Copy your package into the `deployment` directory
 6. Run `docker-compose build cameradar` to build the cameradar container using your custom package
 5. Run `docker-compose up cameradar` to launch Cameradar
-
 
 ### Configuration
 
@@ -125,6 +125,22 @@ Here is the basic content of the configuration file with simple placeholders :
 }
 ```
 
+This configuration is needed only if you want to overwrite the default values, which are :
+
+```json
+{
+  "subnets" : "localhost",
+  "ports" : "554,8554",
+  "rtsp_url_file" : "conf/url.json",
+  "rtsp_ids_file" : "conf/ids.json",
+  "thumbnail_storage_path" : "/tmp",
+  "cache_manager_path" : "../cache_managers/dumb_cache_manager",
+  "cache_manager_name" : "dumb"
+}
+```
+
+This means that by default Cameradar will not use a database, will scan localhost and the ports 554 (default RTSP port) and 8554 (default emulated RTSP port), use the default constructor dictionaries and store the thumbnails in `/tmp`. If you need to override simply the subnets or ports, you can use the [command line options](#command-line-options).
+
 The subnetworks should be passed separated by commas only, and their subnet format should be the same as used in nmap.
 ```json
 "subnets" : "172.100.16.0/24,172.100.17.0/24,localhost,192.168.1.13"
@@ -132,11 +148,11 @@ The subnetworks should be passed separated by commas only, and their subnet form
 
 The **RTSP ports for most cameras are 554**, so you should probably specify 554 as one of the ports you scan. Not giving any ports in the configuration will scan every port of every host found on the subnetworks.
 
-You **can use your own files for the ids and routes dictionaries** used to bruteforce the cameras, but the Cameradar repo already gives you a good base that works with most cameras.
+You **can use your own files for the ids and routes dictionaries** used to bruteforce the cameras, but the Cameradar repository already gives you a good base that works with most cameras.
 
 The thumbnail storage path should be a **valid and accessible directory** in which the thumbnails will be stored.
 
-The cache manager path and name variables are used to change the cache manager you want to load into Cameradar. If you want to, you can code your own cache manager using a database, a file, a remote server, [...]. Feel free to share it by creating a merge request on this repo if you developed a generic manager (It must not be specific to your company's infrastructure).
+The cache manager path and name variables are used to change the cache manager you want to load into Cameradar. If you want to, you can code your own cache manager using a database, a file, a remote server, [...]. Feel free to share it by creating a merge request on this repository if you developed a generic manager (It must not be specific to your company's infrastructure).
 
 ## Output
 
@@ -159,7 +175,7 @@ The cache manager path and name variables are used to change the cache manager y
 
 ## Check camera access
 
-If you have vlc, you should be able to use the GUI to connect to the RTSP stream using this format : `username:password@address:port/route`
+If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI to connect to the RTSP stream using this format : `username:password@address:port/route`
 
 With the above result, the RTSP URL would be `admin:123456@173.16.100.45:554/live.sdp`
 
@@ -168,6 +184,9 @@ If you're still in your console however, you can go even faster by using **vlc i
 ## Command line options
 
 * **"-c"** : Set a custom path to the configuration file (-c /path/to/conf)
+* **"-s"** : Set custom subnets (overrides configuration)
+* **"-p"** : Set custom ports (overrides configuration)
+* **"-m"** : Set number of threads (*Default value : 1*)
 * **"-l"** : Set log level
   * **"-l 1"** : Log level DEBUG
     * _Will print everything including debugging logs_
@@ -213,18 +232,19 @@ The output of Cameradar will be printed on the standard output and will also be 
 
 ## Contribution
 
-Well there are many things we could code in order to add features to Cameradar. Adding other protocols than RTSP would be really cool, as well as making generic cache managers. Creating an HTTP server with an API that would launch cameradar upon recieving requests ans answer with Cameradar's result would also be potentially really useful.
+Well there are many things we could code in order to add features to Cameradar. Adding other protocols than RTSP would be really cool, as well as making more generic cache managers. Improving Cameradar's performance or even the deployment could also be a great help!
 
 If you're not into software development or not into C++, even updating the dictionaries would be a really cool contribution! Just make sure the ids and routes you add are **default constructor credentials** and not custom credentials.
 
-If you have other cool ideas, feel free to share them with me at brendan.leglaunec@etixgroup.com !
+If you have other cool ideas, feel free to share them with me at [brendan.leglaunec@etixgroup.com](mailto:brendan.leglaunec@etixgroup.com) !
 
 ## Next improvements
-
 - [x] Add a docker deployment to avoid the current deps hell
 - [x] Development of a MySQL cache manager
 - [ ] Development of a JSON file cache manager
 - [ ] Development of an XML file cache manager
+- [ ] Make a standalone docker image
+- [ ] Push to DockerHub
 
 ## License
 

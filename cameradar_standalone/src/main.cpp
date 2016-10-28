@@ -24,7 +24,6 @@ void
 print_version() {
     std::cout << "Cameradar version " << CAMERADAR_VERSION << std::endl;
     std::cout << "Build " << CAMERADAR_VERSION_BUILD << std::endl;
-    std::cout << "Git commit " << CAMERADAR_VERSION_GIT_SHA1 << std::endl;
 }
 
 // Command line parsing
@@ -32,6 +31,8 @@ std::pair<bool, etix::tool::opt_parse>
 parse_cmdline(int argc, char* argv[]) {
     auto opt_parse = etix::tool::opt_parse{ argc, argv };
 
+    opt_parse.optional("-s", "Set subnets (e.g.: `172.16.0.0/24`)", true);
+    opt_parse.optional("-p", "Set ports (e.g.: `554,8554`)", true);
     opt_parse.optional("-c", "Path to the configuration file (-c /path/to/conf)", true);
     opt_parse.optional("-l", "Set log level (-l 4 will only show warnings and errors)", true);
     opt_parse.optional("-d", "Launch the discovery tool on the given subnet", false);
@@ -86,18 +87,10 @@ main(int argc, char* argv[]) {
     if (not args.first) return EXIT_FAILURE;
 
     print_version();
-    // configure file configuration path
-    auto conf_path = std::string{};
-    if (not args.second.exist("-c")) {
-        conf_path = etix::cameradar::default_configuration_path;
-        LOG_WARN_("No custom path set, trying to use default path: " + conf_path, "main");
-    } else {
-        conf_path = args.second["-c"];
-    }
 
     if (not args.second.exist("-l")) {
-        etix::tool::logger::get_instance("cameradar").set_level(etix::tool::loglevel::INFO);
-        LOG_INFO_("No log level set, using log level 2 (ignoring DEBUG)", "main");
+        etix::tool::logger::get_instance("cameradar").set_level(etix::tool::loglevel::DEBUG);
+        LOG_INFO_("No log level set, using log level 1", "main");
     } else {
         try {
             int level = std::stoi(args.second["-l"]);
@@ -110,7 +103,7 @@ main(int argc, char* argv[]) {
     }
 
     // Try to load the configuration
-    auto conf = cmrdr::load(conf_path);
+    auto conf = cmrdr::load(args);
     if (not conf.first) { return EXIT_FAILURE; }
 
     LOG_INFO_("Configuration successfully loaded", "main");
