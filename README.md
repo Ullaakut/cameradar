@@ -18,7 +18,7 @@
 
 #### And all of this in a _single command-line_.
 
-Of course, you can also call for individual tasks if you plug in a Database to Cameradar, but for now this repo only contains a basic cache manager. You can however create your own by following the simple example of the **dumb cache manager**.
+Of course, you can also call for individual tasks if you plug in a Database to Cameradar using the MySQL cache manager for example. You can create your own cache manager by following the simple example of the **dumb cache manager**.
 
 <p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/Cameradar.png" width="350"/></p>
 
@@ -58,6 +58,8 @@ The only dependencies are `docker`, `docker-tools`, `git` and `make`.
 4. Run `docker-compose build cameradar` to build the cameradar container
 5. Run `docker-compose up cameradar` to launch Cameradar
 
+By default, the version of the package in the deployment should be the last stable release.
+
 If you want to deploy your custom version of Cameradar using the same method, you should check the [advanced docker deployment](#advanced-docker-deployment) tutorial here.
 
 ## Manual installation
@@ -80,14 +82,16 @@ To install Cameradar you will need these packages
 The simplest way would be to follow these steps :
 
 1. `git clone https://github.com/EtixLabs/cameradar.git`
-2. Go into the Cameradar repository, create a directory named `build` and go in it
-3. In the build directory, run `cmake ..` This will generate the Makefiles you need to build Cameradar
-4. Run the command `make`
-5. This should compile Cameradar. Go into the `cameradar_standalone` directory
-6. You can now customize the `conf/cameradar.conf.json` file to set the subnetworks and specific ports you want to scan, as well as the thumbnail generation path. More information will be given about the configuration file in another part of this document.
-7. You are now ready to launch Cameradar by launching `./cameradar` in the cameradar_standalone directory.
+2. `mkdir build`
+3. `cd build`
+3. `cmake ..`
+4. `make`
+5. `cd cameradar_standalone`
+6. `./cameradar -s the_subnet_you_want_to_scan`
 
 ## Advanced Docker deployment
+
+In case you want to use Docker to deploy your custom version of Cameradar.
 
 ### Dependencies
 
@@ -96,12 +100,13 @@ The only dependencies are `docker` and `docker-compose`.
 ### Deploy a custom version of Cameradar
 
 1. `git clone https://github.com/EtixLabs/cameradar.git`
-2. Go into the Cameradar repository, create a directory named `build` and go in it
-3. In the build directory, run `cmake .. -DCMAKE_BUILD_TYPE=Release` This will generate the Makefiles you need to build Cameradar
-4. Run the command `make package` to compile it into a package
-5. Copy your package into the `deployment` directory
-6. Run `docker-compose build cameradar` to build the cameradar container using your custom package
-5. Run `docker-compose up cameradar` to launch Cameradar
+2. `cd build`
+3. `cmake .. -DCMAKE_BUILD_TYPE=Release`
+4. `make package`
+5. `cp cameradar_*_Release_Linux.tar.gz ../deployment`
+6. `cd ../deployment`
+7. `docker-compose build cameradar`
+8. `docker-compose up cameradar`
 
 ### Configuration
 
@@ -125,7 +130,7 @@ Here is the basic content of the configuration file with simple placeholders :
 }
 ```
 
-This configuration is needed only if you want to overwrite the default values, which are :
+This **configuration is needed only if you want to overwrite the default values**, which are :
 
 ```json
 {
@@ -139,7 +144,7 @@ This configuration is needed only if you want to overwrite the default values, w
 }
 ```
 
-This means that by default Cameradar will not use a database, will scan localhost and the ports 554 (default RTSP port) and 8554 (default emulated RTSP port), use the default constructor dictionaries and store the thumbnails in `/tmp`. If you need to override simply the subnets or ports, you can use the [command line options](#command-line-options).
+This means that **by default Cameradar will not use a database**, will scan localhost and the ports 554 (default RTSP port) and 8554 (default emulated RTSP port), use the default constructor dictionaries and store the thumbnails in `/tmp`. If you need to override simply the subnets or ports, you can use the [command line options](#command-line-options).
 
 The subnetworks should be passed separated by commas only, and their subnet format should be the same as used in nmap.
 ```json
@@ -155,6 +160,8 @@ The thumbnail storage path should be a **valid and accessible directory** in whi
 The cache manager path and name variables are used to change the cache manager you want to load into Cameradar. If you want to, you can code your own cache manager using a database, a file, a remote server, [...]. Feel free to share it by creating a merge request on this repository if you developed a generic manager (It must not be specific to your company's infrastructure).
 
 ## Output
+
+For each camera, Cameradar will output these JSON objects :
 
 ```json
 {

@@ -65,12 +65,7 @@ brutelogs::test_ids(const etix::cameradar::stream_model& stream,
 bool
 ids_already_found(std::vector<stream_model> streams, stream_model stream) {
     for (const auto& it : streams) {
-        if ((stream.address == it.address) && (stream.port == it.port) && it.ids_found) {
-            LOG_DEBUG_(">>>>>> PATH " + std::to_string(stream.path_found) + " IDS " +
-                           std::to_string(stream.ids_found),
-                       "wtf");
-            return true;
-        }
+        if ((stream.address == it.address) && (stream.port == it.port) && it.ids_found) return true;
     }
     return false;
 }
