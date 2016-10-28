@@ -107,6 +107,9 @@ func (m *manager) writeJUnitReportXML(result TestCase, r io.ReadWriter, output s
 	// Write in param stream
 
 	w, err := os.OpenFile(output, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
 	writer := io.Writer(w)
 	writer.Write(bytes)
 
@@ -131,7 +134,7 @@ func (m *manager) writeConsoleReport(result TestCase) bool {
 	} else {
 		failureCount++
 	}
-	fmt.Println("--- Test summary ---\n")
+	fmt.Println("--- Test summary ---")
 	if successCount > 0 {
 		fmt.Printf("Results: %d/%d (%d%%)\n", successCount, successCount+failureCount, successCount*100/(successCount+failureCount))
 		fmt.Printf("Total time: %.6fs\n", total.Seconds())

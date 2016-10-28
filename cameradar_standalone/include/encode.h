@@ -32,8 +32,8 @@ std::string decode64(const std::string& str_to_decode);
 std::string base64_encode(unsigned char const*, unsigned int len);
 std::string base64_decode(std::string const& s);
 
-} //! encode
+} // encode
 
-} //! tool
+} // tool
 
-} //! etix
+} // etix

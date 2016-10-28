@@ -25,9 +25,9 @@ static const std::string no_ids_warning_ =
     "default routes. "
     "Path bruteforce is impossible without the IDs.";
 
-//! Tries to match the detected combination of Username / Password
-//! with the camera stream. Creates a resource in the DB upon
-//! valid discovery
+// Tries to match the detected combination of Username / Password
+// with the camera stream. Creates a resource in the DB upon
+// valid discovery
 bool
 brutelogs::test_ids(const etix::cameradar::stream_model& stream,
                     const std::string& password,
@@ -36,22 +36,24 @@ brutelogs::test_ids(const etix::cameradar::stream_model& stream,
     std::string path = stream.service_name + "://";
     if (username != "" || password != "") { path += username + ":" + password + "@"; }
     path += stream.address + ":" + std::to_string(stream.port);
-    LOG_DEBUG_("Testing ids : " + path, "brutelogs");
+    LOG_INFO_("Testing ids : " + path, "brutelogs");
     try {
         if (curl_describe(path, true)) {
-            LOG_DEBUG_("[FOUND IDS] : " + path, "brutelogs");
+            LOG_INFO_("[FOUND IDS] : " + path, "brutelogs");
             found = true;
             stream_model newstream{
-                stream.address, stream.port,         username,          password,
-                stream.route,   stream.service_name, stream.product,    stream.protocol,
-                stream.state,   true,                stream.path_found, stream.thumbnail_path
+                stream.address, stream.port,         username,       password,
+                stream.route,   stream.service_name, stream.product, stream.protocol,
+                stream.state,   stream.path_found,   true,           stream.thumbnail_path
             };
+            if ((*cache)->has_changed(stream)) return true;
             (*cache)->update_stream(newstream);
         } else {
-            stream_model newstream{ stream.address,    stream.port,       username,
-                                    password,          stream.route,      stream.service_name,
-                                    stream.product,    stream.protocol,   stream.state,
-                                    false,             stream.path_found, stream.thumbnail_path };
+            stream_model newstream{ stream.address,    stream.port,     username,
+                                    password,          stream.route,    stream.service_name,
+                                    stream.product,    stream.protocol, stream.state,
+                                    stream.path_found, false,           stream.thumbnail_path };
+            if ((*cache)->has_changed(stream)) return true;
             (*cache)->update_stream(newstream);
         }
     } catch (const std::runtime_error& e) {
@@ -68,20 +70,35 @@ ids_already_found(std::vector<stream_model> streams, stream_model stream) {
     return false;
 }
 
-//! Tries to discover the right IDs on all RTSP streams in DB
-//! Uses the ids.json file to try different combinations
+bool
+brutelogs::bruteforce_camera(const stream_model& stream) const {
+    for (const auto& username : conf.usernames) {
+        if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
+            break;
+        for (const auto& password : conf.passwords) {
+            if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
+                break;
+            if ((*cache)->has_changed(stream)) return true;
+            if (test_ids(stream, password, username)) return true;
+        }
+    }
+    return false;
+}
+
+// Tries to discover the right IDs on all RTSP streams in DB
+// Uses the ids.json file to try different combinations
 bool
 brutelogs::run() const {
+    std::vector<std::future<bool>> futures;
+
     LOG_INFO_(
         "Beginning bruteforce of the usernames and passwords task, it may "
         "take a while.",
         "brutelogs");
     std::vector<etix::cameradar::stream_model> streams = (*cache)->get_streams();
     LOG_DEBUG_("Found " + std::to_string(streams.size()) + " streams in the cache", "brutelogs");
-    bool doubleskip;
     size_t found = 0;
     for (const auto& stream : streams) {
-        doubleskip = false;
         if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
             break;
         if ((found < streams.size()) && ids_already_found(streams, stream)) {
@@ -92,23 +109,12 @@ brutelogs::run() const {
                       "brutelogs");
             ++found;
         } else {
-            for (const auto& username : conf.usernames) {
-                if (doubleskip ||
-                    signal_handler::instance().should_stop() !=
-                        etix::cameradar::stop_priority::running)
-                    break;
-                for (const auto& password : conf.passwords) {
-                    if (doubleskip ||
-                        signal_handler::instance().should_stop() !=
-                            etix::cameradar::stop_priority::running)
-                        break;
-                    if (test_ids(stream, password, username)) {
-                        ++found;
-                        doubleskip = true;
-                    }
-                }
-            }
+            futures.push_back(
+                std::async(std::launch::async, &brutelogs::bruteforce_camera, this, stream));
         }
+    }
+    for (auto& fit : futures) {
+        if (fit.get()) { ++found; }
     }
     if (!found) {
         LOG_WARN_(no_ids_warning_, "brutelogs");

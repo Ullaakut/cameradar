@@ -14,14 +14,15 @@
 
 #pragma once
 
+#include <cachemanager.h>   // cacheManager
 #include <cameradar_task.h> // task interface
-#include <memory>           // std::shared_ptr
-#include <logger.h>         // LOG
 #include <curl/curl.h>      // cURL client for discovery
 #include <describe.h>       // send DESCRIBE through cURL
+#include <future>           // std::async & std::future
+#include <logger.h>         // LOG
+#include <memory>           // std::shared_ptr
 #include <signal_handler.h> // signals
 #include <stream_model.h>   // data model
-#include <cachemanager.h>   // cacheManager
 
 namespace etix {
 namespace cameradar {
@@ -42,6 +43,7 @@ public:
     virtual bool run() const;
 
     bool test_path(const etix::cameradar::stream_model& cit, const std::string& it) const;
+    bool bruteforce_camera(const stream_model& stream) const;
 };
 }
 }

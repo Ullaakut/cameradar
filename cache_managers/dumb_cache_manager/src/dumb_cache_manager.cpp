@@ -47,12 +47,14 @@ dumb_cache_manager::load_dumb_conf(std::shared_ptr<etix::cameradar::configuratio
 //! parameter
 void
 dumb_cache_manager::set_streams(std::vector<etix::cameradar::stream_model> model) {
+    std::lock_guard<std::mutex> lock(m);
     this->streams = model;
 }
 
 //! Inserts a single stream to the cache
 void
 dumb_cache_manager::update_stream(const etix::cameradar::stream_model& newmodel) {
+    std::lock_guard<std::mutex> lock(m);
     for (auto& stream : this->streams) {
         if (stream.address == newmodel.address && stream.port == newmodel.port) {
             stream = newmodel;
@@ -76,11 +78,20 @@ std::vector<etix::cameradar::stream_model>
 dumb_cache_manager::get_valid_streams() {
     std::vector<stream_model> ret;
     for (const auto& stream : this->streams) {
-        if ((not stream.service_name.compare("rtsp") && not stream.state.compare("open")) &&
-            stream.ids_found && stream.path_found)
-            ret.push_back(stream);
+        if (stream.ids_found && stream.path_found) ret.push_back(stream);
     }
     return ret;
+}
+
+// Returns true if the stream passed as a parameter has changed in the cache
+bool
+dumb_cache_manager::has_changed(const etix::cameradar::stream_model& old) {
+    for (const auto& stream : this->streams) {
+        if (stream.address == old.address)
+            if (stream.path_found != old.path_found || stream.ids_found != old.ids_found)
+                return true;
+    }
+    return false;
 }
 
 extern "C" {

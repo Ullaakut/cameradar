@@ -24,7 +24,7 @@ static const std::string no_hosts_found_ =
     "were "
     "accessible";
 
-//! Avoids segfaults on unknown xml structure
+// Avoids segfaults on unknown xml structure
 std::string
 xml_safe_get(const TiXmlElement* elem, const std::string& attr) {
     if (elem == nullptr) return "closed";
@@ -32,8 +32,8 @@ xml_safe_get(const TiXmlElement* elem, const std::string& attr) {
     return "closed";
 }
 
-//! Parse a single host node (generally containing only one camera)
-//! Pushes it back to the data structure
+// Parse a single host node (generally containing only one camera)
+// Pushes it back to the data structure
 void
 parsing::parse_camera(TiXmlElement* xml_host, std::vector<stream_model>& data) const {
     TiXmlElement* xml_streams = xml_host->FirstChild("ports")->ToElement();
@@ -58,8 +58,8 @@ parsing::parse_camera(TiXmlElement* xml_host, std::vector<stream_model>& data) c
     }
 }
 
-//! Prints all detected cameras into the data structure and stops the program if
-//! no open RTSP streams were found
+// Prints all detected cameras into the data structure and stops the program if
+// no open RTSP streams were found
 bool
 parsing::print_detected_cameras(const std::vector<stream_model>& data) const {
     int added = 0;
@@ -90,8 +90,8 @@ parsing::print_detected_cameras(const std::vector<stream_model>& data) const {
     return true;
 }
 
-//! Opens the nmap output file, parses the data of each discovered port
-//! Adds the RTSP ports only into the DB
+// Opens the nmap output file, parses the data of each discovered port
+// Adds the RTSP ports only into the DB
 bool
 parsing::run() const {
     std::vector<stream_model> data;
@@ -113,7 +113,7 @@ parsing::run() const {
             LOG_WARN_(no_hosts_found_, "parsing");
         if (data.size() == 0) { LOG_WARN_("No cameras were discovered", "parsing"); }
         return print_detected_cameras(data);
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         LOG_ERR_("Error during parsing. brutepath aborted : " + std::string(e.what()), "parsing");
         return false;
     }
