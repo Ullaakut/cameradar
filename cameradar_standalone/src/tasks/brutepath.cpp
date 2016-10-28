@@ -58,12 +58,8 @@ brutepath::test_path(const stream_model& stream, const std::string& route) const
 bool
 path_already_found(std::vector<stream_model> streams, stream_model model) {
     for (const auto& stream : streams) {
-        if ((model.address == stream.address) && (model.port == stream.port) && stream.path_found) {
-            LOG_DEBUG_(">>>>>> PATH " + std::to_string(stream.path_found) + " IDS " +
-                           std::to_string(stream.ids_found),
-                       "wtf");
+        if ((model.address == stream.address) && (model.port == stream.port) && stream.path_found)
             return true;
-        }
     }
     return false;
 }
