@@ -88,12 +88,12 @@ create_recursive_folder(const std::string& folder) {
 
 std::string
 get_file_folder(std::string full_file_path) {
-    //! remove ending slash
+    // remove ending slash
     if (full_file_path.back() == '/') full_file_path.pop_back();
 
     size_t last_slash_position = full_file_path.find_last_of('/');
 
-    //! it there is no slash, there is no folder to return
+    // it there is no slash, there is no folder to return
     if (last_slash_position == std::string::npos) return "";
 
     return std::string(full_file_path, 0, last_slash_position);

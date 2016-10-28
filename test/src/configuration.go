@@ -26,7 +26,7 @@ func (m *manager) parseConfig() bool {
 		fmt.Printf("\nUnable to deserialize config file: %s\n", err)
 		return false
 	}
-	fmt.Println("Configuration file successfully loaded\n")
+	fmt.Println("Configuration file successfully loaded")
 
 	return true
 }

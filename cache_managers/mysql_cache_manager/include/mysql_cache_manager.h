@@ -51,6 +51,8 @@ private:
     etix::cameradar::mysql_configuration db_conf;
     etix::cameradar::mysql::db_connection connection;
 
+    std::mutex m;
+
     static const std::string create_table_query;
     static const std::string insert_with_id_query;
     static const std::string exist_query;
@@ -68,6 +70,8 @@ public:
     static const std::string& static_get_name();
     bool load_mysql_conf(std::shared_ptr<etix::cameradar::configuration> configuration);
     bool configure(std::shared_ptr<etix::cameradar::configuration> configuration) override;
+
+    bool has_changed(const etix::cameradar::stream_model&);
 
     void set_streams(std::vector<etix::cameradar::stream_model> model);
 

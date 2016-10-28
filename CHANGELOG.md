@@ -2,23 +2,51 @@
 
 This file lists all versions of the repository and precises all changes.
 
-## v1.0.4
+## v1.1.0
+
+#### Major changes :
+* There are more command line options
+  * Port can now be overridden in the command line
+  * Subnet can now be overridden in the command line
+* Bruteforce is now multithreaded and will use as many threads as there are discovered cameras
+* Thumbnail generation is now multithreaded and will use as many threads as there are discovered cameras
+* There are now default configuration values in order to make cameradar easier to use
 
 #### Minor changes :
+* The algorithms take external input into account (so that a 3rd party can change the DB to help Cameradar in real-time) and thus check the persistent data at each iteration
+* The default log level is now DEBUG instead of INFO
+* The bruteforce logs are now INFO instead of DEBUG
+* The thumbnail generation logs are now INFO instead of DEBUG
+
+#### Bugs fixed
+* Fixed a bug in which the MySQL cache manager would consider a camera with known ids as having a valid path even if it weren't
+* Fixed a bug in which TCP RTSP streams would not generate thumbnails
+
+## v1.0.5
+
+* Fixed error in MySQL Cache Manager in which thumbnail generation on valid streams could not be done
+* Fixed potential crash in the case the machine running cameradar has no memory left to allocate space for the dynamic cache manager
+
+## v1.0.4
+
+#### Bugs fixed :
 
 * Fixed nmap package detection
 
 ## v1.0.3
 
-#### Minor changes :
+#### Bugs fixed :
 
 * Corrected GStreamer check
 
 ## v1.0.2
 
-#### Minor changes :
+#### Bugs fixed :
 
 * Fixed issues in MySQL Cache Manager
+
+#### Minor changes :
+
 * Added useful debug logs
 
 ## v1.0.1

@@ -29,6 +29,8 @@ private:
     std::vector<etix::cameradar::stream_model> streams;
     std::shared_ptr<etix::cameradar::configuration> configuration;
 
+    std::mutex m;
+
 public:
     using cache_manager_base::cache_manager_base;
     ~dumb_cache_manager();
@@ -37,6 +39,8 @@ public:
     static const std::string& static_get_name();
     bool load_dumb_conf(std::shared_ptr<etix::cameradar::configuration> configuration);
     bool configure(std::shared_ptr<etix::cameradar::configuration> configuration) override;
+
+    bool has_changed(const etix::cameradar::stream_model&);
 
     void set_streams(std::vector<etix::cameradar::stream_model> model);
 

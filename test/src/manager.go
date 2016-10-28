@@ -6,38 +6,39 @@ import (
 )
 
 type manager struct {
-        Config
+	Config
 
-        Tests 	[]Result
-	Result	*TestCase
-	DB 	mysql_db
+	Tests  []Result
+	Result *TestCase
+	DB     mysql_db
 }
 
+// Config needs refacto
 type Config struct {
-        Cameradar Service `json:"Cameradar"`
+	Cameradar Service `json:"Cameradar"`
 
-        Output string
+	Output string
 }
 
 func (m *manager) Init() bool {
-        fmt.Println("- Parsing")
-        if !m.parseConfig() {
-                return false
-        }
+	fmt.Println("- Parsing")
+	if !m.parseConfig() {
+		return false
+	}
 
-        fmt.Println("- Cleaning content")
-        killService(&m.Config.Cameradar)
+	fmt.Println("- Cleaning content")
+	killService(&m.Config.Cameradar)
 
-        return true
+	return true
 }
 
 func (m *manager) Run() bool {
 	var wg sync.WaitGroup
 
-        fmt.Println("\n- Launching all tests")
+	fmt.Println("\n- Launching all tests")
 	var newTest = new(TestCase)
 	newTest.expected = m.Tests
-	if (m.generateConfig(m.Tests, &m.DB)) {
+	if m.generateConfig(m.Tests, &m.DB) {
 		m.dropDB()
 		wg.Add(1)
 		go m.invokeTestCase(newTest, &wg)
@@ -49,6 +50,6 @@ func (m *manager) Run() bool {
 }
 
 func (m *manager) Stop() bool {
-        killService(&m.Config.Cameradar)
-        return true
+	killService(&m.Config.Cameradar)
+	return true
 }

@@ -14,9 +14,10 @@
 
 #pragma once
 
-#include <cameradar_task.h> // task interface
 #include <cachemanager.h>   // cacheManager
+#include <cameradar_task.h> // task interface
 #include <describe.h>       // send DESCRIBE through cURL
+#include <future>           // std::async & std::future
 #include <signal_handler.h> // signals
 #include <stream_model.h>   // data model
 
@@ -41,6 +42,7 @@ public:
     bool test_ids(const etix::cameradar::stream_model& cit,
                   const std::string& pit,
                   const std::string& uit) const;
+    bool bruteforce_camera(const stream_model& stream) const;
 };
 }
 }

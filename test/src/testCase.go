@@ -4,29 +4,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"sync"
 	"time"
-	"net"
 )
 
-type mysql_db struct {
+// MysqlDB needs refacto
+type MysqlDB struct {
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	User     string `json:"user"`
 	Password string `json:"password"`
-	Db_name  string `json:"db_name"`
+	DbName   string `json:"db_name"`
 }
 
+// CameradarConfig needs refacto
 type CameradarConfig struct {
-	Mysql_db               mysql_db `json:"mysql_db"`
-	Subnets                string   `json:"subnets"`
-	Ports                  string   `json:"ports"`
-	Rtsp_url_file          string   `json:"rtsp_url_file"`
-	Rtsp_ids_file          string   `json:"rtsp_ids_file"`
-	Thumbnail_storage_path string   `json:"thumbnail_storage_path"`
+	MysqlDB              MysqlDB `json:"mysql_db"`
+	Subnets              string  `json:"subnets"`
+	Ports                string  `json:"ports"`
+	RtspURLFile          string  `json:"rtsp_url_file"`
+	RtspIdsFile          string  `json:"rtsp_ids_file"`
+	ThumbnailStoragePath string  `json:"thumbnail_storage_path"`
 }
 
+// Result needs refacto
 type Result struct {
 	Address  string `json:"address"`
 	Password string `json:"password"`
@@ -37,6 +40,7 @@ type Result struct {
 	Thumb    string `json:"thumbnail_path,omitempty"`
 }
 
+// TestCase needs refacto
 type TestCase struct {
 	expected []Result
 	result   []Result
@@ -82,7 +86,7 @@ func (m *manager) runTestCase(test *TestCase) bool {
 			for _, e := range test.expected {
 				e.Thumb = r.Thumb
 				var err error
-				var addr[] string
+				var addr []string
 				addr, err = net.LookupHost(e.Address)
 				e.Address = addr[0]
 				if e == r {
@@ -153,6 +157,7 @@ func (m *manager) generateConfig(test []Result, DataBase *mysql_db) bool {
 	return true
 }
 
+// Extend needs refacto
 func Extend(slice []Result, element Result) []Result {
 	n := len(slice)
 	if n == cap(slice) {
