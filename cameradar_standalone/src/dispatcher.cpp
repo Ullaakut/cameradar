@@ -54,8 +54,8 @@ dispatcher::run() {
     worker.join();
 }
 
-//! This loop is used to add all the tasks specified in the command line
-//! And then run them successively
+// This loop is used to add all the tasks specified in the command line
+// And then run them successively
 void
 dispatcher::do_stuff() {
     if (opts.second.exist("-d")) {

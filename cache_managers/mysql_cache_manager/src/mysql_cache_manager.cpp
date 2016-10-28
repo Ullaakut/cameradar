@@ -123,7 +123,7 @@ mysql_cache_manager::load_mysql_conf(
         this->db_conf.user = configuration->raw_conf["mysql_db"]["user"].asString();
         this->db_conf.password = configuration->raw_conf["mysql_db"]["password"].asString();
         this->db_conf.db_name = configuration->raw_conf["mysql_db"]["db_name"].asString();
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         LOG_ERR_("Configuration of the MySQL db failed : " + std::string(e.what()),
                  "mysql_cache_manager");
         return false;
@@ -148,34 +148,31 @@ mysql_cache_manager::load_mysql_conf(
 void
 mysql_cache_manager::set_streams(std::vector<etix::cameradar::stream_model> models) {
     LOG_DEBUG_("Beginning stream list DB insertion", "mysql_cache_manager");
+    std::lock_guard<std::mutex> lock(m);
     for (const auto& model : models) {
         if (!model.service_name.compare("rtsp") && !model.state.compare("open")) {
-          auto query = tool::fmt(
-              this->exist_query, this->connection.get_db_name().c_str(), model.address.c_str());
-          auto result = this->connection.query(query);
-          // If an entry already exists for this address in the database,
-          // no need to insert it.
+            auto query = tool::fmt(
+                this->exist_query, this->connection.get_db_name().c_str(), model.address.c_str());
+            auto result = this->connection.query(query);
 
-          // TODO : Update an entry if it already exists.
+            if (result.data->next()) continue;
 
-          if (result.data->next()) continue;
-
-          query = tool::fmt(this->insert_with_id_query,
-                            this->connection.get_db_name().c_str(),
-                            model.address.c_str(),
-                            model.password.c_str(),
-                            model.product.c_str(),
-                            model.protocol.c_str(),
-                            model.route.c_str(),
-                            model.service_name.c_str(),
-                            model.state.c_str(),
-                            model.thumbnail_path.c_str(),
-                            model.username.c_str(),
-                            std::to_string(model.port).c_str(),
-                            std::to_string(model.ids_found).c_str(),
-                            std::to_string(model.path_found).c_str());
-          execute_query(query);
-      }
+            query = tool::fmt(this->insert_with_id_query,
+                              this->connection.get_db_name().c_str(),
+                              model.address.c_str(),
+                              model.password.c_str(),
+                              model.product.c_str(),
+                              model.protocol.c_str(),
+                              model.route.c_str(),
+                              model.service_name.c_str(),
+                              model.state.c_str(),
+                              model.thumbnail_path.c_str(),
+                              model.username.c_str(),
+                              std::to_string(model.port).c_str(),
+                              std::to_string(model.ids_found).c_str(),
+                              std::to_string(model.path_found).c_str());
+            execute_query(query);
+        }
     }
 }
 
@@ -197,6 +194,7 @@ mysql_cache_manager::update_stream(const etix::cameradar::stream_model& model) {
                            std::to_string(model.ids_found).c_str(),
                            std::to_string(model.path_found).c_str(),
                            model.address.c_str());
+    std::lock_guard<std::mutex> lock(m);
     execute_query(query);
 }
 
@@ -217,12 +215,12 @@ mysql_cache_manager::get_streams() {
         if (not result.data->getString("state").compare("open") &&
             not result.data->getString("service_name").compare("rtsp")) {
             stream_model s{
-                result.data->getString("address"),     result.data->getUInt("port"),
-                result.data->getString("username"),    result.data->getString("password"),
-                result.data->getString("route"),       result.data->getString("service_name"),
-                result.data->getString("product"),     result.data->getString("protocol"),
-                result.data->getString("state"),       result.data->getBoolean("ids_found"),
-                result.data->getBoolean("path_found"), result.data->getString("thumbnail_path")
+                result.data->getString("address"),    result.data->getUInt("port"),
+                result.data->getString("username"),   result.data->getString("password"),
+                result.data->getString("route"),      result.data->getString("service_name"),
+                result.data->getString("product"),    result.data->getString("protocol"),
+                result.data->getString("state"),      result.data->getBoolean("path_found"),
+                result.data->getBoolean("ids_found"), result.data->getString("thumbnail_path")
             };
             lst.push_back(s);
         }
@@ -249,12 +247,12 @@ mysql_cache_manager::get_valid_streams() {
         if (not result.data->getString("ids_found").compare("1") &&
             not result.data->getString("path_found").compare("1")) {
             stream_model s{
-                result.data->getString("address"),     result.data->getUInt("port"),
-                result.data->getString("username"),    result.data->getString("password"),
-                result.data->getString("route"),       result.data->getString("service_name"),
-                result.data->getString("product"),     result.data->getString("protocol"),
-                result.data->getString("state"),       result.data->getBoolean("ids_found"),
-                result.data->getBoolean("path_found"), result.data->getString("thumbnail_path")
+                result.data->getString("address"),    result.data->getUInt("port"),
+                result.data->getString("username"),   result.data->getString("password"),
+                result.data->getString("route"),      result.data->getString("service_name"),
+                result.data->getString("product"),    result.data->getString("protocol"),
+                result.data->getString("state"),      result.data->getBoolean("path_found"),
+                result.data->getBoolean("ids_found"), result.data->getString("thumbnail_path")
             };
             lst.push_back(s);
         }
@@ -262,6 +260,26 @@ mysql_cache_manager::get_valid_streams() {
 
     delete result.data;
     return lst;
+}
+
+// Returns true if the stream passed as a parameter has changed in the cache
+bool
+mysql_cache_manager::has_changed(const etix::cameradar::stream_model& old) {
+    auto query = tool::fmt(this->get_results_query, this->connection.get_db_name().c_str());
+    auto result = this->connection.query(query);
+
+    if (not result.data) {
+        delete result.data;
+        return {};
+    }
+
+    while (result.data->next()) {
+        if (result.data->getString("address") == old.address)
+            if (result.data->getBoolean("ids_found") != old.ids_found ||
+                result.data->getBoolean("path_found") != old.path_found)
+                return true;
+    }
+    return false;
 }
 
 extern "C" {

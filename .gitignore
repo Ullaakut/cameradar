@@ -26,3 +26,18 @@
 *.exe
 *.out
 *.app
+
+# Results
+result.json
+test-results.xml
+
+# Build
+build/
+
+# JetBrains
+.idea/
+
+# Deps
+deps/boost/
+deps/jsoncpp/
+mysql-connector/

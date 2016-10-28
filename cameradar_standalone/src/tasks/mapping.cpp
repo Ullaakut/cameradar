@@ -17,15 +17,15 @@
 namespace etix {
 namespace cameradar {
 
-//! The first command checks if dpkg finds nmap in the system by cutting the
-//! result and grepping
-//! nmap from it.
-//!
-//! The second command checks the version of nmap, right now it needs to be the
-//! 6.47 but this could
-//! be changed to 6 or greater depending on the needs. In a docker container
-//! this should not be a
-//! problem.
+// The first command checks if dpkg finds nmap in the system by cutting the
+// result and grepping
+// nmap from it.
+//
+// The second command checks the version of nmap, right now it needs to be the
+// 6.47 but this could
+// be changed to 6 or greater depending on the needs. In a docker container
+// this should not be a
+// problem.
 bool
 nmap_is_ok() {
     return (
@@ -33,8 +33,8 @@ nmap_is_ok() {
         && launch_command("mkdir -p /tmp/scans")); // Creates the directory in which the scans will be stored
 }
 
-//! Launches and checks the return of the nmap command
-//! Uses the subnets specified in the conf file to launch nmap
+// Launches and checks the return of the nmap command
+// Uses the subnets specified in the conf file to launch nmap
 bool
 mapping::run() const {
     if (nmap_is_ok()) {

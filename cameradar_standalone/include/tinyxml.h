@@ -31,11 +31,11 @@ distribution.
 #pragma warning(disable : 4786)
 #endif
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 // Help out windows:
 #if defined(_DEBUG) && !defined(DEBUG)
@@ -43,9 +43,9 @@ distribution.
 #endif
 
 #ifdef TIXML_USE_STL
-#include <string>
 #include <iostream>
 #include <sstream>
+#include <string>
 #define TIXML_STRING std::string
 #else
 #include "tinystr.h"
@@ -1086,9 +1086,18 @@ public:
         return const_cast<TiXmlAttribute*>((const_cast<const TiXmlAttribute*>(this))->Previous());
     }
 
-    bool operator==(const TiXmlAttribute& rhs) const { return rhs.name == name; }
-    bool operator<(const TiXmlAttribute& rhs) const { return name < rhs.name; }
-    bool operator>(const TiXmlAttribute& rhs) const { return name > rhs.name; }
+    bool
+    operator==(const TiXmlAttribute& rhs) const {
+        return rhs.name == name;
+    }
+    bool
+    operator<(const TiXmlAttribute& rhs) const {
+        return name < rhs.name;
+    }
+    bool
+    operator>(const TiXmlAttribute& rhs) const {
+        return name > rhs.name;
+    }
 
     /*	Attribute parsing starts: first letter of the name
                                              returns: the next char after the
@@ -1171,7 +1180,6 @@ private:
     //*ME:	Because of hidden/disabled copy-construktor in TiXmlAttribute
     //(sentinel-element),
     //*ME:	this class must be also use a hidden/disabled copy-constructor
-    //!!!
     TiXmlAttributeSet(const TiXmlAttributeSet&); // not allowed
     void operator=(const TiXmlAttributeSet&);    // not allowed (as TiXmlAttribute)
 
@@ -1509,7 +1517,8 @@ public:
 #endif
 
     TiXmlText(const TiXmlText& copy) : TiXmlNode(TiXmlNode::TINYXML_TEXT) { copy.CopyTo(this); }
-    TiXmlText& operator=(const TiXmlText& base) {
+    TiXmlText&
+    operator=(const TiXmlText& base) {
         base.CopyTo(this);
         return *this;
     }
@@ -1664,7 +1673,8 @@ public:
     TiXmlUnknown(const TiXmlUnknown& copy) : TiXmlNode(TiXmlNode::TINYXML_UNKNOWN) {
         copy.CopyTo(this);
     }
-    TiXmlUnknown& operator=(const TiXmlUnknown& copy) {
+    TiXmlUnknown&
+    operator=(const TiXmlUnknown& copy) {
         copy.CopyTo(this);
         return *this;
     }
@@ -2039,7 +2049,8 @@ public:
     TiXmlHandle(TiXmlNode* _node) { this->node = _node; }
     /// Copy constructor
     TiXmlHandle(const TiXmlHandle& ref) { this->node = ref.node; }
-    TiXmlHandle operator=(const TiXmlHandle& ref) {
+    TiXmlHandle
+    operator=(const TiXmlHandle& ref) {
         if (&ref != this) this->node = ref.node;
         return *this;
     }

@@ -24,8 +24,8 @@ namespace tool {
 
 static std::mutex mutex;
 
-//! Format a string with the given arguments
-//! same behavior as sprintf.
+// Format a string with the given arguments
+// same behavior as sprintf.
 template <class... Args>
 std::string
 fmt(const std::string& base, Args... args) {

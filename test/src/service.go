@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// Service needs refacto
 type Service struct {
 	Path       string `json:"Path"`
 	Args       string `json:"Args"`

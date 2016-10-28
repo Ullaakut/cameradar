@@ -56,7 +56,7 @@ configuration::load_ids() {
             "the default one "
             "instead.",
             "configuration");
-        content = read_file(default_ids_file_path_).second;
+        content = read_file(default_rtsp_ids_file).second;
     }
     if (content.size()) {
         auto root = Json::Value();
@@ -101,7 +101,7 @@ configuration::load_url() {
             "the default one "
             "instead.",
             "configuration");
-        content = read_file(default_urls_file_path_).second;
+        content = read_file(default_rtsp_url_file).second;
     }
     if (content.size()) {
         auto root = Json::Value();
@@ -131,18 +131,47 @@ serialize(const Json::Value& root) {
     std::pair<bool, configuration> ret;
 
     try {
-        ret.second.ports = root["ports"].asString();
-        ret.second.subnets = root["subnets"].asString();
-        ret.second.rtsp_ids_file = root["rtsp_ids_file"].asString();
-        ret.second.rtsp_url_file = root["rtsp_url_file"].asString();
-        ret.second.thumbnail_storage_path = root["thumbnail_storage_path"].asString();
-        ret.second.cache_manager_path = root["cache_manager_path"].asString();
-        ret.second.cache_manager_name = root["cache_manager_name"].asString();
+        if (!root["ports"].isNull())
+            ret.second.ports = root["ports"].asString();
+        else
+            ret.second.ports = default_ports;
+
+        if (!root["subnets"].isNull())
+            ret.second.subnets = root["subnets"].asString();
+        else
+            ret.second.subnets = default_subnets;
+
+        if (!root["rtsp_ids_file"].isNull())
+            ret.second.rtsp_ids_file = root["rtsp_ids_file"].asString();
+        else
+            ret.second.rtsp_ids_file = default_rtsp_ids_file;
+
+        if (!root["rtsp_url_file"].isNull())
+            ret.second.rtsp_url_file = root["rtsp_url_file"].asString();
+        else
+            ret.second.rtsp_url_file = default_rtsp_url_file;
+
+        if (!root["thumbnail_storage_path"].isNull())
+            ret.second.thumbnail_storage_path = root["thumbnail_storage_path"].asString();
+        else
+            ret.second.thumbnail_storage_path = default_thumbnail_storage_path;
+
+        if (!root["cache_manager_path"].isNull())
+            ret.second.cache_manager_path = root["cache_manager_path"].asString();
+        else
+            ret.second.cache_manager_path = default_cache_manager_path;
+
+        if (!root["cache_manager_name"].isNull())
+            ret.second.cache_manager_name = root["cache_manager_name"].asString();
+        else
+            ret.second.cache_manager_name = default_cache_manager_name;
+
         ret.first = true;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         LOG_ERR_("Configuration failed : " + std::string(e.what()), "configuration");
         ret.first = false;
     }
+
     return ret;
 }
 
@@ -156,7 +185,16 @@ configuration::get_raw() const {
 // Will return true & valid configuration if success
 // Otherwise false & empty configuration
 std::pair<bool, configuration>
-load(const std::string& path) {
+load(const std::pair<bool, etix::tool::opt_parse>& args) {
+    std::string path;
+
+    if (not args.second.exist("-c")) {
+        path = etix::cameradar::default_configuration_path;
+        LOG_WARN_("No custom path set, trying to use default path: " + path, "main");
+    } else {
+        path = args.second["-c"];
+    }
+
     // Check if the file exists at the given path
     if (access(path.c_str(), F_OK) == -1) {
         LOG_ERR_("Can't access: " + path, "configuration");
@@ -190,6 +228,9 @@ load(const std::string& path) {
     conf.second.raw_conf = root;
     conf.first &= conf.second.load_url();
     conf.first &= conf.second.load_ids();
+
+    if (args.second.exist("-s")) conf.second.subnets = args.second["-s"];
+    if (args.second.exist("-p")) conf.second.ports = args.second["-p"];
 
     return conf;
 }
