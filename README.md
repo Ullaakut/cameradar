@@ -97,7 +97,15 @@ In case you want to use Docker to deploy your custom version of Cameradar.
 
 The only dependencies are `docker` and `docker-compose`.
 
-### Deploy a custom version of Cameradar
+### Using the package generation script
+1. `git clone https://github.com/EtixLabs/cameradar.git`
+2. `cd deployment`
+3. `rm *.tar.gz`
+4. `./build_last_package.sh`
+5. `docker-compose build cameradar`
+6. `docker-compose up cameradar`
+
+### Deploy a custom version of Cameradar by hand
 
 1. `git clone https://github.com/EtixLabs/cameradar.git`
 2. `cd build`
