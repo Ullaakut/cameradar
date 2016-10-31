@@ -54,7 +54,7 @@ parsing::parse_camera(TiXmlElement* xml_host, std::vector<stream_model>& data) c
             stream.service_name = "closed";
             stream.product = "closed";
         }
-        data.push_back(stream);
+        if (!stream.state.compare("open")) data.push_back(stream);
     }
 }
 

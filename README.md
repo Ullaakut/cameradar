@@ -40,6 +40,7 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 - [Under the hood](#under-the-hood)
 - [Contribution](#contribution)
 - [Next improvements](#next-improvements)
+- [Frequently Asked Questions](#frequently-asked-questions)
 - [License](#license)
 
 ## Quick install
@@ -222,6 +223,7 @@ If you're still in your console however, you can go even faster by using **vlc i
   * Needs either to be launched with the -d option or to use an advanced cache manager (DB, file, ...) with data already present
 * **"-v"** : Display Cameradar's version
 * **"-h"** : Display this help
+* **"--gst-rtsp-server"** : Use this option if the bruteforce does not seem to work (only detects the username but not the path, or the opposite). This option will switch the order of the bruteforce to prioritize path over credentials, which is the way priority is handled for cameras that use GStreamer's RTSP server.
 
 ## Under the hood
 
@@ -260,6 +262,24 @@ If you have other cool ideas, feel free to share them with me at [brendan.leglau
 - [ ] Development of an XML file cache manager
 - [ ] Make a standalone docker image
 - [ ] Push to DockerHub
+
+## Frequently Asked Questions
+
+> My camera's credentials are guessed by Cameradar but the RTSP url is not!
+
+Your camera probably uses GST RTSP Server internally. Try the `--gst-rtsp-server` command-line option, and if it does not work, send me the cameradar output in DEBUG mode (`-l 1`) and I will help you.
+
+> Cameradar does not detect any camera!
+
+That means that either your cameras are not streaming in RTSP or that they are not on the subnetwork you are scanning. In most cases, CCTV cameras will be on a private subnetwork. Use the `-s` option to specify your camera's subnetwork.
+
+> Cameradar detects my cameras, but does not manage to access them at all!
+
+Maybe your cameras have been configured and the credentials / URL have been changed. Cameradar only guesses using default constructor values. However, you can use your own dictionary in which you just have to add your passwords. To do that, see how the [configuration](#configuration) works.
+
+> It does not compile
+
+You probably missed the part with the dependencies! Use the quick docker deployment, it will be easier and will not pollute your machine with useless dependencies! `;)`
 
 ## License
 

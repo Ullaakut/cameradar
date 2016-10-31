@@ -41,6 +41,12 @@ parse_cmdline(int argc, char* argv[]) {
     opt_parse.optional("-g", "Check if the stream can be opened with GStreamer", false);
     opt_parse.optional("-v", "Display Cameradar's version", false);
     opt_parse.optional("-h", "Display this help", false);
+    opt_parse.optional(
+        "--gst-rtsp-server",
+        "Change the order of the bruteforce to match GST RTSP Server's implementation of "
+        "RTSP. Some cameras and RTSP servers will use this standard instead of the more "
+        "standard one. For more information, see the README.md file.",
+        false);
     opt_parse.execute();
 
     if (opt_parse.exist("-h")) {
