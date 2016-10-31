@@ -35,7 +35,7 @@ brutelogs::test_ids(const etix::cameradar::stream_model& stream,
     bool found = false;
     std::string path = stream.service_name + "://";
     if (username != "" || password != "") { path += username + ":" + password + "@"; }
-    path += stream.address + ":" + std::to_string(stream.port);
+    path += stream.address + ":" + std::to_string(stream.port) + stream.route;
     LOG_INFO_("Testing ids : " + path, "brutelogs");
     try {
         if (curl_describe(path, true)) {

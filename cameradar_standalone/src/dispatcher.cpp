@@ -17,7 +17,7 @@
 namespace etix {
 namespace cameradar {
 
-  using namespace std::chrono_literals;
+using namespace std::chrono_literals;
 
 // The main loop of the binary
 void
@@ -49,7 +49,7 @@ dispatcher::run() {
     // Waiting for task to cleanup / force stop command
     while ((signal_handler::instance().should_stop() not_eq stop_priority::force_stop) and
            doing_stuff()) {
-             std::this_thread::sleep_for(30ms);
+        std::this_thread::sleep_for(30ms);
     }
     worker.join();
 }
@@ -63,8 +63,13 @@ dispatcher::do_stuff() {
         queue.push_back(new etix::cameradar::parsing(cache, conf, nmap_output));
     }
     if (opts.second.exist("-b")) {
-        queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
-        queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+        if (opts.second.exist("--gst-rtsp-server")) {
+            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
+        } else {
+            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+        }
     }
     if (opts.second.exist("-t")) {
         queue.push_back(new etix::cameradar::thumbnail(cache, conf, nmap_output));
@@ -76,8 +81,13 @@ dispatcher::do_stuff() {
         !opts.second.exist("-g")) {
         queue.push_back(new etix::cameradar::mapping(cache, conf, nmap_output));
         queue.push_back(new etix::cameradar::parsing(cache, conf, nmap_output));
-        queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
-        queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+        if (opts.second.exist("--gst-rtsp-server")) {
+            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
+        } else {
+            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+        }
         queue.push_back(new etix::cameradar::thumbnail(cache, conf, nmap_output));
         queue.push_back(new etix::cameradar::stream_check(cache, conf, nmap_output));
     }
