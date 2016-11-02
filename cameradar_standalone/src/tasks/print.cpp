@@ -24,7 +24,7 @@ print::run() const {
     std::vector<stream_model> results = (*cache)->get_valid_streams();
     std::ofstream file;
     bool first = true;
-    file.open("result.json");
+    file.open("/tmp/shared/result.json");
     file << "[\n";
     for (const auto& stream : results) {
         LOG_INFO_("Found a valid RTSP Stream and generated a thumbnail at : " +
