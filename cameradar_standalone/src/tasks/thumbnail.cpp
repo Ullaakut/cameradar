@@ -48,6 +48,7 @@ thumbnail::generate_thumbnail(const stream_model& stream) const {
         return false;
     std::string ffmpeg_cmd =
         "mkdir -p %s ; "
+        "timeout 20 "
         "ffmpeg "
         "-rtsp_transport tcp "
         "-y "

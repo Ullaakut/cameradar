@@ -13,9 +13,12 @@
 // limitations under the License.
 
 #include <describe.h>
+#include <mutex>
 
 namespace etix {
 namespace cameradar {
+
+std::mutex m;
 
 // Ugly workaround
 size_t
@@ -37,6 +40,9 @@ curl_describe(const std::string& path, bool logs) {
     struct curl_slist* custom_msg = NULL;
     char URL[256];
     long rc;
+    m.lock();
+    curl_global_init(0);
+    m.unlock();
     csession = curl_easy_init();
     if (csession == NULL) return -1;
     sprintf(URL, "%s", path.c_str());
@@ -78,6 +84,10 @@ curl_describe(const std::string& path, bool logs) {
     }
 
     curl_easy_cleanup(csession);
+
+    m.lock();
+    curl_global_cleanup();
+    m.unlock();
     LOG_DEBUG_("Response code : " + std::to_string(rc), "describe");
     if (logs) {
         // Some cameras return 400 instead of 401, don't know why.
