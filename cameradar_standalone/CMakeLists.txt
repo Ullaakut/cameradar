@@ -45,7 +45,7 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 include (find_sources)
-find_sources ("src" "include" "src/models" "src/repositories" "src/tasks")
+find_sources ("src" "include" "src/tasks")
 
 add_executable (cameradar ${SOURCES})
 target_link_libraries (cameradar pthread jsoncpp dl curl ${GSTREAMER_LIBRARIES})

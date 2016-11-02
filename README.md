@@ -24,6 +24,7 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 
 ## Table of content
 
+- [Docker Image](#docker-image)
 - [Quick install](#quick-install)
   - [Dependencies](#quick-install###dependencies)
   - [Five steps guide](#quick-install###five-steps-guide)
@@ -43,6 +44,28 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [License](#license)
 
+## Docker Image
+
+This is the fastest and simplest way to use Cameradar. To do this you will just need `docker` on your machine.
+
+Run 
+
+`docker run \
+-v /tmp/thumbs/:/tmp/thumbs \
+-e CACHE_MANAGER=your_manager \
+-e CAMERAS_PORTS=your_ports \
+-e CAMERAS_SUBNETWORKS=your_subnetwork \
+ullaakut/cameradar:tag` 
+
+* `your_subnetwork` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`).
+* `your_ports` can be one port, multiple ports and even port ranges (e.g.: `554,8554,9000-9554`)
+* `your_manager` can be either `dumb` or `mysql` but you probably want to use `dumb`. Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information.
+* `tag` allows you to specify a specific version for camerada. If you don't specify any tag, you will use the latest version by default (recommended)
+
+The generated thumbnails will be in `/tmp/thumbs` on both your machine and the `cameradar` container.
+
+For more complex use of the Docker image, see the `Environment variables` part of [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/).
+
 ## Quick install
 
 The quick install uses docker to build Cameradar without polluting your machine with dependencies and makes it easy to deploy Cameradar in a few commands. **However, it may require networking knowledge, as your docker containers will need access to the cameras subnetwork.**
@@ -56,10 +79,13 @@ The only dependencies are `docker`, `docker-tools`, `git` and `make`.
 1. `git clone https://github.com/EtixLabs/cameradar.git`
 2. Go into the Cameradar repository, then to the `deployment` directory
 3. Tweak the `conf/cameradar.conf.json` as you need (see [the onfiguration guide here](#configuration) for more information)
-4. Run `docker-compose build cameradar` to build the cameradar container
-5. Run `docker-compose up cameradar` to launch Cameradar
+4. Run `docker-compose build & docker-compose up`
 
 By default, the version of the package in the deployment should be the last stable release.
+
+If you want to scan a different subnetwork or different ports, change the values `CAMERAS_SUBNETWORKS` and `CAMERAS_PORTS` in the `docker-compose.yml` file.
+
+The generated thumbnails will be in the `cameradar_thumbnails` folder after cameradar has finished executing.
 
 If you want to deploy your custom version of Cameradar using the same method, you should check the [advanced docker deployment](#advanced-docker-deployment) tutorial here.
 

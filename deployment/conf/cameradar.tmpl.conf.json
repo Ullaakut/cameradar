@@ -1,0 +1,16 @@
+{
+  "mysql_db" : {
+    "host" : "cameradar-database",
+    "port" : 3306,
+    "user": "root",
+    "password": "$MYSQL_ROOT_PASSWORD",
+    "db_name": "cmrdr"
+  },
+  "subnets" : "$CAMERAS_SUBNETWORKS",
+  "ports" : "$CAMERAS_PORTS",
+  "rtsp_url_file" : "/cameradar/conf/url.json",
+  "rtsp_ids_file" : "/cameradar/conf/ids.json",
+  "thumbnail_storage_path" : "/tmp/thumbs",
+  "cache_manager_path" : "/cameradar/cache_managers",
+  "cache_manager_name" : "$CACHE_MANAGER"
+}
