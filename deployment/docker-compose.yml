@@ -1,16 +1,26 @@
-cameradar:
-  build: .
-  dockerfile: Dockerfile
-  env_file: env_file
-  volumes:
-    - "./conf:/tmp/conf:ro"
-    - "./cameradar_thumbnails:/tmp/cameradar_thumbnails"
-  links:
-   - mysql
-mysql:
-  image: mysql:5.7
-  environment:
-   MYSQL_ROOT_PASSWORD: root
-   MYSQL_DATABASE: cmrdr
-  ports:
-   - "3306:3306"
+version: '2'
+
+services:
+  cameradar:
+    build: .
+    container_name: cameradar
+    volumes:
+      - "./cameradar_thumbnails:/tmp/thumbs"
+    environment:
+     - CAMERAS_SUBNETWORKS=localhost
+     - CAMERAS_PORTS=554,8554
+     - CACHE_MANAGER=mysql
+     - MYSQL_ROOT_PASSWORD=root
+    depends_on:
+     - cameradar-database
+  cameradar-database:
+    container_name: cameradar-database
+    image: mysql:5.7
+    environment:
+     - MYSQL_ROOT_PASSWORD=root
+     - MYSQL_DATABASE=cmrdr
+    ports:
+     - "3306:3306"
+
+volumes:
+  mysql_data:

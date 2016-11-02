@@ -18,7 +18,10 @@ RUN apt-get update && apt-get install -y \
 ADD cameradar_*_Release_Linux.tar.gz /
 RUN mv cameradar_*_Release_Linux cameradar
 
-RUN mkdir /conf
-ADD run.sh /run.sh
+COPY conf /cameradar/conf
 
-CMD ["/run.sh"]
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN ln -s /usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+CMD ["/cameradar/bin/cameradar", "-c", "/cameradar/conf/cameradar.conf.json"]
