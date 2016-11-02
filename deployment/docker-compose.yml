@@ -6,13 +6,12 @@ services:
     container_name: cameradar
     volumes:
       - "./cameradar_thumbnails:/tmp/thumbs"
+      - ".:/tmp/shared"
     environment:
      - CAMERAS_SUBNETWORKS=localhost
      - CAMERAS_PORTS=554,8554
-     - CACHE_MANAGER=mysql
+     - CACHE_MANAGER=dumb
      - MYSQL_ROOT_PASSWORD=root
-    depends_on:
-     - cameradar-database
   cameradar-database:
     container_name: cameradar-database
     image: mysql:5.7

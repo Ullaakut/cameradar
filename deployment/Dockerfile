@@ -21,7 +21,7 @@ RUN mv cameradar_*_Release_Linux cameradar
 COPY conf /cameradar/conf
 
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN ln -s /usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
+RUN ln -s /usr/local/bin/docker-entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["/cameradar/bin/cameradar", "-c", "/cameradar/conf/cameradar.conf.json"]
