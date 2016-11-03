@@ -50,12 +50,14 @@ This is the fastest and simplest way to use Cameradar. To do this you will just 
 
 Run 
 
-`docker run \
--v /tmp/thumbs/:/tmp/thumbs \
--e CACHE_MANAGER=your_manager \
--e CAMERAS_PORTS=your_ports \
--e CAMERAS_SUBNETWORKS=your_subnetwork \
-ullaakut/cameradar:tag` 
+```
+docker run  \
+            -v /tmp/thumbs/:/tmp/thumbs \
+            -e CACHE_MANAGER=your_manager \
+            -e CAMERAS_PORTS=your_ports \
+            -e CAMERAS_SUBNETWORKS=your_subnetwork \
+            ullaakut/cameradar:tag
+```
 
 * `your_subnetwork` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`).
 * `your_ports` can be one port, multiple ports and even port ranges (e.g.: `554,8554,9000-9554`)
