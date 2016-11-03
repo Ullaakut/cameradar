@@ -81,7 +81,7 @@ db_connection::execute(const std::string& request) {
             return_value = { execute_result::no_row_updated, "No row updated" };
         }
     } catch (sql::SQLException& e) { return_value = { execute_result::sql_error, e.what() }; }
-    if (stmt) { delete stmt; }
+    delete stmt;
 
     return return_value;
 }
@@ -103,8 +103,7 @@ db_connection::query(const std::string& query) {
     } catch (sql::SQLException& e) {
         return_value = { nullptr, execute_result::sql_error, e.what() };
     }
-
-    if (stmt) { delete stmt; }
+    delete stmt;
 
     return return_value;
 }

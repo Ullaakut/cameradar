@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "cachemanager.h" // for cache_manager
+#include <algorithm>      // for move
 #include <dlfcn.h>        // for dlerror, dlclose, dlopen, dlsym, etc
 #include <logger.h>       // for LOG_ERR_
 #include <stdbool.h>      // for bool, false, true
-#include <algorithm>      // for move
 
 #include <errno.h>
 
@@ -46,10 +46,7 @@ cache_manager::cache_manager(cache_manager&& old)
 }
 
 cache_manager::~cache_manager() {
-    if (this->ptr) {
-        delete this->ptr;
-        this->ptr = nullptr;
-    }
+    delete this->ptr;
     if (this->handle) { dlclose(handle); }
 }
 
@@ -105,13 +102,25 @@ cache_manager_iface* cache_manager::operator->() { return this->ptr; }
 
 const cache_manager_iface* cache_manager::operator->() const { return this->ptr; }
 
-bool operator==(std::nullptr_t nullp, const cache_manager& p) { return p.ptr == nullp; }
+bool
+operator==(std::nullptr_t nullp, const cache_manager& p) {
+    return p.ptr == nullp;
+}
 
-bool operator==(const cache_manager& p, std::nullptr_t nullp) { return p.ptr == nullp; }
+bool
+operator==(const cache_manager& p, std::nullptr_t nullp) {
+    return p.ptr == nullp;
+}
 
-bool operator!=(std::nullptr_t nullp, const cache_manager& p) { return p.ptr != nullp; }
+bool
+operator!=(std::nullptr_t nullp, const cache_manager& p) {
+    return p.ptr != nullp;
+}
 
-bool operator!=(const cache_manager& p, std::nullptr_t nullp) { return p.ptr != nullp; }
+bool
+operator!=(const cache_manager& p, std::nullptr_t nullp) {
+    return p.ptr != nullp;
+}
 
 cache_manager_base&
 cache_manager_base::get_instance() {
