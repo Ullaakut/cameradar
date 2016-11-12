@@ -3,7 +3,7 @@
 ports=('8554' '8554' '8554' '8554' '8554' '8554')
 users=('admin' 'root' 'ubnt' 'Admin' 'supervisor' '')
 passwords=('admin' 'root' '12345' 'ubnt' 'password' '')
-routes=('live.sdp' 'live.sdp' 'ch001.sdp' '' 'invalid' 'live_mpeg4.sdp')
+routes=('cam0_0' 'live.sdp' 'ch001.sdp' 'cam' 'invalid' 'live_mpeg4.sdp')
 cams_name_pattern="fake_camera_"
 
 # json generation variable only
@@ -11,11 +11,16 @@ json="[\n"
 first=true
 # $1 = adress, $2 = port, $3 = path, $4 = usernam $5 = password, $6 = valid
 function make_json {
+    # Get all data about the container, this will return three lines
+    # One empty that we ignore
+    # the two other ones with the IP of our container
+    # We take the second one using sed and cut to get only the IPAddress
+    address="$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $CID)"
     if [ "$first" = true ] ; then first=false
     else json="$json,\n"; fi
     json="$json{"
-    json="$json\"address\":\"$1\","
-    json="$json\"port\":\"$2\","
+    json="$json\"address\":\"$address\","
+    json="$json\"port\":$2,"
     json="$json\"route\":\"$3\","
     json="$json\"username\":\"$4\","
     json="$json\"password\":\"$5\","
@@ -50,13 +55,12 @@ function start {
         # if conf_idx = 4 -> invalid conf
         if [ "$conf_idx" == "4" ] ; then is_valid=false; fi
 
-        docker run -d --name "$name" fake-camera /start.sh "$port" "$user" "$passw" "$route"
-        make_json "$name" "$port" "$route" "$user" "$passw" $is_valid
+        CID=$(docker run -d --name "$name" fake-camera /start.sh "$port" "$user" "$passw" "$route");
+        make_json "$name" "$port" "$route" "$user" "$passw" $is_valid $CID
     done
 
     # finalize json
     json="$json]"
-    echo "$json"
 }
 
 function stop {

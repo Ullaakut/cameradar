@@ -19,11 +19,9 @@ set (PROJECT_NAME cameradar)
 
 project (${PROJECT_NAME})
 
-message ("Here")
-
 set (${PROJECT_NAME}_VERSION_MAJOR 1)
 set (${PROJECT_NAME}_VERSION_MINOR 1)
-set (${PROJECT_NAME}_VERSION_PATCH 0)
+set (${PROJECT_NAME}_VERSION_PATCH 1)
 set (${PROJECT_NAME}_VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}${${PROJECT_NAME}_SUFFIX}")
 
 find_package(Git REQUIRED)
@@ -34,7 +32,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall -Wextra -Wno-unused-function")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color") #enable error coloration on gcc
 
 # release specific flags
-set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2") #enable error coloration on gcc
+set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 #debug specific flags
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fprofile-arcs -ftest-coverage")
@@ -102,7 +100,7 @@ include_directories (
 set (${CAMERADAR_BINARIES} "")
 set (${CAMERADAR_LIBRARIES} "")
 
-#build cache managers
+# Build cache managers
 add_subdirectory (deps)
 message ("Debug")
 add_subdirectory (cameradar_standalone)
@@ -115,11 +113,11 @@ install (FILES ${CAMERADAR_CACHE_MANAGERS} DESTINATION cache_managers)
 install (FILES ${CAMERADAR_LIBRARIES} DESTINATION libraries)
 install (DIRECTORY ${CMAKE_SOURCE_DIR}/deps/licenses DESTINATION libraries)
 
-# cpack configuration
+# CPack configuration
 include (InstallRequiredSystemLibraries)
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "cameradar")
 set (CPACK_PACKAGE_VENDOR "Etix Labs")
-set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "cameradar tool")
+set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cameradar hacks its way into RTSP CCTV cameras")
 set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}_${${PROJECT_NAME}_VERSION}_${CMAKE_BUILD_TYPE}_${CMAKE_SYSTEM_NAME}")
 set (CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")

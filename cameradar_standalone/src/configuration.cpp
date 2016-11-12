@@ -92,12 +92,12 @@ bool
 configuration::load_url() {
     std::string content;
 
-    LOG_DEBUG_("Trying to open ids file from " + this->rtsp_ids_file, "configuration");
+    LOG_DEBUG_("Trying to open url file from " + this->rtsp_url_file, "configuration");
     if (this->rtsp_url_file.size()) {
         content = read_file(this->rtsp_url_file.c_str()).second;
     } else {
         LOG_WARN_(
-            "No ids file detected in your configuration, Cameradar will use "
+            "No url file detected in your configuration, Cameradar will use "
             "the default one "
             "instead.",
             "configuration");

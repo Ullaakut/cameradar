@@ -2,19 +2,19 @@
     "Output": "cameratest.log.xml",
 
     "Cameradar" : {
-	"Path": "/home/ullaakut/Work/cctv_server2/cameradar/test/cameradar",
-    "Args": "-l 1 -c tmp_config",
-    "Ports": "554,5554,8554",
-    "IdsPath": "conf/ids.json",
-    "RoutesPath": "conf/url.json",
-    "ThumbPath": "/home/ullaakut/.cctv",
-    "dbHost": "0.0.0.0",
-    "dbPort": 3306,
-    "dbUser": "root",
-    "dbPassword": "root",
-    "dbName": "cctv",
-	"Console": false
-    },
+        "Path": "/cameradar/cameradar_standalone/cameradar",
+        "Args": "-s 172.17.0.0/24 -c /conf/cameradar.conf.json --gst-rtsp-server",
+        "Ports": "554,5554,8554",
+        "IdsPath": "/conf/ids.json",
+        "RoutesPath": "/conf/url.json",
+        "ThumbPath": "/tmp",
+        "dbHost": "cameradar-database",
+        "dbPort": 3306,
+        "dbUser": "root",
+        "dbPassword": "root",
+        "dbName": "cmrdr",
+    	  "Console": false
+        },
     "Tests" : [
       {
         "address" : "127.0.0.1",

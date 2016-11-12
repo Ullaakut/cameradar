@@ -1,15 +1,19 @@
 #!/bin/bash
 
-while ! mysqladmin ping -h"mysql_cameradar" -P3306 --silent; do
+while ! mysqladmin ping -h"cameradar-database" -P3306 --silent; do
     sleep 1
 done
 
-ls -alhR /conf
-cat /etc/hosts
+cat /tmp/tests/cameradartest.conf.json
 
 # build
 go build
+
+cp /tmp/tests/*.xml ./
+
 # run test
 ./cameradartest /tmp/tests/cameradartest.conf.json
 
-cp cameratest.log.xml /tmp/tests/
+cat *.xml
+
+cp *.xml /tmp/tests/

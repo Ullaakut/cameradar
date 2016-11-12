@@ -15,30 +15,28 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 )
 
-func main() {
-	Tester := new(Tester)
-	defer Tester.Stop()
-
-	// Parse conf (streams should already be launched by Jenkins)
-	fmt.Println("--- Initializing Cameradar Test Tool ... ---")
-	if !Tester.Init() {
-		fmt.Println("-> Cameradar Test Tool initialization FAILED")
-		return
+// Launch it via goroutine
+// Start read log of service
+func readLog(service *Service, reader io.ReadCloser) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		str := scanner.Text()
+		if service.Console {
+			fmt.Printf("[%s] %s\n", service.Path, str)
+		}
+		fmt.Printf("%s\n", str)
+		service.Mutex.Lock()
+		service.Logs = append(service.Logs, str)
+		service.Mutex.Unlock()
 	}
-
-	// Run tests
-	if !Tester.Run() {
-		fmt.Println("-> Cameradar Test Tool FAILED")
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("[%s] Service failed: %s\n", service.Path, err)
 	}
-
-	// Write results
-	fmt.Println("--- Writing results... ---")
-	if !Tester.WriteResults(*(Tester.Result), Tester.Output) {
-		fmt.Println("-> Write results FAILED")
-		return
-	}
-	fmt.Println("--- Writing results done ---")
+	fmt.Printf("Logger of service: [%s] stopped\n", service.Path)
+	service.Active = false
 }
