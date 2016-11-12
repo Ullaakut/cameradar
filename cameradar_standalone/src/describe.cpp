@@ -25,8 +25,8 @@ size_t
 write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
     // I'm sorry for this
     // Forget you ever saw it
-    (void)buffer;
-    (void)userp;
+    if (not buffer || not size || not nmemb) return 0;
+
     return size * nmemb;
 }
 
@@ -88,7 +88,7 @@ curl_describe(const std::string& path, bool logs) {
     m.lock();
     curl_global_cleanup();
     m.unlock();
-    LOG_DEBUG_("Response code : " + std::to_string(rc), "describe");
+    LOG_DEBUG_("[" + path + "] Response code : " + std::to_string(rc), "describe");
     if (logs) {
         // Some cameras return 400 instead of 401, don't know why.
         // Some cameras timeout and then curl considers the status as 0

@@ -2,14 +2,14 @@ FROM ubuntu:15.10
 
 MAINTAINER brendan.leglaunec@etixgroup.com
 
-ENV LD_LIBRARY_PATH="/cctv/libraries"
+ENV LD_LIBRARY_PATH="/cameradar/libraries"
 
 # install go
 RUN apt-get update && apt-get install -y make git wget curl
 RUN wget https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz
 # set variable env
-ENV GOPATH=/go
+ENV GOPATH=/cameradartest/go
 ENV PATH=$PATH:/go/bin
 ENV PATH=$PATH:/usr/local/go/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
@@ -27,17 +27,19 @@ RUN apt-get update && apt-get install -y \
 
 RUN apt-get install -y psmisc
 
-ADD cctv_*_Debug_Linux.tar.gz /
-RUN mv cctv_*_Debug_Linux cctv
+ADD cameradar_*_Debug_Linux.tar.gz /
+RUN mv cameradar_*_Debug_Linux cameradar
 
 # create cameradaratest folder in go src path
-RUN mkdir -p /go/src/cameradartest
-ADD ./conf /conf
+RUN mkdir -p /cameradartest/go/src/cameradartest
+COPY src/*.go /cameradartest/go/src/cameradartest/
+COPY ./conf /conf
 ADD ./docker/run_cameradartest.sh /run.sh
 
 # get go deps
 RUN go get github.com/go-sql-driver/mysql
 
 RUN mkdir /thumbnails
-WORKDIR /go/src/cameradartest
+WORKDIR /cameradartest/go/src/cameradartest
+RUN go build -o cameradartest *.go
 CMD ["/run.sh"]

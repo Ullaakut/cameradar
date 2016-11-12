@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <rtsp_path.h>
 #include <logger.h>
+#include <rtsp_path.h>
 
 namespace etix {
 
@@ -21,10 +21,17 @@ namespace cameradar {
 
 const std::string
 make_path(const stream_model& model) {
-    std::string ret(model.service_name + "://" + model.username + ":" + model.password + "@" +
-                    model.address + ":" + std::to_string(model.port) + model.route);
-    LOG_DEBUG_(ret, "debug");
-    return ret;
+    if (model.password != "" || model.username != "") {
+        std::string ret(model.service_name + "://" + model.username + ":" + model.password + "@" +
+                        model.address + ":" + std::to_string(model.port) + model.route);
+        LOG_DEBUG_(ret, "debug");
+        return ret;
+    } else {
+        std::string ret(model.service_name + "://" + model.address + ":" +
+                        std::to_string(model.port) + model.route);
+        LOG_DEBUG_(ret, "debug");
+        return ret;
+    }
 }
 }
 }

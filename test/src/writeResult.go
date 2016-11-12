@@ -1,11 +1,26 @@
+// Copyright 2016 Etix Labs
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
-	"time"
 )
 
 ////////////////////////////////////////////////
@@ -13,21 +28,23 @@ import (
 
 // JUnitTestSuites is a collection of JUnit test suites.
 type JUnitTestSuites struct {
-	XMLName xml.Name `xml:"testsuites"`
-	Suites  []JUnitTestSuite
+	XMLName    xml.Name         `xml:"testsuites"`
+	TestSuites []JUnitTestSuite `xml:"testsuite"`
 }
 
 // JUnitTestSuite is a single JUnit test suite which may contain many
 // testcases.
 type JUnitTestSuite struct {
-	Tests     int    `xml:"tests,attr"`
-	Failures  int    `xml:"failures,attr"`
-	Time      string `xml:"time,attr"`
-	TestCases []JUnitTestCase
+	XMLName   xml.Name        `xml:"testsuite"`
+	Tests     int             `xml:"tests,attr"`
+	Failures  int             `xml:"failures,attr"`
+	Time      string          `xml:"time,attr"`
+	TestCases []JUnitTestCase `xml:"testcase"`
 }
 
 // JUnitTestCase is a single test case with its result.
 type JUnitTestCase struct {
+	XMLName xml.Name      `xml:"testcase"`
 	Message string        `xml:"message,attr"`
 	Time    string        `xml:"time,attr"`
 	Failure *JUnitFailure `xml:"failure,omitempty"`
@@ -35,25 +52,25 @@ type JUnitTestCase struct {
 
 // JUnitFailure contains data related to a failed test.
 type JUnitFailure struct {
-	Message  string `xml:"message,attr"`
-	Type     string `xml:"type,attr"`
-	Contents string `xml:",chardata"`
+	XMLName  xml.Name `xml:"failure"`
+	Message  string   `xml:"message,attr"`
+	Type     string   `xml:"type,attr"`
+	Contents string   `xml:",chardata"`
 }
 
-func (m *manager) WriteResults(result TestCase, output string) bool {
+// WriteResults will output the results in the standard output as well as concatenate them in an XML JUnit report
+func (t *Tester) WriteResults(result Test, output string) bool {
 	fmt.Printf("Displaying results...\n")
-	// Write Console report
-	m.writeConsoleReport(result)
+	t.writeConsoleReport(result)
 
-	// Write XML report
-	// Open xml
 	file, err := os.OpenFile(output, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Printf("Error opening XML: %s\n", err)
 		return false
 	}
 	defer file.Close()
-	err = m.writeJUnitReportXML(result, file, output)
+
+	err = t.writeJUnitReportXML(result, file, output)
 	if err != nil {
 		fmt.Printf("Error writing XML: %s\n", err)
 		return false
@@ -63,42 +80,47 @@ func (m *manager) WriteResults(result TestCase, output string) bool {
 }
 
 // Write tests results under JUnit format on w
-func (m *manager) writeJUnitReportXML(result TestCase, r io.ReadWriter, output string) error {
+func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output string) error {
 	suites := JUnitTestSuites{}
-	dec := xml.NewDecoder(r)
-	if err := dec.Decode(&suites); err != nil {
-		fmt.Printf("\nUnable to deserialize XML log file: %s\n", err)
+
+	buf, err := ioutil.ReadFile(output)
+
+	dec := xml.NewDecoder(bytes.NewBufferString(string(buf)))
+	err = dec.Decode(&suites)
+	if err != nil {
+		fmt.Printf("\nUnable to deserialize %s file: %s\n", output, err)
 	}
+
 	ts := JUnitTestSuite{
 		Tests:     len(result.result) + len(result.expected),
 		Failures:  0,
 		Time:      fmt.Sprintf("%.6f", result.time.Seconds()),
 		TestCases: []JUnitTestCase{},
 	}
-	// Run throught all iterations
-	testCase := JUnitTestCase{
-		Time:    fmt.Sprintf("%.6f", result.time.Seconds()),
-		Failure: nil,
+
+	for _, r := range result.result {
+		testCase := JUnitTestCase{
+			Time:    fmt.Sprintf("%.6f", result.time.Seconds()),
+			Failure: nil,
+		}
+		testCase.Message = "The stream " + r.Address + " could be accessed and its thumbnail was properly generated"
+		ts.TestCases = append(ts.TestCases, testCase)
 	}
-	if len(result.result) > 0 {
-		testCase.Message = "These streams matched what we expected:"
-	}
-	for _, success := range result.result {
-		testCase.Message += " " + success.Address
-	}
-	if !result.ok {
-		testCase.Failure = &JUnitFailure{
-			Message: "These streams did not match what we expected:",
-			Type:    "",
+
+	for _, e := range result.expected {
+		testCase := JUnitTestCase{
+			Time:    fmt.Sprintf("%.6f", result.time.Seconds()),
+			Failure: nil,
+		}
+		if e.err != nil {
+			testCase.Failure = &JUnitFailure{
+				Message: e.err.Error(),
+				Type:    "",
+			}
 		}
 	}
-	for _, fail := range result.expected {
-		ts.Failures++
-		testCase.Failure.Message += " " + fail.Address
-	}
-	ts.TestCases = append(ts.TestCases, testCase)
 
-	suites.Suites = append(suites.Suites, ts)
+	suites.TestSuites = append(suites.TestSuites, ts)
 	// Fix indent
 	bytes, err := xml.MarshalIndent(suites, "", "\t")
 	if err != nil {
@@ -112,35 +134,16 @@ func (m *manager) writeJUnitReportXML(result TestCase, r io.ReadWriter, output s
 	}
 	writer := io.Writer(w)
 	writer.Write(bytes)
-
 	return nil
 }
 
-func (m *manager) writeConsoleReport(result TestCase) bool {
-	min := 50 * time.Hour
-	max := 0 * time.Second
-	total := 0 * time.Second
-	successCount := 0
-	failureCount := 0
-	if result.ok {
-		successCount++
-		total += result.time
-		if result.time < min {
-			min = result.time
-		}
-		if result.time > max {
-			max = result.time
-		}
-	} else {
-		failureCount++
-	}
+func (t *Tester) writeConsoleReport(result Test) bool {
+	successCount := len(result.result)
+	failureCount := len(result.expected)
 	fmt.Println("--- Test summary ---")
 	if successCount > 0 {
 		fmt.Printf("Results: %d/%d (%d%%)\n", successCount, successCount+failureCount, successCount*100/(successCount+failureCount))
-		fmt.Printf("Total time: %.6fs\n", total.Seconds())
-		fmt.Printf("Average time: %.6fs\n", total.Seconds()/float64(successCount))
-		fmt.Printf("Min time: %.6fs\n", min.Seconds())
-		fmt.Printf("Max time: %.6fs\n", max.Seconds())
+		fmt.Printf("Time: %.6fs\n", result.time.Seconds())
 	} else {
 		fmt.Printf("No test in success\n")
 	}

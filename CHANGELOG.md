@@ -2,6 +2,34 @@
 
 This file lists all versions of the repository and precises all changes.
 
+## v1.1.1
+
+#### Minor changes :
+* Removed unnecessary null pointer checks (thanks to https://github.com/elfring)
+* Updated package description
+* Removed debug message in CMake build
+* Added `/ch01.264` to the URL dictionary in the deployment (Comelit default RTSP URL)
+* Updated tests partially (still needs work to make the code cleaner)
+  * Variable names are now compliant with Golang best practices
+  * JSON variable names are back to normal
+  * Functions have been moved in more appropriate source files
+  * Structure definitions have been moved in more appropriate source files
+  * Source files have been renamed to be more relevant
+  * JUnit output now considers each camera as a test case
+  * JUnit output now contains errors which makes debugging much easier
+* Added header files where it was forgotten
+
+#### Bugfixes :
+* Fixed an issue where if you loose your internet connection during thumbnail generation, FFMpeg would get stuck forever and thus Cameradar would never finish
+* Fixed an issue where multithreading could cause crashes
+* Fixed an issue where the routes dictionary was mistaken for the credentials dictionary
+* Fixed issues with the golang testing tool
+  * Fixed automated camera generation
+  * Fixed docker IP address resolution
+
+#### Known issues :
+* There is an issue with Camera Emulation Server that makes it impossible for Cameradar to generate thumbnails, which is why right now the verification of the thumbnails presence is commented and it is assumed correct. It is probably an issue with GST-RTSP-Server but requires investigation.
+
 ## v1.1.0
 
 #### Major changes :
