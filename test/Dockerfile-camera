@@ -1,14 +1,23 @@
 FROM ubuntu:16.04
 MAINTAINER brendan.leglaunec@etixgroup.com
 
-RUN useradd -m vlc; \
-    apt-get update; \
-    apt-get install -y vlc-nox
-
-RUN sed -i s/geteuid/getppid/g /usr/bin/vlc
+RUN apt-get update && apt-get install -y \
+    libgstrtspserver-1.0-dev \
+    libgstreamer1.0-dev \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+    gstreamer1.0-tools \
+    libssl-dev mysql-client \
+    gstreamer1.0-plugins-good \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-bad1.0-dev
 
 ADD ./docker/screen.png /vlc/screen.png
-COPY ./docker/run_vlc.sh /start.sh
-COPY ./etix_rtsp_server /etix_rtsp_server
+COPY ./docker/run_ces.sh /start.sh
+COPY ./camera_emulation_server /camera_emulation_server
 
 EXPOSE 8554
+
+RUN ./camera_emulation_server&
