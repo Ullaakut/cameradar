@@ -3,7 +3,7 @@
 ## An RTSP surveillance camera access multitool
 
 [![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg)](#license)
-[![Latest release](https://img.shields.io/badge/release-1.1.0-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
+[![Latest release](https://img.shields.io/badge/release-1.1.1-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 
 #### Cameradar allows you to:
@@ -48,7 +48,7 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 
 This is the fastest and simplest way to use Cameradar. To do this you will just need `docker` on your machine.
 
-Run 
+Run
 
 ```
 docker run  \
