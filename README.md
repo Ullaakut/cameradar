@@ -3,6 +3,7 @@
 ## An RTSP surveillance camera access multitool
 
 [![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg)](#license)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg)](https://hub.docker.com/r/ullaakut/cameradar/)
 [![Latest release](https://img.shields.io/badge/release-1.1.1-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 
