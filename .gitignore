@@ -41,3 +41,7 @@ build/
 deps/boost/
 deps/jsoncpp/
 mysql-connector/
+
+# Test
+test/cameradartest.conf.json
+test/cameradar_*_Debug_Linux.tar.gz

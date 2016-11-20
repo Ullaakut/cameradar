@@ -2,9 +2,10 @@
 
 ## An RTSP surveillance camera access multitool
 
-[![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg)](#license)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg)](https://hub.docker.com/r/ullaakut/cameradar/)
-[![Latest release](https://img.shields.io/badge/release-1.1.1-green.svg)](https://github.com/EtixLabs/cameradar/releases/latest)
+[![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat-square)](#license)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat-square)](https://hub.docker.com/r/ullaakut/cameradar/)
+[![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat-square)](https://travis-ci.org/EtixLabs/cameradar)
+[![Latest release](https://img.shields.io/badge/release-1.1.2-green.svg?style=flat-square)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 
 #### Cameradar allows you to:
@@ -54,16 +55,14 @@ Run
 ```
 docker run  \
             -v /tmp/thumbs/:/tmp/thumbs \
-            -e CACHE_MANAGER=your_manager \
-            -e CAMERAS_PORTS=your_ports \
             -e CAMERAS_SUBNETWORKS=your_subnetwork \
             ullaakut/cameradar:tag
 ```
 
 * `your_subnetwork` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`).
-* `your_ports` can be one port, multiple ports and even port ranges (e.g.: `554,8554,9000-9554`)
-* `your_manager` can be either `dumb` or `mysql` but you probably want to use `dumb`. Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information.
 * `tag` allows you to specify a specific version for camerada. If you don't specify any tag, you will use the latest version by default (recommended)
+
+Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information and more command-line options.
 
 The generated thumbnails will be in `/tmp/thumbs` on both your machine and the `cameradar` container.
 
