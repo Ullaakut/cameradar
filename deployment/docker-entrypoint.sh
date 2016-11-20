@@ -21,7 +21,20 @@ for arg; do
 	esac
 done
 
+if [ "$CACHE_MANAGER" == "" ]; then
+	export CACHE_MANAGER="dumb"
+fi
+
+if [ "$CAMERAS_SUBNETWORKS" == "" ]; then
+	export CAMERAS_SUBNETWORKS="0.0.0.0"
+fi
+
+if [ "$CAMERAS_PORTS" == "" ]; then
+	export CAMERAS_PORTS="554,8554"
+fi
+
 envsubst < /cameradar/conf/cameradar.tmpl.conf.json > /cameradar/conf/cameradar.conf.json
+
 
 if [ "$CACHE_MANAGER" == "mysql" ] && [ "$1" = '/cameradar/bin/cameradar' -a -z "$wantHelp" ]; then
   echo -n "Waiting for cameradar-database to be ready..."

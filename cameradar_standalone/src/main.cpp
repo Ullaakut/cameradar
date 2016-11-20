@@ -88,14 +88,13 @@ check_storage_path(const std::string& thumbnail_storage_path) {
 
 int
 main(int argc, char* argv[]) {
-    etix::tool::logger::get_instance("cameradar");
+    etix::tool::logger::get_instance("cameradar").set_level(etix::tool::loglevel::DEBUG);
     auto args = parse_cmdline(argc, argv);
     if (not args.first) return EXIT_FAILURE;
 
     print_version();
 
     if (not args.second.exist("-l")) {
-        etix::tool::logger::get_instance("cameradar").set_level(etix::tool::loglevel::DEBUG);
         LOG_INFO_("No log level set, using log level 1", "main");
     } else {
         try {

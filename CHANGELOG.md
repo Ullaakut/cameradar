@@ -2,6 +2,18 @@
 
 This file lists all versions of the repository and precises all changes.
 
+## v1.1.2
+
+#### Minor changes :
+* Added travis integration
+* Added default environment value for Docker deployment
+* Updated docker image description with new easy usage
+* Updated README badges style (replaced flat with square-flat)
+* Build last package can now also generate a debug package if given the `Debug` command-line argument
+
+#### Known issues :
+* There is still the issue with Camera Emulation Server, see the [previous version's patchnote](#v1.1.1) for more information.
+
 ## v1.1.1
 
 #### Minor changes :
