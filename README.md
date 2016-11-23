@@ -5,7 +5,7 @@
 [![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat-square)](#license)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat-square)](https://hub.docker.com/r/ullaakut/cameradar/)
 [![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat-square)](https://travis-ci.org/EtixLabs/cameradar)
-[![Latest release](https://img.shields.io/badge/release-1.1.2-green.svg?style=flat-square)](https://github.com/EtixLabs/cameradar/releases/latest)
+[![Latest release](https://img.shields.io/badge/release-1.1.3-green.svg?style=flat-square)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 
 #### Cameradar allows you to:

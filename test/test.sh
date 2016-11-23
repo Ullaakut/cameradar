@@ -32,9 +32,11 @@ function make_docker_command {
 
 function start_test {
     ./docker/gen_cameras.sh start $1 ./docker/cameratest.conf.tmpl.json
-    eval $cmd
     make_docker_command $1
+    eval $cmd
+    ret=$?
     ./docker/gen_cameras.sh stop
+    return $ret
 }
 
 # build images
@@ -50,9 +52,11 @@ echo "starting mysql"
 docker pull mysql:5.7
 docker run --name cameradar-database -e MYSQL_DATABASE=cmrdr -e MYSQL_ROOT_PASSWORD=root -d mysql:5.7
 
-start_test 1
 start_test 5
+ret=$?
+echo "Tests returned ${ret}"
 
 # stop mysql
 echo "stopping mysql"
 docker rm -f cameradar-database
+exit $ret

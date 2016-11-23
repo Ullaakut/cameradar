@@ -55,7 +55,7 @@ func getResult(test *[]Result, resultPath string) bool {
 	return true
 }
 
-func isValid(e Result, r Result) bool {
+func isValid(e *Result, r Result) bool {
 	if e.Username != r.Username {
 		e.err = errors.New(e.Address + " had a different username than " + r.Username)
 		return false

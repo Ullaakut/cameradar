@@ -13,5 +13,10 @@ else
     url="rtsp://$user:$passw@:$port/$route"
 fi
 
-./camera_emulation_server -u $2 -p $3 -r $4
+if [ "$2" == "" && "$3" == "" ]; then
+  ./camera_emulation_server -r $4
+else
+  ./camera_emulation_server -u $2 -p $3 -r $4
+fi
+
 echo "Stream started on ${url}"

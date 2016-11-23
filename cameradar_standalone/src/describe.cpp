@@ -25,6 +25,7 @@ size_t
 write_data(void* buffer, size_t size, size_t nmemb, void* userp) {
     // I'm sorry for this
     // Forget you ever saw it
+    (void)userp;
     if (not buffer || not size || not nmemb) return 0;
 
     return size * nmemb;
