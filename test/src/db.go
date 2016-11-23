@@ -43,7 +43,7 @@ func (t *Tester) dropDB() bool {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("------ Dropped CCTV Database -------")
+	fmt.Println("------ Dropped Cameradar Database -------")
 	return true
 }
 

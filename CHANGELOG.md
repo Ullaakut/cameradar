@@ -2,6 +2,20 @@
 
 This file lists all versions of the repository and precises all changes.
 
+## v1.1.3
+
+#### Minor changes :
+* Added automatic pushes to DockerHub to the travis integration
+* Made travis configuration file better
+* Changed the package generation scripts to make them report errors
+* Removed old etix_rtsp_server binary from the test folder
+
+#### Bugfixes :
+* Fixed an issue that made it mandatory to launch tests at least once so that they can work the second time
+* Fixed an issue that made the golang testing tool not compile in the testing script
+* Fixed an issue that made the golang testing tool sometimes ignore some tests
+* The previous known issue has been investigated and we don't know where it came from. However after a night of testing I have been unable to reproduce it, so I will consider it closed
+
 ## v1.1.2
 
 #### Minor changes :

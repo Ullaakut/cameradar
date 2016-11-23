@@ -17,6 +17,7 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -60,9 +61,6 @@ type JUnitFailure struct {
 
 // WriteResults will output the results in the standard output as well as concatenate them in an XML JUnit report
 func (t *Tester) WriteResults(result Test, output string) bool {
-	fmt.Printf("Displaying results...\n")
-	t.writeConsoleReport(result)
-
 	file, err := os.OpenFile(output, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Printf("Error opening XML: %s\n", err)
@@ -72,7 +70,7 @@ func (t *Tester) WriteResults(result Test, output string) bool {
 
 	err = t.writeJUnitReportXML(result, file, output)
 	if err != nil {
-		fmt.Printf("Error writing XML: %s\n", err)
+		fmt.Printf("The tests were unsuccessful: %s\n", err)
 		return false
 	}
 	fmt.Printf("-> JUnit XML report written: %s\n", output)
@@ -93,7 +91,7 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 
 	ts := JUnitTestSuite{
 		Tests:     len(result.result) + len(result.expected),
-		Failures:  0,
+		Failures:  len(result.expected),
 		Time:      fmt.Sprintf("%.6f", result.time.Seconds()),
 		TestCases: []JUnitTestCase{},
 	}
@@ -103,7 +101,7 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 			Time:    fmt.Sprintf("%.6f", result.time.Seconds()),
 			Failure: nil,
 		}
-		testCase.Message = "The stream " + r.Address + " could be accessed and its thumbnail was properly generated"
+		testCase.Message = "The stream " + r.Address + " had the expected result"
 		ts.TestCases = append(ts.TestCases, testCase)
 	}
 
@@ -118,6 +116,24 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 				Type:    "",
 			}
 		}
+		ts.TestCases = append(ts.TestCases, testCase)
+	}
+
+	successCount := 0
+	failureCount := 0
+	for _, test := range ts.TestCases {
+		if test.Failure != nil {
+			failureCount++
+		} else {
+			successCount++
+		}
+	}
+	fmt.Println("--- Test summary ---")
+	if successCount > 0 {
+		fmt.Printf("Results: %d/%d (%d%%)\n", successCount, successCount+failureCount, successCount*100/(successCount+failureCount))
+		fmt.Printf("Time: %.6fs\n", result.time.Seconds())
+	} else {
+		fmt.Printf("No test in success\n")
 	}
 
 	suites.TestSuites = append(suites.TestSuites, ts)
@@ -134,19 +150,8 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 	}
 	writer := io.Writer(w)
 	writer.Write(bytes)
-	return nil
-}
-
-func (t *Tester) writeConsoleReport(result Test) bool {
-	successCount := len(result.result)
-	failureCount := len(result.expected)
-	fmt.Println("--- Test summary ---")
-	if successCount > 0 {
-		fmt.Printf("Results: %d/%d (%d%%)\n", successCount, successCount+failureCount, successCount*100/(successCount+failureCount))
-		fmt.Printf("Time: %.6fs\n", result.time.Seconds())
-	} else {
-		fmt.Printf("No test in success\n")
+	if failureCount > 0 {
+		return errors.New("Some cameras were not successfully accessed.")
 	}
-
-	return true
+	return nil
 }
