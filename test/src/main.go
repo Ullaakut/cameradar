@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 func main() {
@@ -38,7 +39,8 @@ func main() {
 	fmt.Println("--- Writing results... ---")
 	if !Tester.WriteResults(*(Tester.Result), Tester.Output) {
 		fmt.Println("-> Write results FAILED")
-		return
+		os.Exit(1)
 	}
 	fmt.Println("--- Writing results done ---")
+	os.Exit(0)
 }
