@@ -277,19 +277,13 @@ The output of Cameradar will be printed on the standard output and will also be 
 
 ## Contribution
 
-Well there are many things we could code in order to add features to Cameradar. Adding other protocols than RTSP would be really cool, as well as making more generic cache managers. Improving Cameradar's performance or even the deployment could also be a great help!
+Before contributing, make sure the task you want to realize has not been assigned to someone else already, and if not don't forget to assign it to yourself and move it to `In progress` in the [Project page](https://github.com/EtixLabs/cameradar/projects/1). Then before submitting your pull request, please use clang-format to format your code.
+
+You can ask for a merge of your pull request directly on the master branch, as I don't really feel the need for a develop branch at the moment.
 
 If you're not into software development or not into C++, even updating the dictionaries would be a really cool contribution! Just make sure the ids and routes you add are **default constructor credentials** and not custom credentials.
 
 If you have other cool ideas, feel free to share them with me at [brendan.leglaunec@etixgroup.com](mailto:brendan.leglaunec@etixgroup.com) !
-
-## Next improvements
-- [x] Add a docker deployment to avoid the current deps hell
-- [x] Development of a MySQL cache manager
-- [ ] Development of a JSON file cache manager
-- [ ] Development of an XML file cache manager
-- [ ] Make a standalone docker image
-- [ ] Push to DockerHub
 
 ## Frequently Asked Questions
 
