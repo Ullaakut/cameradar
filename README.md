@@ -279,7 +279,7 @@ The output of Cameradar will be printed on the standard output and will also be 
 
 Before contributing, make sure the task you want to realize has not been assigned to someone else already, and if not don't forget to assign it to yourself and move it to `In progress` in the [Project page](https://github.com/EtixLabs/cameradar/projects/1). Then before submitting your pull request, please use `clang-format` to format your C++ code and `go-fmt` for Golang code.
 
-You can ask for a merge of your pull request directly on the master branch, as I don't really feel the need for a develop branch at the moment.
+You can ask for a merge of your pull request only on the develop branch, and it will be pushed in the master branch in the next release.
 
 If you're not into software development or not into C++, even updating the dictionaries would be a really cool contribution! Just make sure the ids and routes you add are **default constructor credentials** and not custom credentials.
 
