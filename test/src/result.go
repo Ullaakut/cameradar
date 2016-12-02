@@ -47,11 +47,13 @@ func getResult(test *[]Result, resultPath string) bool {
 		fmt.Printf("\nCan't open result file: %s\n", err)
 		return false
 	}
+
 	dec := json.NewDecoder(resultFile)
 	if err = dec.Decode(&test); err != nil {
 		fmt.Printf("\nUnable to deserialize result file: %s\n", err)
 		return false
 	}
+
 	return true
 }
 
@@ -75,9 +77,10 @@ func isValid(e *Result, r Result) bool {
 	return true
 }
 
-// Extend needs refacto
+// Extend takes a slice of Results and adds a new element to it
 func Extend(slice []Result, element Result) []Result {
 	n := len(slice)
+
 	if n == cap(slice) {
 		// Slice is full; must grow.
 		// We double its size and add 1, so if the size is zero we still grow.
@@ -85,7 +88,9 @@ func Extend(slice []Result, element Result) []Result {
 		copy(newSlice, slice)
 		slice = newSlice
 	}
+
 	slice = slice[0 : n+1]
 	slice[n] = element
+
 	return slice
 }

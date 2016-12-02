@@ -23,6 +23,8 @@
 namespace etix {
 namespace cameradar {
 
+static const std::string default_result_path = "/tmp/shared/result.json";
+
 class print : public etix::cameradar::cameradar_task {
     const configuration& conf;
     std::shared_ptr<cache_manager> cache;

@@ -24,6 +24,7 @@ import (
 // Start read log of service
 func readLog(service *Service, reader io.ReadCloser) {
 	scanner := bufio.NewScanner(reader)
+
 	for scanner.Scan() {
 		str := scanner.Text()
 		if service.Console {
@@ -34,9 +35,12 @@ func readLog(service *Service, reader io.ReadCloser) {
 		service.Logs = append(service.Logs, str)
 		service.Mutex.Unlock()
 	}
-	if err := scanner.Err(); err != nil {
+
+	err := scanner.Err()
+	if err != nil {
 		fmt.Printf("[%s] Service failed: %s\n", service.Path, err)
 	}
+
 	fmt.Printf("Logger of service: [%s] stopped\n", service.Path)
 	service.Active = false
 }

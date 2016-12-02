@@ -21,8 +21,8 @@ import (
 )
 
 func (t *Tester) parseConfig() bool {
-	// Get config file path
 	confPath := "conf/cameratest.conf.json"
+
 	av := len(os.Args)
 	if av > 1 {
 		confPath = os.Args[1]

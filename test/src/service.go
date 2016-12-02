@@ -21,8 +21,8 @@ import (
 	"sync"
 )
 
-// Service needs refacto
-type Service struct {
+// ServiceConfig contains the configuration variables for the service structure
+type ServiceConfig struct {
 	Path       string `json:"path"`
 	Args       string `json:"args"`
 	Ports      string `json:"ports"`
@@ -35,17 +35,22 @@ type Service struct {
 	DbPassword string `json:"db_password"`
 	DbName     string `json:"db_name"`
 	Console    bool   `json:"console"`
-
-	Logs   []string
-	Active bool // Based on io.ReadCloser status
-	Mutex  sync.Mutex
-	cmd    *exec.Cmd // Go handler of the service
 }
 
-func startService(service *Service) bool {
+// Service allows to run a command and to access its logs asynchronously
+type Service struct {
+	Config ServiceConfig // Configuration variables
+	Logs   []string      // Contains the executer's logs
+	Active bool          // Based on io.ReadCloser status
+	Mutex  sync.Mutex    // Used to append to the logs safely
+	cmd    *exec.Cmd     // Pointer to the executer
+}
+
+func startService(service *Service, config ServiceConfig) bool {
 	// Launch service
-	args := strings.Fields(service.Args)
-	service.cmd = exec.Command(service.Path, args...)
+	service.Config = config
+	args := strings.Fields(service.Config.Args)
+	service.cmd = exec.Command(service.Config.Path, args...)
 
 	handler, err := service.cmd.StdoutPipe()
 	if err != nil {
@@ -64,7 +69,7 @@ func startService(service *Service) bool {
 		return false
 	}
 
-	fmt.Printf("Service: [%s] started\n", service.Path)
+	fmt.Printf("Service: [%s] started\n", service.Config.Path)
 	service.Active = true
 
 	// Read service logs and update service status
@@ -83,15 +88,15 @@ func stopService(service *Service) {
 // Kill all instances of specified service
 func killService(service *Service) {
 	// Sending SIGTERM
-	fmt.Printf("Executing: killall %s\n", service.Path)
-	cmd := exec.Command("killall", service.Path)
+	fmt.Printf("Executing: killall %s\n", service.Config.Path)
+	cmd := exec.Command("killall", service.Config.Path)
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	sigAbort := []string{service.Path, "-s", "SIGABRT"}
-	fmt.Printf("Executing: killall %s -s SIGABRT\n", service.Path)
+	fmt.Printf("Executing: killall %s -s SIGABRT\n", service.Config.Path)
 	cmd = exec.Command("killall", sigAbort...)
 	err = cmd.Run()
 	if err != nil {
