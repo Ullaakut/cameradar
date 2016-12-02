@@ -41,6 +41,7 @@ func main() {
 		fmt.Println("-> Write results FAILED")
 		os.Exit(1)
 	}
+
 	fmt.Println("--- Writing results done ---")
 	os.Exit(0)
 }

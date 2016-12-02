@@ -21,12 +21,13 @@ import (
 
 // Tester is the structure that will manage the whole testing
 type Tester struct {
-	Cameradar Service `json:"cameradar"`
-	Output    string
+	ServiceConf ServiceConfig `json:"cameradar"`
+	Output      string        `json:"output"`
+	Tests       []Result      `json:"tests"`
 
-	Tests  []Result
-	Result *Test
-	DB     MysqlDB
+	Cameradar Service // Runs the command and manages the logs
+	Result    *Test   // Results of the testing
+	DB        MysqlDB // Access to the database to make sure it's empty
 }
 
 // Init gets the testing configuration and makes sure that no other Cameradar service is running at the moment
@@ -49,12 +50,14 @@ func (t *Tester) Run() bool {
 	fmt.Println("\n- Launching all tests")
 	var newTest = new(Test)
 	newTest.expected = t.Tests
+
 	if t.configureDatabase(&t.DB) {
 		t.dropDB()
 		wg.Add(1)
 		go t.invokeTestCase(newTest, &wg)
 		t.Result = newTest
 	}
+
 	wg.Wait()
 	fmt.Println("All tests completed")
 	return true
