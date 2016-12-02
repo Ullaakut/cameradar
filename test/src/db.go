@@ -22,40 +22,22 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// MysqlDB contains the MySQL configuration
-type MysqlDB struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	DbName   string `json:"db_name"`
-}
-
 func (t *Tester) dropDB() bool {
-	dsn := t.DB.User + ":" + t.DB.Password + "@" + "tcp(" + t.DB.Host + ":" + strconv.Itoa(t.DB.Port) + ")/" + t.DB.DbName + "?charset=utf8"
+	dsn := t.ServiceConf.DbUser + ":" + t.ServiceConf.DbPassword + "@" + "tcp(" + t.ServiceConf.DbHost + ":" + strconv.Itoa(t.ServiceConf.DbPort) + ")/" + t.ServiceConf.DbName + "?charset=utf8"
+
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	defer db.Close()
-	q := "DROP DATABASE " + t.DB.DbName + ";"
+
+	q := "DROP DATABASE " + t.ServiceConf.DbName + ";"
 	_, err = db.Exec(q)
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	fmt.Println("------ Dropped Cameradar Database -------")
-	return true
-}
-
-func (t *Tester) configureDatabase(DataBase *MysqlDB) bool {
-	var db MysqlDB
-
-	db.Host = t.Cameradar.DbHost
-	db.Port = t.Cameradar.DbPort
-	db.User = t.Cameradar.DbUser
-	db.Password = t.Cameradar.DbPassword
-	db.DbName = t.Cameradar.DbName
-
-	*DataBase = db
 	return true
 }

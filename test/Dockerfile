@@ -4,17 +4,16 @@ MAINTAINER brendan.leglaunec@etixgroup.com
 
 ENV LD_LIBRARY_PATH="/cameradar/libraries"
 
-# install go
+# Manually install Go
 RUN apt-get update && apt-get install -y make git wget curl
 RUN wget https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz
-# set variable env
+
 ENV GOPATH=/cameradartest/go
 ENV PATH=$PATH:/go/bin
 ENV PATH=$PATH:/usr/local/go/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
-# needed for cameradar
 RUN apt-get update && apt-get install -y \
     nmap \
     libmysqlclient18 \
@@ -30,13 +29,11 @@ RUN apt-get install -y psmisc
 ADD cameradar_*_Debug_Linux.tar.gz /
 RUN mv cameradar_*_Debug_Linux cameradar
 
-# create cameradaratest folder in go src path
 RUN mkdir -p /cameradartest/go/src/cameradartest
 COPY src/*.go /cameradartest/go/src/cameradartest/
 COPY ./conf /conf
 ADD ./docker/run_cameradartest.sh /run.sh
 
-# get go deps
 RUN go get github.com/go-sql-driver/mysql
 
 RUN mkdir /thumbnails

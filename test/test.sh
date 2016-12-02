@@ -18,24 +18,35 @@ function make_docker_command {
         cmd="$cmd --link=\"$name\""
     done
 
-    # add mysql libk
+    # add mysql link
     cmd="$cmd --link=\"cameradar-database\""
     # add cameradar srcs
     cmd="$cmd -v \"`pwd`/src:/go/src/cameradartest\""
-    # add cmaeradar conf
+    # add cameradar testing volume
     cmd="$cmd -v \"`pwd`/:/tmp/tests\""
-    # add container name
+    # add cameradar results volume
     cmd="$cmd -v \"`pwd`/:/tmp/shared\""
     # add container name
     cmd="$cmd cameradartest"
 }
 
 function start_test {
+    # Generate all cameras
     ./docker/gen_cameras.sh start $1 ./docker/cameratest.conf.tmpl.json
+
+    # Prepare docker command
     make_docker_command $1
+
+    # Launch docker command
     eval $cmd
+
+    # Get docker command return
     ret=$?
+
+    # Stop all cameras
     ./docker/gen_cameras.sh stop
+
+    #
     return $ret
 }
 
