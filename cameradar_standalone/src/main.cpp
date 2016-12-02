@@ -18,8 +18,6 @@
 #include <iostream>     // iostream
 #include <opt_parse.h>  // parsing opt
 
-namespace cmrdr = etix::cameradar;
-
 void
 print_version() {
     std::cout << "Cameradar version " << CAMERADAR_VERSION << std::endl;
@@ -108,7 +106,7 @@ main(int argc, char* argv[]) {
     }
 
     // Try to load the configuration
-    auto conf = cmrdr::load(args);
+    auto conf = etix::cameradar::load(args);
     if (not conf.first) { return EXIT_FAILURE; }
 
     LOG_INFO_("Configuration successfully loaded", "main");
