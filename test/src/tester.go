@@ -25,9 +25,8 @@ type Tester struct {
 	Output      string        `json:"output"`
 	Tests       []Result      `json:"tests"`
 
-	Cameradar Service // Runs the command and manages the logs
-	Result    *Test   // Results of the testing
-	DB        MysqlDB // Access to the database to make sure it's empty
+	Tests  []Result
+	Result *Test
 }
 
 // Init gets the testing configuration and makes sure that no other Cameradar service is running at the moment
