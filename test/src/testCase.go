@@ -52,7 +52,7 @@ func (t *Tester) invokeTestCase(testCase *Test, wg *sync.WaitGroup) {
 // Then, if the result did not match the expected but it was supposed to fail
 // Add it to the valid results and remove it from the expected slice
 func (t *Tester) runTestCase(test *Test) {
-	startService(&t.Cameradar)
+	startService(&t.Cameradar, t.ServiceConf)
 	for t.Cameradar.Active {
 		time.Sleep(25 * time.Millisecond)
 	}

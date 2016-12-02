@@ -95,7 +95,7 @@ func killService(service *Service) {
 		fmt.Println(err)
 	}
 
-	sigAbort := []string{service.Path, "-s", "SIGABRT"}
+	sigAbort := []string{service.Config.Path, "-s", "SIGABRT"}
 	fmt.Printf("Executing: killall %s -s SIGABRT\n", service.Config.Path)
 	cmd = exec.Command("killall", sigAbort...)
 	err = cmd.Run()

@@ -23,7 +23,7 @@ import (
 )
 
 func (t *Tester) dropDB() bool {
-	dsn := t.ServiceConf.User + ":" + t.ServiceConf.Password + "@" + "tcp(" + t.ServiceConf.Host + ":" + strconv.Itoa(t.ServiceConf.Port) + ")/" + t.ServiceConf.DbName + "?charset=utf8"
+	dsn := t.ServiceConf.DbUser + ":" + t.ServiceConf.DbPassword + "@" + "tcp(" + t.ServiceConf.DbHost + ":" + strconv.Itoa(t.ServiceConf.DbPort) + ")/" + t.ServiceConf.DbName + "?charset=utf8"
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {

@@ -25,8 +25,8 @@ type Tester struct {
 	Output      string        `json:"output"`
 	Tests       []Result      `json:"tests"`
 
-	Tests  []Result
-	Result *Test
+	Cameradar Service
+	Result    *Test
 }
 
 // Init gets the testing configuration and makes sure that no other Cameradar service is running at the moment
@@ -50,12 +50,10 @@ func (t *Tester) Run() bool {
 	var newTest = new(Test)
 	newTest.expected = t.Tests
 
-	if t.configureDatabase(&t.DB) {
-		t.dropDB()
-		wg.Add(1)
-		go t.invokeTestCase(newTest, &wg)
-		t.Result = newTest
-	}
+	t.dropDB()
+	wg.Add(1)
+	go t.invokeTestCase(newTest, &wg)
+	t.Result = newTest
 
 	wg.Wait()
 	fmt.Println("All tests completed")
