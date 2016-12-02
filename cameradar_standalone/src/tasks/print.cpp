@@ -21,24 +21,26 @@ namespace cameradar {
 // Uses the subnets specified in the conf file to launch nmap
 bool
 print::run() const {
-    std::vector<stream_model> results = (*cache)->get_valid_streams();
     std::ofstream file;
+    std::vector<stream_model> results = (*cache)->get_valid_streams();
     bool first = true;
-    file.open("/tmp/shared/result.json");
+
+    file.open(default_result_path);
+    if (file.fail()) {
+        LOG_ERR_("Could not open file " + default_result_path, "print");
+        return false;
+    }
+
     file << "[\n";
     for (const auto& stream : results) {
-        LOG_INFO_("Found a valid RTSP Stream and generated a thumbnail at : " +
-                      stream.thumbnail_path,
-                  "print");
-
+        file << deserialize(stream).toStyledString();
         if (first)
             first = false;
         else
             file << ",";
-        file << deserialize(stream).toStyledString();
         LOG_INFO_("Generated JSON Result : " + deserialize(stream).toStyledString(), "print");
     }
-    file << "\n]";
+    file << "]";
     file.close();
     return true;
 }
