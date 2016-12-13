@@ -21,11 +21,11 @@ function make_docker_command {
     # add mysql libk
     cmd="$cmd --link=\"cameradar-database\""
     # add cameradar srcs
-    cmd="$cmd -v \"`pwd`/src:/go/src/cameradartest\""
+    cmd="$cmd -v \"$(pwd)/src:/go/src/cameradartest\""
     # add cmaeradar conf
-    cmd="$cmd -v \"`pwd`/:/tmp/tests\""
+    cmd="$cmd -v \"$(pwd)/:/tmp/tests\""
     # add container name
-    cmd="$cmd -v \"`pwd`/:/tmp/shared\""
+    cmd="$cmd -v \"$(pwd)/:/tmp/shared\""
     # add container name
     cmd="$cmd cameradartest"
 }
