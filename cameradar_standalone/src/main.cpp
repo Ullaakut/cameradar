@@ -14,7 +14,6 @@
 
 #include "version.h"    // versionning
 #include <dispatcher.h> // program loop
-#include <fs.h>         // fs::home
 #include <iostream>     // iostream
 #include <opt_parse.h>  // parsing opt
 
