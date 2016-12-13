@@ -21,7 +21,6 @@ namespace cameradar {
 // Uses the subnets specified in the conf file to launch nmap
 bool
 print::run() const {
-    bool first = true;
     std::vector<stream_model> results = (*cache)->get_valid_streams();
     std::ofstream file;
 
@@ -32,13 +31,11 @@ print::run() const {
     }
 
     file << "[\n";
+    unsigned int i = 0;
     for (const auto& stream : results) {
         file << deserialize(stream).toStyledString();
 
-        if (first) {
-            file << ",";
-            first = false;
-        }
+        if (++i < results.size()) file << ",";
 
         LOG_INFO_("Generated JSON Result : " + deserialize(stream).toStyledString(), "print");
     }
