@@ -24,9 +24,6 @@ import (
 	"os"
 )
 
-////////////////////////////////////////////////
-// Data declarations
-
 // JUnitTestSuites is a collection of JUnit test suites.
 type JUnitTestSuites struct {
 	XMLName    xml.Name         `xml:"testsuites"`
@@ -73,12 +70,17 @@ func (t *Tester) WriteResults(result Test, output string) bool {
 		fmt.Printf("The tests were unsuccessful: %s\n", err)
 		return false
 	}
+
 	fmt.Printf("-> JUnit XML report written: %s\n", output)
 	return true
 }
 
 // Write tests results under JUnit format on w
 func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output string) error {
+	if result.expected == nil && result.result == nil {
+		return errors.New("Test results could not be deserialized.")
+	}
+
 	suites := JUnitTestSuites{}
 
 	buf, err := ioutil.ReadFile(output)
@@ -110,6 +112,7 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 			Time:    fmt.Sprintf("%.6f", result.time.Seconds()),
 			Failure: nil,
 		}
+
 		if e.err != nil {
 			testCase.Failure = &JUnitFailure{
 				Message: e.err.Error(),
@@ -128,6 +131,7 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 			successCount++
 		}
 	}
+
 	fmt.Println("--- Test summary ---")
 	if successCount > 0 {
 		fmt.Printf("Results: %d/%d (%d%%)\n", successCount, successCount+failureCount, successCount*100/(successCount+failureCount))
@@ -137,19 +141,19 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 	}
 
 	suites.TestSuites = append(suites.TestSuites, ts)
-	// Fix indent
 	bytes, err := xml.MarshalIndent(suites, "", "\t")
 	if err != nil {
 		return err
 	}
-	// Write in param stream
 
 	w, err := os.OpenFile(output, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
+
 	writer := io.Writer(w)
 	writer.Write(bytes)
+
 	if failureCount > 0 {
 		return errors.New("Some cameras were not successfully accessed.")
 	}
