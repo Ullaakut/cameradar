@@ -43,7 +43,7 @@ function start {
     for (( i=1; i<=$1; i++ )); do
         name="$cams_name_pattern$i"
         # random conf
-        conf_idx=$(($RANDOM % ${#ports[@]}))
+        conf_idx=$((RANDOM % ${#ports[@]}))
 
         # get conf variables
         port=${ports[$conf_idx]}
@@ -65,7 +65,7 @@ function start {
 
 function stop {
     # if no cameras containers are started just exit
-    camera_count="`docker ps -a -q --filter="name=$cams_name_pattern" | wc -l`"
+    camera_count="$(docker ps -a -q --filter="name=$cams_name_pattern" | wc -l)"
     if [ "$camera_count" == "0" ]; then
         echo "error: no cameras started"; exit 1
     fi

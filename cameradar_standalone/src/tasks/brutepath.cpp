@@ -70,10 +70,7 @@ brutepath::bruteforce_camera(const stream_model& stream) const {
         if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
             break;
         if ((*cache)->has_changed(stream)) return true;
-        if (test_path(stream, route)) {
-            return true;
-            break;
-        }
+        if (test_path(stream, route)) return true;
     }
     return false;
 }

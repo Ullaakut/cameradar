@@ -22,21 +22,19 @@ namespace cameradar {
 // In order to check for the stream validity
 bool
 stream_check::run() const {
-    GstElement* pipeline;
     GstElement* elem;
-
     gst_init(nullptr, nullptr);
-
     std::vector<stream_model> streams = (*cache)->get_valid_streams();
 
     if (not streams.size()) {
         LOG_WARN_("There were no valid streams to check. Cameradar will stop.", "stream_check");
         return false;
     }
+
     for (const auto& stream : streams) {
         GError* error = NULL;
 
-        pipeline =
+        GstElement* pipeline =
             gst_parse_launch("rtspsrc name=source ! rtph264depay ! h264parse ! fakesink", &error);
 
         std::string location = "rtsp://";

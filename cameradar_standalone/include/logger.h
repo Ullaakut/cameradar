@@ -14,13 +14,15 @@
 
 #pragma once
 
+#include "spdlog/spdlog.h"
 #include <sstream>
 #include <string>
-#include "spdlog/spdlog.h"
 
 namespace etix {
 
 namespace tool {
+
+enum class loglevel { DEBUG = 1, INFO = 2, WARN = 4, ERR = 5, CRITICAL = 6 };
 
 inline std::string
 format_output(const std::string& from, const std::string& message) {
@@ -31,8 +33,6 @@ format_output(const std::string& from, const std::string& message) {
 
     return ss.str();
 }
-
-enum class loglevel { DEBUG = 1, INFO = 2, WARN = 4, ERR = 5, CRITICAL = 6 };
 
 class logger {
     std::string name;
@@ -64,11 +64,6 @@ public:
         }
     }
 
-    std::string
-    get_name() const {
-        return this->name;
-    }
-
     static void
     info(const std::string& message) {
         etix::tool::logger::get_instance().console->info(message);
@@ -82,11 +77,6 @@ public:
     static void
     err(const std::string& message) {
         etix::tool::logger::get_instance().console->error(message);
-    }
-
-    static void
-    crit(const std::string& message) {
-        etix::tool::logger::get_instance().console->critical(message);
     }
 
     static void
@@ -110,7 +100,4 @@ public:
         std::string(from) + "::" + __FUNCTION__ + ":" + std::to_string(__LINE__), message))
 #define LOG_INFO_(message, from)                                                                   \
     etix::tool::logger::get_instance().info(etix::tool::format_output(                             \
-        std::string(from) + "::" + __FUNCTION__ + ":" + std::to_string(__LINE__), message))
-#define LOG_CRIT_(message, from)                                                                   \
-    etix::tool::logger::get_instance().crit(etix::tool::format_output(                             \
         std::string(from) + "::" + __FUNCTION__ + ":" + std::to_string(__LINE__), message))
