@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
     libgstreamer-plugins-base1.0-dev \
     libgstreamer-plugins-bad1.0-dev
 
-ADD ./docker/screen.png /vlc/screen.png
 COPY ./docker/run_ces.sh /start.sh
 COPY ./camera_emulation_server /camera_emulation_server
 
