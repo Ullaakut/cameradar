@@ -35,10 +35,10 @@ print::run() const {
     for (const auto& stream : results) {
         file << deserialize(stream).toStyledString();
 
-        if (first)
-            first = false;
-        else
+        if (first) {
             file << ",";
+            first = false;
+        }
 
         LOG_INFO_("Generated JSON Result : " + deserialize(stream).toStyledString(), "print");
     }

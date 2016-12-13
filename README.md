@@ -2,10 +2,11 @@
 
 ## An RTSP surveillance camera access multitool
 
-[![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat-square)](#license)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat-square)](https://hub.docker.com/r/ullaakut/cameradar/)
-[![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat-square)](https://travis-ci.org/EtixLabs/cameradar)
-[![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat-square)](https://github.com/EtixLabs/cameradar/releases/latest)
+[![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat)](#license)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
+[![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat)](https://travis-ci.org/EtixLabs/cameradar)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/4cca0fe9dd6f457fa904bd2731b7bb9a)](https://www.codacy.com/app/brendan-le-glaunec/cameradar?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=EtixLabs/cameradar&amp;utm_campaign=Badge_Grade)
+[![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 
 #### Cameradar allows you to:

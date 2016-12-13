@@ -14,13 +14,13 @@
 
 #include "fs.h"
 
-#include <vector>     // for std::vector
-#include <sstream>    // for std::stringstream
+#include <fstream>    // for std::ifstream
 #include <pwd.h>      // for getpwuid, passwd
+#include <sstream>    // for std::stringstream
 #include <stddef.h>   // for size_t
 #include <sys/stat.h> // for stat, mkdir, S_ISDIR
 #include <unistd.h>   // for getuid
-#include <fstream>    // for std::ifstream
+#include <vector>     // for std::vector
 
 namespace etix {
 
@@ -53,18 +53,6 @@ is_folder(const std::string& folder) {
 }
 
 bool
-get_or_create_folder(const std::string& folder) {
-    bool status = false;
-
-    switch (is_folder(folder)) {
-    case fs_error::is_dir: status = true; break;
-    case fs_error::is_not_dir: status = false; break;
-    case fs_error::dont_exist: status = create_recursive_folder(folder); break;
-    }
-    return status;
-}
-
-bool
 create_folder(const std::string& folder) {
     if (mkdir(folder.c_str(), 0755) == 0) { return true; }
 
@@ -84,25 +72,6 @@ create_recursive_folder(const std::string& folder) {
         current_path += '/';
     }
     return true;
-}
-
-std::string
-get_file_folder(std::string full_file_path) {
-    // remove ending slash
-    if (full_file_path.back() == '/') full_file_path.pop_back();
-
-    size_t last_slash_position = full_file_path.find_last_of('/');
-
-    // it there is no slash, there is no folder to return
-    if (last_slash_position == std::string::npos) return "";
-
-    return std::string(full_file_path, 0, last_slash_position);
-}
-
-std::string
-home(void) {
-    struct passwd* passwdEnt = getpwuid(getuid());
-    return { passwdEnt->pw_dir };
 }
 
 bool
