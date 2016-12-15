@@ -41,9 +41,8 @@ Of course, you can also call for individual tasks if you plug in a Database to C
 - [Output](#output)
 - [Check camera access](#check-camera-access)
 - [Command line options](#command-line-options)
-- [Under the hood](#under-the-hood)
-- [Contribution](#contribution)
 - [Next improvements](#next-improvements)
+- [Contribution](#contribution)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [License](#license)
 
@@ -80,15 +79,15 @@ The only dependencies are `docker`, `docker-tools`, `git` and `make`.
 ### Five steps guide
 
 1. `git clone https://github.com/EtixLabs/cameradar.git`
-2. Go into the Cameradar repository, then to the `deployment` directory
-3. Tweak the `conf/cameradar.conf.json` as you need (see [the onfiguration guide here](#configuration) for more information)
-4. Run `docker-compose build & docker-compose up`
+2. `cd cameradar/deployment`
+3. Tweak the `conf/cameradar.conf.json` as you need (see [the configuration guide here](#configuration) for more information)
+4. `docker-compose build ; docker-compose up`
 
 By default, the version of the package in the deployment should be the last stable release.
 
 If you want to scan a different subnetwork or different ports, change the values `CAMERAS_SUBNETWORKS` and `CAMERAS_PORTS` in the `docker-compose.yml` file.
 
-The generated thumbnails will be in the `cameradar_thumbnails` folder after cameradar has finished executing.
+The generated thumbnails will be in the `cameradar_thumbnails` folder after Cameradar has finished executing.
 
 If you want to deploy your custom version of Cameradar using the same method, you should check the [advanced docker deployment](#advanced-docker-deployment) tutorial here.
 
@@ -112,12 +111,13 @@ To install Cameradar you will need these packages
 The simplest way would be to follow these steps :
 
 1. `git clone https://github.com/EtixLabs/cameradar.git`
-2. `mkdir build`
-3. `cd build`
-3. `cmake ..`
-4. `make`
-5. `cd cameradar_standalone`
-6. `./cameradar -s the_subnet_you_want_to_scan`
+2. `cd cameradar`
+3. `mkdir build`
+4. `cd build`
+5. `cmake ..`
+6. `make`
+7. `cd cameradar_standalone`
+8. `./cameradar -s the_subnet_you_want_to_scan`
 
 ## Advanced Docker deployment
 
@@ -129,7 +129,7 @@ The only dependencies are `docker` and `docker-compose`.
 
 ### Using the package generation script
 1. `git clone https://github.com/EtixLabs/cameradar.git`
-2. `cd deployment`
+2. `cd cameradar/deployment`
 3. `rm *.tar.gz`
 4. `./build_last_package.sh`
 5. `docker-compose build cameradar`
@@ -138,13 +138,15 @@ The only dependencies are `docker` and `docker-compose`.
 ### Deploy a custom version of Cameradar by hand
 
 1. `git clone https://github.com/EtixLabs/cameradar.git`
-2. `cd build`
-3. `cmake .. -DCMAKE_BUILD_TYPE=Release`
-4. `make package`
-5. `cp cameradar_*_Release_Linux.tar.gz ../deployment`
-6. `cd ../deployment`
-7. `docker-compose build cameradar`
-8. `docker-compose up cameradar`
+2. `cd cameradar`
+3. `mkdir build`
+4. `cd build`
+5. `cmake .. -DCMAKE_BUILD_TYPE=Release`
+6. `make package`
+7. `cp cameradar_*_Release_Linux.tar.gz ../deployment`
+8. `cd ../deployment`
+9. `docker-compose build cameradar`
+10. `docker-compose up cameradar`
 
 ### Configuration
 
@@ -160,11 +162,11 @@ Here is the basic content of the configuration file with simple placeholders :
   },
   "subnets" : "SUBNET1,SUBNET2,SUBNET3,[...]",
   "ports" : "PORT1,PORT2,[...]",
-  "rtsp_url_file" : "conf/url.json",
-  "rtsp_ids_file" : "conf/ids.json",
+  "rtsp_url_file" : "/path/to/url/dictionary",
+  "rtsp_ids_file" : "/path/to/url/dictionary",
   "thumbnail_storage_path" : "/valid/path/to/a/storage/directory",
-  "cache_manager_path" : "../cache_managers/dumb_cache_manager",
-  "cache_manager_name" : "dumb"
+  "cache_manager_path" : "/path/to/cache/manager",
+  "cache_manager_name" : "CACHE_MANAGER_NAME"
 }
 ```
 
@@ -220,11 +222,11 @@ For each camera, Cameradar will output these JSON objects :
 
 ## Check camera access
 
-If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI to connect to the RTSP stream using this format : `username:password@address:port/route`
+If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI to connect to the RTSP stream using this format : `rtsp://username:password@address:port/route`
 
-With the above result, the RTSP URL would be `admin:123456@173.16.100.45:554/live.sdp`
+With the above result, the RTSP URL would be `rtsp://admin:123456@173.16.100.45:554/live.sdp`
 
-If you're still in your console however, you can go even faster by using **vlc in commmand-line** and just run `vlc username:password@address:port/route` with the camera's info instead of the placeholders.
+If you're still in your console however, you can go even faster by using **vlc in commmand-line** and just run `vlc rtsp://username:password@address:port/route` with the camera's info instead of the placeholders.
 
 ## Command line options
 
@@ -254,43 +256,15 @@ If you're still in your console however, you can go even faster by using **vlc i
 * **"-h"** : Display this help
 * **"--gst-rtsp-server"** : Use this option if the bruteforce does not seem to work (only detects the username but not the path, or the opposite). This option will switch the order of the bruteforce to prioritize path over credentials, which is the way priority is handled for cameras that use GStreamer's RTSP server.
 
-## Under the hood
-
-Cameradar uses **nmap** to map all of the subnetworks you specified in the configuration file (_cameradar.conf.json_), then parses its result to get all of the open RTSP streams that were detected.
-
-After that, it uses **cURL** to send requests to the cameras and to try routes and ids for each camera until it is accessed or until all of the most used routes/ids (that you can modify in _conf/ids.json_ and _conf/url.json_) were tried
-
-Then, it uses **FFMPEG** to generate a lightweight thumbnail from the stream, which you could use to get a quick preview of the camera's view.
-
-Finally, it tries to access the stream using a simple **Gstreamer pipeline** to check for the stream's encoding.
-
-The output of Cameradar will be printed on the standard output and will also be accessible in the result.json file.
-
-Cameradar uses **nmap** to map all of the subnetworks you specified in the configuration file (_cameradar.conf.json_), then parses its result to get all of the open RTSP streams that were detected.
-
-After that, it uses **cURL** to send requests to the cameras and to try routes and ids for each camera until it is accessed or until all of the most used routes/ids (that you can modify in _conf/ids.json_ and _conf/url.json_) were tried
-
-Then, it uses **FFMPEG** to generate a lightweight thumbnail from the stream, which you could use to get a quick preview of the camera's view.
-
-Finally, it tries to access the stream using a simple **Gstreamer pipeline** to check for the stream's encoding.
-
-The output of Cameradar will be printed on the standard output and will also be accessible in the result.json file.
-
 ## Contribution
 
-Before contributing, make sure the task you want to realize has not been assigned to someone else already, and if not don't forget to assign it to yourself and move it to `In progress` in the [Project page](https://github.com/EtixLabs/cameradar/projects/1). Then before submitting your pull request, please use `clang-format` to format your C++ code and `go-fmt` for Golang code.
-
-You can ask for a merge of your pull request only on the develop branch, and it will be pushed in the master branch in the next release.
-
-If you're not into software development or not into C++, even updating the dictionaries would be a really cool contribution! Just make sure the ids and routes you add are **default constructor credentials** and not custom credentials.
-
-If you have other cool ideas, feel free to share them with me at [brendan.leglaunec@etixgroup.com](mailto:brendan.leglaunec@etixgroup.com) !
+See [the contribution document](/CONTRIBUTION.md) to get started.
 
 ## Frequently Asked Questions
 
-> My camera's credentials are guessed by Cameradar but the RTSP url is not!
+> My camera's credentials are guessed by Cameradar but the RTSP URL is not!
 
-Your camera probably uses GST RTSP Server internally. Try the `--gst-rtsp-server` command-line option, and if it does not work, send me the cameradar output in DEBUG mode (`-l 1`) and I will help you.
+Your camera probably uses GST RTSP Server internally. Try the `--gst-rtsp-server` command-line option, and if it does not work, send me the Cameradar output in DEBUG mode (`-l 1`) and I will help you.
 
 > Cameradar does not detect any camera!
 
@@ -298,9 +272,9 @@ That means that either your cameras are not streaming in RTSP or that they are n
 
 > Cameradar detects my cameras, but does not manage to access them at all!
 
-Maybe your cameras have been configured and the credentials / URL have been changed. Cameradar only guesses using default constructor values. However, you can use your own dictionary in which you just have to add your passwords. To do that, see how the [configuration](#configuration) works.
+Maybe your cameras have been configured and the credentials / URL have been changed. Cameradar only guesses using default constructor values. However, you can use your own dictionary in which you just have to add your passwords. To do that, see how the [configuration](#configuration) works. Also, maybe your camera's credentials are not yet known, in which case if you find them it would be very nice to add them to the Cameradar dictionaries to help other people in the future.
 
-> It does not compile
+> It does not compile :(
 
 You probably missed the part with the dependencies! Use the quick docker deployment, it will be easier and will not pollute your machine with useless dependencies! `;)`
 
