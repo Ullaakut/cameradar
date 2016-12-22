@@ -53,8 +53,7 @@ This is the fastest and simplest way to use Cameradar. To do this you will just 
 Run
 
 ```
-docker run  \
-            -v /tmp/thumbs/:/tmp/thumbs \
+docker run  -v /tmp/thumbs/:/tmp/thumbs \
             -e CAMERAS_SUBNETWORKS=your_subnetwork \
             ullaakut/cameradar:tag
 ```
