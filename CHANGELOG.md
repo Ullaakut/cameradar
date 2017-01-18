@@ -2,6 +2,21 @@
 
 This file lists all versions of the repository and precises all changes.
 
+## v1.1.4
+
+#### Minor changes :
+* Simplified use of Docker image
+* Renamed MySQL table name to be more explicit
+* Refactoring of the Golang functional tester done
+* The output was made more human readable
+* Added automatic code quality checks for pull requests
+* Added contribution documentation
+* Updated dictionaries to add user suggestions for Chinese cameras
+* Enhanced `result.json` file's format
+
+#### Bugfixes :
+* Fixed a bug in the functional testing in which if the `result.json` file was not formatted correctly, the test failed but was still considered a success.
+
 ## v1.1.3
 
 #### Minor changes :
