@@ -38,7 +38,7 @@ namespace etix {
 namespace cameradar {
 
 const std::string mysql_cache_manager::create_table_query =
-    "CREATE TABLE IF NOT EXISTS `results` ("
+    "CREATE TABLE IF NOT EXISTS `cameradar_results` ("
     "`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, "
     "`address` tinytext NOT NULL, "
     "`password` tinytext NOT NULL, "
@@ -55,31 +55,31 @@ const std::string mysql_cache_manager::create_table_query =
     "PRIMARY KEY (`id`));";
 
 const std::string mysql_cache_manager::insert_with_id_query =
-    "INSERT INTO `%s`.`results`"
+    "INSERT INTO `%s`.`cameradar_results`"
     " (`address`, `password`, `product`, `protocol`, `route`, `service_name`, `state`, "
     "`thumbnail_path`, `username`, `port`, `ids_found`, `path_found`)"
     " VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')";
 
 const std::string mysql_cache_manager::update_result_query =
-    "UPDATE `%s`.`results` SET"
-    " `results`.`address` = '%s',"
-    " `results`.`password` = '%s',"
-    " `results`.`product` = '%s',"
-    " `results`.`protocol` = '%s',"
-    " `results`.`route` = '%s',"
-    " `results`.`service_name` = '%s',"
-    " `results`.`state` = '%s',"
-    " `results`.`thumbnail_path` = '%s',"
-    " `results`.`username` = '%s',"
-    " `results`.`port` = '%s',"
-    " `results`.`ids_found` = '%s',"
-    " `results`.`path_found` = '%s'"
-    " WHERE `results`.`address` LIKE '%s'";
+    "UPDATE `%s`.`cameradar_results` SET"
+    " `cameradar_results`.`address` = '%s',"
+    " `cameradar_results`.`password` = '%s',"
+    " `cameradar_results`.`product` = '%s',"
+    " `cameradar_results`.`protocol` = '%s',"
+    " `cameradar_results`.`route` = '%s',"
+    " `cameradar_results`.`service_name` = '%s',"
+    " `cameradar_results`.`state` = '%s',"
+    " `cameradar_results`.`thumbnail_path` = '%s',"
+    " `cameradar_results`.`username` = '%s',"
+    " `cameradar_results`.`port` = '%s',"
+    " `cameradar_results`.`ids_found` = '%s',"
+    " `cameradar_results`.`path_found` = '%s'"
+    " WHERE `cameradar_results`.`address` LIKE '%s'";
 
 const std::string mysql_cache_manager::exist_query =
-    "SELECT * FROM `%s`.`results` WHERE `results`.`address` = '%s'";
+    "SELECT * FROM `%s`.`cameradar_results` WHERE `cameradar_results`.`address` = '%s'";
 
-const std::string mysql_cache_manager::get_results_query = "SELECT * FROM `%s`.`results`";
+const std::string mysql_cache_manager::get_results_query = "SELECT * FROM `%s`.`cameradar_results`";
 
 const std::string mysql_cache_manager::name = "mysql-cache-manager";
 
