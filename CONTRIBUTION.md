@@ -6,6 +6,19 @@ If you're not into software development or not into C++, you can still help. Upd
 
 If you have other cool ideas, feel free to share them with me at [brendan.leglaunec@etixgroup.com](mailto:brendan.leglaunec@etixgroup.com) !
 
+## Version 2.0.0
+
+- *Cameradar* will become the name of the library.
+- *Cameraccess* will be the name of the binary that uses Cameradar to _hack_ the cameras.
+
+This quite big refactoring comes from the fact that most users who want to access cameras either want to launch it with the basic cache manager, mostly using the docker image already provided in this repository, or will not use it because it does not integrate into their software solution without sharing their database with Cameradar, which would cause issues with database migrations for example.
+
+Transforming it into a library will allow developers to use it directly in their own code exactly as they want, allowing for a greater flexibility. The Cameraccess binary will then provide a simple use example as well as maintaining the current simple way of using Cameradar for non-developers.
+
+This is quite a huge task compared to the tiny changes I usually do on Cameradar, so it might take a long time.
+
+If you want to contribute, note that the develop will stay in 1.x until the 2.0.0 is released. A new development branch will be created especially for the 2.0 version, called `2.0.0` from which all work on the 2.0.0 version will be done until the 2.0.0 version is ready to replace the 1.x on the master and develop branches. The rest of the workflow is exactly the same as for the rest of the repository.
+
 ## Workflow
 
 ### Branches & issues
