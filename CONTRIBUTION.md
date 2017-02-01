@@ -17,8 +17,6 @@ Transforming it into a library will allow developers to use it directly in their
 
 This is quite a huge task compared to the tiny changes I usually do on Cameradar, so it might take a long time.
 
-If you want to contribute, note that the develop will stay in 1.x until the 2.0.0 is released. A new development branch will be created especially for the 2.0 version, called `2.0.0` from which all work on the 2.0.0 version will be done until the 2.0.0 version is ready to replace the 1.x on the master and develop branches. The rest of the workflow is exactly the same as for the rest of the repository.
-
 ## Workflow
 
 ### Branches & issues
