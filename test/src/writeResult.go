@@ -78,7 +78,7 @@ func (t *Tester) WriteResults(result Test, output string) bool {
 // Write tests results under JUnit format on w
 func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output string) error {
 	if result.expected == nil && result.result == nil {
-		return errors.New("Test results could not be deserialized.")
+		return errors.New("test results could not be deserialized")
 	}
 
 	suites := JUnitTestSuites{}
@@ -155,7 +155,7 @@ func (t *Tester) writeJUnitReportXML(result Test, rw io.ReadWriter, output strin
 	writer.Write(bytes)
 
 	if failureCount > 0 {
-		return errors.New("Some cameras were not successfully accessed.")
+		return errors.New("some cameras were not successfully accessed")
 	}
 	return nil
 }
