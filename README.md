@@ -58,7 +58,7 @@ docker run  -v /tmp/thumbs/:/tmp/thumbs \
             ullaakut/cameradar:tag
 ```
 
-* `your_subnetwork` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`).
+* `your_subnetwork` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
 * `tag` allows you to specify a specific version for camerada. If you don't specify any tag, you will use the latest version by default (recommended)
 
 Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information and more command-line options.
@@ -230,7 +230,7 @@ If you're still in your console however, you can go even faster by using **vlc i
 ## Command line options
 
 * **"-c"** : Set a custom path to the configuration file (-c /path/to/conf)
-* **"-s"** : Set custom subnets (overrides configuration)
+* **"-s"** : Set custom subnets (overrides configuration) : You can use this argument in many ways, using a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
 * **"-p"** : Set custom ports (overrides configuration)
 * **"-m"** : Set number of threads (*Default value : 1*)
 * **"-l"** : Set log level
