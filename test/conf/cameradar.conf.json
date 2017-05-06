@@ -6,7 +6,7 @@
     "password": "root",
     "db_name": "cmrdr"
   },
-  "subnets" : "localhost",
+  "target" : "localhost",
   "ports" : "554,8554",
   "rtsp_url_file" : "/conf/url.json",
   "rtsp_ids_file" : "/conf/ids.json",

@@ -76,7 +76,7 @@ This file lists all versions of the repository and precises all changes.
 #### Major changes :
 * There are more command line options
   * Port can now be overridden in the command line
-  * Subnet can now be overridden in the command line
+  * target can now be overridden in the command line
 * Bruteforce is now multithreaded and will use as many threads as there are discovered cameras
 * Thumbnail generation is now multithreaded and will use as many threads as there are discovered cameras
 * There are now default configuration values in order to make cameradar easier to use
