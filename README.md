@@ -13,8 +13,8 @@
 
 * **Detect open RTSP hosts** on any accessible target
 * Get their public info (hostname, port, camera model, etc.)
-* Bruteforce your way into them to get their **stream route** (for example /live.sdp)
-* Bruteforce your way into them to get the **username and password** of the cameras
+* Launch automated dictionary attacks to get their **stream route** (for example /live.sdp)
+* Launch automated dictionary attacks to get the **username and password** of the cameras
 * **Generate thumbnails** from them to check if the streams are valid and to have a quick preview of their content
 * Try to create a Gstreamer pipeline to check if they are **properly encoded**
 * Print a summary of all the informations Cameradar could get
@@ -192,7 +192,7 @@ The targets should be passed separated by commas only, and their target format s
 
 The **RTSP ports for most cameras are 554**, so you should probably specify 554 as one of the ports you scan. Not giving any ports in the configuration will scan every port of every host found on the target.
 
-You **can use your own files for the ids and routes dictionaries** used to bruteforce the cameras, but the Cameradar repository already gives you a good base that works with most cameras.
+You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras.
 
 The thumbnail storage path should be a **valid and accessible directory** in which the thumbnails will be stored.
 
@@ -249,7 +249,7 @@ If you're still in your console however, you can go even faster by using **vlc i
   * **"-l 6"** : Log level CRITICAL
     * _Doesn't print anything since Cameradar can't have critical failures right now, however you can use this level to debug your own code easily or if you add new critical layers_
 * **"-d"** : Launch the discovery tool
-* **"-b"** : Launch the bruteforce tool on all discovered devices
+* **"-b"** : Launch the dictionary attack tool on all discovered devices
   * Needs either to be launched with the -d option or to use an advanced cache manager (DB, file, ...) with data already present
 * **"-t"** : Generate thumbnails from detected cameras
   * Needs either to be launched with the -d option or to use an advanced cache manager (DB, file, ...) with data already present
@@ -257,7 +257,7 @@ If you're still in your console however, you can go even faster by using **vlc i
   * Needs either to be launched with the -d option or to use an advanced cache manager (DB, file, ...) with data already present
 * **"-v"** : Display Cameradar's version
 * **"-h"** : Display this help
-* **"--gst-rtsp-server"** : Use this option if the bruteforce does not seem to work (only detects the username but not the path, or the opposite). This option will switch the order of the bruteforce to prioritize path over credentials, which is the way priority is handled for cameras that use GStreamer's RTSP server.
+* **"--gst-rtsp-server"** : Use this option if the attack does not seem to work (only detects the username but not the path, or the opposite). This option will switch the order of the attacks to prioritize path over credentials, which is the way priority is handled for cameras that use GStreamer's RTSP server.
 
 ## Contribution
 
