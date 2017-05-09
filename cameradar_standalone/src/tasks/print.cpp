@@ -18,7 +18,7 @@ namespace etix {
 namespace cameradar {
 
 // Launches and checks the return of the nmap command
-// Uses the subnets specified in the conf file to launch nmap
+// Uses the specified targets in the conf file to launch nmap
 bool
 print::run() const {
     std::vector<stream_model> results = (*cache)->get_valid_streams();

@@ -6,7 +6,7 @@
     "password": "$MYSQL_ROOT_PASSWORD",
     "db_name": "cmrdr"
   },
-  "subnets" : "$CAMERAS_SUBNETWORKS",
+  "target" : "$CAMERAS_TARGET",
   "ports" : "$CAMERAS_PORTS",
   "rtsp_url_file" : "/cameradar/conf/url.json",
   "rtsp_ids_file" : "/cameradar/conf/ids.json",
