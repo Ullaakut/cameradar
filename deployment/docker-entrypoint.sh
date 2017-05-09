@@ -24,8 +24,8 @@ if [ "$CACHE_MANAGER" == "" ]; then
 	export CACHE_MANAGER="dumb"
 fi
 
-if [ "$CAMERAS_SUBNETWORKS" == "" ]; then
-	export CAMERAS_SUBNETWORKS="0.0.0.0"
+if [ "$CAMERAS_TARGET" == "" ]; then
+	export CAMERAS_TARGET="0.0.0.0"
 fi
 
 if [ "$CAMERAS_PORTS" == "" ]; then

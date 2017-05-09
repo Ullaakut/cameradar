@@ -20,7 +20,7 @@ namespace cameradar {
 static const std::string no_hosts_found_ =
     "No hosts were discovered on your network. Please check your internet "
     "connexion "
-    "and verify that the subnetworks you specified in your configuration file "
+    "and verify that the targetworks you specified in your configuration file "
     "were "
     "accessible";
 
@@ -79,7 +79,7 @@ parsing::print_detected_cameras(const std::vector<stream_model>& data) const {
         LOG_WARN_(
             "Mapping unsuccessful, no rtsp streams were discovered. You "
             "should try other "
-            "subnetworks",
+            "targetworks",
             "parsing");
         return false;
     }
