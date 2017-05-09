@@ -11,7 +11,7 @@
 
 #### Cameradar allows you to:
 
-* **Detect open RTSP hosts** on any accessible subnetwork
+* **Detect open RTSP hosts** on any accessible target
 * Get their public info (hostname, port, camera model, etc.)
 * Bruteforce your way into them to get their **stream route** (for example /live.sdp)
 * Bruteforce your way into them to get the **username and password** of the cameras
@@ -54,11 +54,11 @@ Run
 
 ```
 docker run  -v /tmp/thumbs/:/tmp/thumbs \
-            -e CAMERAS_SUBNETWORKS=your_subnetwork \
+            -e CAMERAS_TARGET=your_target \
             ullaakut/cameradar:tag
 ```
 
-* `your_subnetwork` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
+* `your_target` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those separated by commas (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
 * `tag` allows you to specify a specific version for camerada. If you don't specify any tag, you will use the latest version by default (recommended)
 
 Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information and more command-line options.
@@ -84,7 +84,7 @@ The only dependencies are `docker`, `docker-tools`, `git` and `make`.
 
 By default, the version of the package in the deployment should be the last stable release.
 
-If you want to scan a different subnetwork or different ports, change the values `CAMERAS_SUBNETWORKS` and `CAMERAS_PORTS` in the `docker-compose.yml` file.
+If you want to scan a different target or different ports, change the values `CAMERAS_TARGET` and `CAMERAS_PORTS` in the `docker-compose.yml` file.
 
 The generated thumbnails will be in the `cameradar_thumbnails` folder after Cameradar has finished executing.
 
@@ -116,7 +116,7 @@ The simplest way would be to follow these steps :
 5. `cmake ..`
 6. `make`
 7. `cd cameradar_standalone`
-8. `./cameradar -s the_subnet_you_want_to_scan`
+8. `./cameradar -s the_target_you_want_to_scan`
 
 ## Advanced Docker deployment
 
@@ -159,7 +159,7 @@ Here is the basic content of the configuration file with simple placeholders :
      "password": "root",
      "db_name": "cmrdr"
   },
-  "subnets" : "SUBNET1,SUBNET2,SUBNET3,[...]",
+  "target" : "target1,target2,target3,[...]",
   "ports" : "PORT1,PORT2,[...]",
   "rtsp_url_file" : "/path/to/url/dictionary",
   "rtsp_ids_file" : "/path/to/url/dictionary",
@@ -173,7 +173,7 @@ This **configuration is needed only if you want to overwrite the default values*
 
 ```json
 {
-  "subnets" : "localhost",
+  "target" : "localhost",
   "ports" : "554,8554",
   "rtsp_url_file" : "conf/url.json",
   "rtsp_ids_file" : "conf/ids.json",
@@ -183,14 +183,14 @@ This **configuration is needed only if you want to overwrite the default values*
 }
 ```
 
-This means that **by default Cameradar will not use a database**, will scan localhost and the ports 554 (default RTSP port) and 8554 (default emulated RTSP port), use the default constructor dictionaries and store the thumbnails in `/tmp`. If you need to override simply the subnets or ports, you can use the [command line options](#command-line-options).
+This means that **by default Cameradar will not use a database**, will scan localhost and the ports 554 (default RTSP port) and 8554 (default emulated RTSP port), use the default constructor dictionaries and store the thumbnails in `/tmp`. If you need to override simply the target or ports, you can use the [command line options](#command-line-options).
 
-The subnetworks should be passed separated by commas only, and their subnet format should be the same as used in nmap.
+The targets should be passed separated by commas only, and their target format should be the same as used in nmap.
 ```json
-"subnets" : "172.100.16.0/24,172.100.17.0/24,localhost,192.168.1.13"
+"target" : "172.100.16.0/24,172.100.17.0/24,localhost,192.168.1.13"
 ```
 
-The **RTSP ports for most cameras are 554**, so you should probably specify 554 as one of the ports you scan. Not giving any ports in the configuration will scan every port of every host found on the subnetworks.
+The **RTSP ports for most cameras are 554**, so you should probably specify 554 as one of the ports you scan. Not giving any ports in the configuration will scan every port of every host found on the target.
 
 You **can use your own files for the ids and routes dictionaries** used to bruteforce the cameras, but the Cameradar repository already gives you a good base that works with most cameras.
 
@@ -230,7 +230,11 @@ If you're still in your console however, you can go even faster by using **vlc i
 ## Command line options
 
 * **"-c"** : Set a custom path to the configuration file (-c /path/to/conf)
+<<<<<<< HEAD
 * **"-s"** : Set custom subnets (overrides configuration) : You can use this argument in many ways, using a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
+=======
+* **"-s"** : Set custom target (overrides configuration)
+>>>>>>> 5489969... v2.0.0: Rename subnet to target to avoid confusion
 * **"-p"** : Set custom ports (overrides configuration)
 * **"-m"** : Set number of threads (*Default value : 1*)
 * **"-l"** : Set log level
@@ -267,7 +271,7 @@ Your camera probably uses GST RTSP Server internally. Try the `--gst-rtsp-server
 
 > Cameradar does not detect any camera!
 
-That means that either your cameras are not streaming in RTSP or that they are not on the subnetwork you are scanning. In most cases, CCTV cameras will be on a private subnetwork. Use the `-s` option to specify your camera's subnetwork.
+That means that either your cameras are not streaming in RTSP or that they are not on the target you are scanning. In most cases, CCTV cameras will be on a private subnetwork. Use the `-s` option to specify your target.
 
 > Cameradar detects my cameras, but does not manage to access them at all!
 

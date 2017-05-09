@@ -34,16 +34,16 @@ nmap_is_ok() {
 }
 
 // Launches and checks the return of the nmap command
-// Uses the subnets specified in the conf file to launch nmap
+// Uses the target specified in the conf file to launch nmap
 bool
 mapping::run() const {
     if (nmap_is_ok()) {
-        std::string subnets = this->conf.subnets;
-        std::replace(subnets.begin(), subnets.end(), ',', ' ');
+        std::string target = this->conf.target;
+        std::replace(target.begin(), target.end(), ',', ' ');
         LOG_INFO_("Nmap 6.0 or greater found", "mapping");
         LOG_INFO_("Beginning mapping task. This may take a while.", "mapping");
         std::string cmd =
-            "nmap -T4 -A " + subnets + " -p " + this->conf.ports + " -oX " + nmap_output;
+            "nmap -T4 -A " + target + " -p " + this->conf.ports + " -oX " + nmap_output;
         LOG_DEBUG_("Launching nmap : " + cmd, "mapping");
         bool ret = launch_command(cmd);
         if (ret)

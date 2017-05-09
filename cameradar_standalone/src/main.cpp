@@ -28,11 +28,11 @@ std::pair<bool, etix::tool::opt_parse>
 parse_cmdline(int argc, char* argv[]) {
     auto opt_parse = etix::tool::opt_parse{ argc, argv };
 
-    opt_parse.optional("-s", "Set subnets (e.g.: `172.16.0.0/24`)", true);
+    opt_parse.optional("-s", "Set target (e.g.: `172.16.0.0/24`)", true);
     opt_parse.optional("-p", "Set ports (e.g.: `554,8554`)", true);
     opt_parse.optional("-c", "Path to the configuration file (-c /path/to/conf)", true);
     opt_parse.optional("-l", "Set log level (-l 4 will only show warnings and errors)", true);
-    opt_parse.optional("-d", "Launch the discovery tool on the given subnet", false);
+    opt_parse.optional("-d", "Launch the discovery tool on the given target", false);
     opt_parse.optional("-b", "Launch the bruteforce tool on all discovered devices", false);
     opt_parse.optional("-t", "Generate thumbnails from detected cameras", false);
     opt_parse.optional("-g", "Check if the stream can be opened with GStreamer", false);

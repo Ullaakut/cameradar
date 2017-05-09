@@ -28,7 +28,7 @@ namespace cameradar {
 static const std::string default_configuration_path = "conf/cameradar.conf.json";
 
 static const std::string default_ports = "554,8554";
-static const std::string default_subnets = "localhost,168.0.0.0/24";
+static const std::string default_target = "localhost,168.0.0.0/24";
 static const std::string default_thumbnail_storage_path = "/tmp";
 static const std::string default_rtsp_url_file = "conf/url.json";
 static const std::string default_rtsp_ids_file = "conf/ids.json";
@@ -37,7 +37,7 @@ static const std::string default_cache_manager_name = "dumb";
 
 struct configuration {
     std::string thumbnail_storage_path;
-    std::string subnets;
+    std::string target;
     std::string rtsp_url_file;
     std::string rtsp_ids_file;
     std::string ports;
@@ -51,14 +51,14 @@ struct configuration {
 
     configuration() = default;
     configuration(const std::string& thumbnail_storage_path,
-                  const std::string& subnets,
+                  const std::string& target,
                   const std::string& rtsp_url_file,
                   const std::string& rtsp_ids_file,
                   const std::string& cache_manager_path,
                   const std::string& cache_manager_name,
                   const std::string& ports)
     : thumbnail_storage_path(thumbnail_storage_path)
-    , subnets(subnets)
+    , target(target)
     , rtsp_url_file(rtsp_url_file)
     , rtsp_ids_file(rtsp_ids_file)
     , ports(ports)

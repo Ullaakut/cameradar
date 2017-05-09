@@ -136,10 +136,10 @@ serialize(const Json::Value& root) {
         else
             ret.second.ports = default_ports;
 
-        if (!root["subnets"].isNull())
-            ret.second.subnets = root["subnets"].asString();
+        if (!root["target"].isNull())
+            ret.second.target = root["target"].asString();
         else
-            ret.second.subnets = default_subnets;
+            ret.second.target = default_target;
 
         if (!root["rtsp_ids_file"].isNull())
             ret.second.rtsp_ids_file = root["rtsp_ids_file"].asString();
@@ -229,8 +229,8 @@ load(const std::pair<bool, etix::tool::opt_parse>& args) {
     conf.first &= conf.second.load_url();
     conf.first &= conf.second.load_ids();
 
-    if (args.second.exist("-s")) conf.second.subnets = args.second["-s"];
-    if (args.second.exist("-p")) conf.second.ports = args.second["-p"];
+    if (args.second.exist("-s")) conf.second.target = args.second["-s"];
+    if (args.second.exist("-p")) conf.second.target = args.second["-p"];
 
     return conf;
 }
