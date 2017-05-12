@@ -76,7 +76,7 @@ This file lists all versions of the repository and precises all changes.
 #### Major changes :
 * There are more command line options
   * Port can now be overridden in the command line
-  * target can now be overridden in the command line
+  * Target can now be overridden in the command line
 * Bruteforce is now multithreaded and will use as many threads as there are discovered cameras
 * Thumbnail generation is now multithreaded and will use as many threads as there are discovered cameras
 * There are now default configuration values in order to make cameradar easier to use
@@ -84,7 +84,7 @@ This file lists all versions of the repository and precises all changes.
 #### Minor changes :
 * The algorithms take external input into account (so that a 3rd party can change the DB to help Cameradar in real-time) and thus check the persistent data at each iteration
 * The default log level is now DEBUG instead of INFO
-* The bruteforce logs are now INFO instead of DEBUG
+* The attack logs are now INFO instead of DEBUG
 * The thumbnail generation logs are now INFO instead of DEBUG
 
 #### Bugs fixed
@@ -140,7 +140,7 @@ This file lists all versions of the repository and precises all changes.
 
 ## v0.2.2
 
-After doing some testing on a weirdly configured camera network in a far away Datacenter, I discovered that some Cameras needed a few tweaks to the Cameradar bruteforcing method in order to be accessed.
+After doing some testing on a weirdly configured camera network in a far away Datacenter, I discovered that some Cameras needed a few tweaks to the Cameradar attack method in order to be accessed.
 
 #### Major changes :
 

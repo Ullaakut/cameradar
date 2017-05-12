@@ -16,34 +16,33 @@
 
 #include <cachemanager.h>   // cacheManager
 #include <cameradar_task.h> // task interface
-#include <curl/curl.h>      // cURL client for discovery
 #include <describe.h>       // send DESCRIBE through cURL
 #include <future>           // std::async & std::future
-#include <logger.h>         // LOG
-#include <memory>           // std::shared_ptr
 #include <signal_handler.h> // signals
 #include <stream_model.h>   // data model
 
 namespace etix {
 namespace cameradar {
 
-class brutepath : public etix::cameradar::cameradar_task {
+class creds_attack : public etix::cameradar::cameradar_task {
     const configuration& conf;
     std::shared_ptr<cache_manager> cache;
     std::string nmap_output;
 
 public:
-    brutepath() = delete;
-    brutepath(std::shared_ptr<cache_manager> cache,
+    creds_attack() = delete;
+    creds_attack(std::shared_ptr<cache_manager> cache,
               const configuration& conf,
               std::string nmap_output)
     : conf(conf), cache(cache), nmap_output(nmap_output) {}
-    brutepath(const brutepath& ref) = delete;
+    creds_attack(const creds_attack& ref) = delete;
 
     virtual bool run() const;
 
-    bool test_path(const etix::cameradar::stream_model& cit, const std::string& it) const;
-    bool bruteforce_camera(const stream_model& stream) const;
+    bool test_ids(const etix::cameradar::stream_model& cit,
+                  const std::string& pit,
+                  const std::string& uit) const;
+    bool attack_camera_creds(const stream_model& stream) const;
 };
 }
 }
