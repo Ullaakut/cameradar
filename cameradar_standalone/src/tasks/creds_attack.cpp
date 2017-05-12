@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <cachemanager.h>
-#include <tasks/brutelogs.h>
+#include <tasks/creds_attack.h>
 
 namespace etix {
 namespace cameradar {
@@ -23,23 +23,23 @@ static const std::string no_ids_warning_ =
     "cameras. Either "
     "they have custom ids, or your ids.json file does not contain enough "
     "default routes. "
-    "Path bruteforce is impossible without the IDs.";
+    "Path dictionary attack is impossible without the credentials.";
 
 // Tries to match the detected combination of Username / Password
 // with the camera stream. Creates a resource in the DB upon
 // valid discovery
 bool
-brutelogs::test_ids(const etix::cameradar::stream_model& stream,
+creds_attack::test_ids(const etix::cameradar::stream_model& stream,
                     const std::string& password,
                     const std::string& username) const {
     bool found = false;
     std::string path = stream.service_name + "://";
     if (username != "" || password != "") { path += username + ":" + password + "@"; }
     path += stream.address + ":" + std::to_string(stream.port) + stream.route;
-    LOG_INFO_("Testing ids : " + path, "brutelogs");
+    LOG_INFO_("Testing ids : " + path, "creds_attack");
     try {
         if (curl_describe(path, true)) {
-            LOG_INFO_("[FOUND IDS] : " + path, "brutelogs");
+            LOG_INFO_("[FOUND IDS] : " + path, "creds_attack");
             found = true;
             stream_model newstream{
                 stream.address, stream.port,         username,       password,
@@ -57,7 +57,7 @@ brutelogs::test_ids(const etix::cameradar::stream_model& stream,
             (*cache)->update_stream(newstream);
         }
     } catch (const std::runtime_error& e) {
-        LOG_DEBUG_("Ids already tested : " + std::string(e.what()), "brutelogs");
+        LOG_DEBUG_("Ids already tested : " + std::string(e.what()), "creds_attack");
     }
     return found;
 }
@@ -71,7 +71,7 @@ ids_already_found(std::vector<stream_model> streams, stream_model stream) {
 }
 
 bool
-brutelogs::bruteforce_camera(const stream_model& stream) const {
+creds_attack::attack_camera_creds(const stream_model& stream) const {
     for (const auto& username : conf.usernames) {
         if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
             break;
@@ -88,15 +88,15 @@ brutelogs::bruteforce_camera(const stream_model& stream) const {
 // Tries to discover the right IDs on all RTSP streams in DB
 // Uses the ids.json file to try different combinations
 bool
-brutelogs::run() const {
+creds_attack::run() const {
     std::vector<std::future<bool>> futures;
 
     LOG_INFO_(
-        "Beginning bruteforce of the usernames and passwords task, it may "
+        "Beginning attack of the credentials , it may "
         "take a while.",
-        "brutelogs");
+        "creds_attack");
     std::vector<etix::cameradar::stream_model> streams = (*cache)->get_streams();
-    LOG_DEBUG_("Found " + std::to_string(streams.size()) + " streams in the cache", "brutelogs");
+    LOG_DEBUG_("Found " + std::to_string(streams.size()) + " streams in the cache", "creds_attack");
     size_t found = 0;
     for (const auto& stream : streams) {
         if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
@@ -106,23 +106,23 @@ brutelogs::run() const {
                           " : This camera's ids were already discovered in "
                           "the database. Skipping to "
                           "the next camera.",
-                      "brutelogs");
+                      "creds_attack");
             ++found;
         } else {
             futures.push_back(
-                std::async(std::launch::async, &brutelogs::bruteforce_camera, this, stream));
+                std::async(std::launch::async, &creds_attack::attack_camera_creds, this, stream));
         }
     }
     for (auto& fit : futures) {
         if (fit.get()) { ++found; }
     }
     if (!found) {
-        LOG_WARN_(no_ids_warning_, "brutelogs");
+        LOG_WARN_(no_ids_warning_, "creds_attack");
         return false;
     } else
         LOG_INFO_("Found " + std::to_string(found) + " ids for " + std::to_string(streams.size()) +
                       " cameras",
-                  "brutelogs");
+                  "creds_attack");
     return true;
 }
 }

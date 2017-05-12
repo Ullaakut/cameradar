@@ -7,7 +7,7 @@
 // strictly forbidden unless
 // prior written permission is obtained from Etix Labs.
 
-#include <tasks/brutepath.h>
+#include <tasks/path_attack.h>
 
 namespace etix {
 namespace cameradar {
@@ -23,18 +23,18 @@ static const std::string no_route_found_ =
 // with a route for the camera stream. Creates a resource in the DB upon
 // valid discovery
 bool
-brutepath::test_path(const stream_model& stream, const std::string& route) const {
+path_attack::test_path(const stream_model& stream, const std::string& route) const {
     bool found = false;
     std::string path = stream.service_name + "://" + stream.username + ":" + stream.password + "@" +
                        stream.address + ":" + std::to_string(stream.port);
     if (route.front() != '/') { path += "/"; }
     path += route;
-    LOG_INFO_("Testing path : " + path, "brutepath");
+    LOG_INFO_("Testing path : " + path, "path_attack");
     try {
         if (curl_describe(path, false)) {
             // insert in DB and go to the next port, print a cool message
             found = true;
-            LOG_INFO_("Discovered a valid path : [" + path + "]", "brutepath");
+            LOG_INFO_("Discovered a valid path : [" + path + "]", "path_attack");
             stream_model newstream{
                 stream.address,      stream.port,          stream.username, stream.password, route,
                 stream.service_name, stream.product,       stream.protocol, stream.state,    true,
@@ -51,7 +51,7 @@ brutepath::test_path(const stream_model& stream, const std::string& route) const
             if ((*cache)->has_changed(stream)) return true;
             (*cache)->update_stream(newstream);
         }
-    } catch (const std::runtime_error& e) { LOG_INFO_(e.what(), "brutepath"); }
+    } catch (const std::runtime_error& e) { LOG_INFO_(e.what(), "path_attack"); }
     return found;
 }
 
@@ -65,7 +65,7 @@ path_already_found(std::vector<stream_model> streams, stream_model model) {
 }
 
 bool
-brutepath::bruteforce_camera(const stream_model& stream) const {
+path_attack::attack_camera_path(const stream_model& stream) const {
     for (const auto& route : conf.paths) {
         if (signal_handler::instance().should_stop() != etix::cameradar::stop_priority::running)
             break;
@@ -78,10 +78,10 @@ brutepath::bruteforce_camera(const stream_model& stream) const {
 // Tries to discover a route on all RTSP streams in DB
 // Uses the url.json file to try different routes
 bool
-brutepath::run() const {
+path_attack::run() const {
     std::vector<std::future<bool>> futures;
 
-    LOG_INFO_("Beginning bruteforce of the camera paths task, it may take a while.", "bruteforce");
+    LOG_INFO_("Beginning attack of the camera paths, it may take a while.", "path_attack");
     std::vector<stream_model> streams = (*cache)->get_streams();
     int found = 0;
     for (const auto& stream : streams) {
@@ -91,23 +91,23 @@ brutepath::run() const {
             LOG_INFO_(stream.address +
                           " : This camera's path was already discovered in the database. Skipping "
                           "to the next camera.",
-                      "brutepath");
+                      "path_attack");
             ++found;
         } else {
             futures.push_back(
-                std::async(std::launch::async, &brutepath::bruteforce_camera, this, stream));
+                std::async(std::launch::async, &path_attack::attack_camera_path, this, stream));
         }
     }
     for (auto& fit : futures) {
         if (fit.get()) { ++found; }
     }
     if (!found) {
-        LOG_WARN_(no_route_found_, "brutepath");
+        LOG_WARN_(no_route_found_, "path_attack");
 
     } else
         LOG_INFO_("Found " + std::to_string(found) + " routes for " +
                       std::to_string(streams.size()) + " cameras",
-                  "brutepath");
+                  "path_attack");
     return true;
 }
 }

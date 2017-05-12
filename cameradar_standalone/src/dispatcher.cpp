@@ -64,11 +64,11 @@ dispatcher::do_stuff() {
     }
     if (opts.second.exist("-b")) {
         if (opts.second.exist("--gst-rtsp-server")) {
-            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
-            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::path_attack(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::creds_attack(cache, conf, nmap_output));
         } else {
-            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
-            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::creds_attack(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::path_attack(cache, conf, nmap_output));
         }
     }
     if (opts.second.exist("-t")) {
@@ -82,11 +82,11 @@ dispatcher::do_stuff() {
         queue.push_back(new etix::cameradar::mapping(cache, conf, nmap_output));
         queue.push_back(new etix::cameradar::parsing(cache, conf, nmap_output));
         if (opts.second.exist("--gst-rtsp-server")) {
-            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
-            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::path_attack(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::creds_attack(cache, conf, nmap_output));
         } else {
-            queue.push_back(new etix::cameradar::brutelogs(cache, conf, nmap_output));
-            queue.push_back(new etix::cameradar::brutepath(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::creds_attack(cache, conf, nmap_output));
+            queue.push_back(new etix::cameradar::path_attack(cache, conf, nmap_output));
         }
         queue.push_back(new etix::cameradar::thumbnail(cache, conf, nmap_output));
         queue.push_back(new etix::cameradar::stream_check(cache, conf, nmap_output));

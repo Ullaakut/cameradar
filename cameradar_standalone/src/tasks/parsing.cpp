@@ -114,7 +114,7 @@ parsing::run() const {
         if (data.size() == 0) { LOG_WARN_("No cameras were discovered", "parsing"); }
         return print_detected_cameras(data);
     } catch (const std::exception& e) {
-        LOG_ERR_("Error during parsing. brutepath aborted : " + std::string(e.what()), "parsing");
+        LOG_ERR_("Error during parsing. path_attack aborted : " + std::string(e.what()), "parsing");
         return false;
     }
 }

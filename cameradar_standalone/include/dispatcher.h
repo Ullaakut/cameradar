@@ -26,8 +26,8 @@
 // All the tasks managed by the dispatcher
 #include <tasks/mapping.h>
 #include <tasks/parsing.h>
-#include <tasks/brutelogs.h>
-#include <tasks/brutepath.h>
+#include <tasks/creds_attack.h>
+#include <tasks/path_attack.h>
 #include <tasks/thumbnail.h>
 #include <tasks/stream_check.h>
 #include <tasks/print.h>
@@ -40,8 +40,8 @@ enum class task {
     preparation,
     mapping,
     parsing,
-    brutepath,
-    bruteforce,
+    path_attack,
+    creds_attack,
     thumb_generation,
     print,
     finished
