@@ -2,9 +2,19 @@
 
 This file lists all versions of the repository and precises all changes.
 
+## v2.0.0
+
+#### Major changes:
+
+* Cameradar is no longer a C++ application but a Golang library
+* Cameraccess is a Golang application replacing the former C++ one (the C++ Cameradar image can still be used with the tag `1.1.4`)
+* The docker image for Cameraccess is lighter than the one for Cameradar
+* The Cameradar golang library enables users to build their own application around camera discovery and attack. Example of applications could be an automatic camera discovery daemon with scheduled scans, a security audit tool to check if CCTV cameras are protected from attacks by being isolated and having strong passwords, etc.
+
 ## v1.1.4
 
-#### Minor changes :
+#### Minor changes:
+
 * Simplified use of Docker image
 * Renamed MySQL table name to be more explicit
 * Refactoring of the Golang functional tester done
@@ -14,18 +24,21 @@ This file lists all versions of the repository and precises all changes.
 * Updated dictionaries to add user suggestions for Chinese cameras
 * Enhanced `result.json` file's format
 
-#### Bugfixes :
+#### Bugfixes:
+
 * Fixed a bug in the functional testing in which if the `result.json` file was not formatted correctly, the test failed but was still considered a success.
 
 ## v1.1.3
 
-#### Minor changes :
+#### Minor changes:
+
 * Added automatic pushes to DockerHub to the travis integration
 * Made travis configuration file better
 * Changed the package generation scripts to make them report errors
 * Removed old etix_rtsp_server binary from the test folder
 
-#### Bugfixes :
+#### Bugfixes:
+
 * Fixed an issue that made it mandatory to launch tests at least once so that they can work the second time
 * Fixed an issue that made the golang testing tool not compile in the testing script
 * Fixed an issue that made the golang testing tool sometimes ignore some tests
@@ -33,19 +46,22 @@ This file lists all versions of the repository and precises all changes.
 
 ## v1.1.2
 
-#### Minor changes :
+#### Minor changes:
+
 * Added travis integration
 * Added default environment value for Docker deployment
 * Updated docker image description with new easy usage
 * Updated README badges style (replaced flat with square-flat)
 * Build last package can now also generate a debug package if given the `Debug` command-line argument
 
-#### Known issues :
+#### Known issues
+
 * There is still the issue with Camera Emulation Server, see the [previous version's patchnote](#v1.1.1) for more information.
 
 ## v1.1.1
 
-#### Minor changes :
+#### Minor changes:
+
 * Removed unnecessary null pointer checks (thanks to https://github.com/elfring)
 * Updated package description
 * Removed debug message in CMake build
@@ -60,7 +76,8 @@ This file lists all versions of the repository and precises all changes.
   * JUnit output now contains errors which makes debugging much easier
 * Added header files where it was forgotten
 
-#### Bugfixes :
+#### Bugfixes:
+
 * Fixed an issue where if you loose your internet connection during thumbnail generation, FFMpeg would get stuck forever and thus Cameradar would never finish
 * Fixed an issue where multithreading could cause crashes
 * Fixed an issue where the routes dictionary was mistaken for the credentials dictionary
@@ -68,12 +85,14 @@ This file lists all versions of the repository and precises all changes.
   * Fixed automated camera generation
   * Fixed docker IP address resolution
 
-#### Known issues :
+#### Known issues:
+
 * There is an issue with Camera Emulation Server that makes it impossible for Cameradar to generate thumbnails, which is why right now the verification of the thumbnails presence is commented and it is assumed correct. It is probably an issue with GST-RTSP-Server but requires investigation.
 
 ## v1.1.0
 
-#### Major changes :
+#### Major changes:
+
 * There are more command line options
   * Port can now be overridden in the command line
   * Target can now be overridden in the command line
@@ -81,13 +100,15 @@ This file lists all versions of the repository and precises all changes.
 * Thumbnail generation is now multithreaded and will use as many threads as there are discovered cameras
 * There are now default configuration values in order to make cameradar easier to use
 
-#### Minor changes :
+#### Minor changes:
+
 * The algorithms take external input into account (so that a 3rd party can change the DB to help Cameradar in real-time) and thus check the persistent data at each iteration
 * The default log level is now DEBUG instead of INFO
 * The attack logs are now INFO instead of DEBUG
 * The thumbnail generation logs are now INFO instead of DEBUG
 
 #### Bugs fixed
+
 * Fixed a bug in which the MySQL cache manager would consider a camera with known ids as having a valid path even if it weren't
 * Fixed a bug in which TCP RTSP streams would not generate thumbnails
 
@@ -98,23 +119,23 @@ This file lists all versions of the repository and precises all changes.
 
 ## v1.0.4
 
-#### Bugs fixed :
+#### Bugs fixed:
 
 * Fixed nmap package detection
 
 ## v1.0.3
 
-#### Bugs fixed :
+#### Bugs fixed:
 
 * Corrected GStreamer check
 
 ## v1.0.2
 
-#### Bugs fixed :
+#### Bugs fixed:
 
 * Fixed issues in MySQL Cache Manager
 
-#### Minor changes :
+#### Minor changes:
 
 * Added useful debug logs
 
@@ -122,11 +143,11 @@ This file lists all versions of the repository and precises all changes.
 
 ### Ubuntu 16.04 Release
 
-#### Major changes :
+#### Major changes:
 
 * The Docker deployment is now done using Ubuntu 16.04 instead of Ubuntu 15.10, so that it uses more recent packages.
 
-#### Minor changes :
+#### Minor changes:
 
 * Removed useless dependencies
 
@@ -134,7 +155,7 @@ This file lists all versions of the repository and precises all changes.
 
 ### First production-ready release
 
-#### Major changes :
+#### Major changes:
 
 * Added functional testing
 
@@ -142,15 +163,15 @@ This file lists all versions of the repository and precises all changes.
 
 After doing some testing on a weirdly configured camera network in a far away Datacenter, I discovered that some Cameras needed a few tweaks to the Cameradar attack method in order to be accessed.
 
-#### Major changes :
+#### Major changes:
 
 * Cameradar can access Cameras that are configured to always send 400 Bad Requests responses
 
-#### Minor changes :
+#### Minor changes:
 
 * Changed iterator name from `it` to `stream` in dumb cache manager to improve code readability
 
-#### Bugfixes :
+#### Bugfixes:
 
 * Cameradar no longer considers a timing out Camera as an accessible stream
 

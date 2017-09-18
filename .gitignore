@@ -1,46 +1,15 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
 # Results
 result.json
-test-results.xml
+*.xml
 
-# Build
-build/
-
-# JetBrains
+# IDE config
 .idea/
+.vscode/
 
 # Deps
-deps/boost/
-deps/jsoncpp/
-mysql-connector/
+cpp/deps/jsoncpp/
+cpp/deps/mysql-connector/
+cpp/deployment/cameradar_*_Release_Linux.tar.gz
 
 # Test
 test/cameradartest.conf.json
