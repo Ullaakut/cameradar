@@ -1,7 +1,7 @@
 FROM golang:alpine
-WORKDIR /go/src/github.com/EtixLabs/cameradar
+WORKDIR /go/src/github.com/EtixLabs/cameradar/cameraccess
 
-COPY . /go/src/github.com/EtixLabs/cameradar/cameraccess
+COPY . /go/src/github.com/EtixLabs/cameradar
 
 RUN apk update && \
     apk upgrade && \
