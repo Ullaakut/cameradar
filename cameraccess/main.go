@@ -40,8 +40,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	streams, _ := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
-
 	credentials, err := cmrdr.LoadCredentials(options.Credentials)
 	if err != nil {
 		color.Red("Invalid credentials dictionary: %s", err.Error())
@@ -54,8 +52,8 @@ func main() {
 		return
 	}
 
+	streams, _ := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
 	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
-
 	streams, _ = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 
 	prettyPrint(streams)
@@ -73,26 +71,26 @@ func prettyPrint(streams []cmrdr.Stream) {
 	if len(streams) > 0 {
 		for _, stream := range streams {
 			if stream.CredentialsFound && stream.RouteFound {
-				fmt.Printf("Device RTSP URL:\t%s\n", blue(cmrdr.RTSPURL(stream)))
+				fmt.Printf("%s\tDevice RTSP URL:\t%s\n", green("\xE2\x96\xB6"), blue(cmrdr.RTSPURL(stream)))
 				success++
 			} else {
-				fmt.Printf("Admin panel URL:\t%s %s\n", yellow(cmrdr.AdminPanelURL(stream)), white("You can use this URL to try attacking the camera's admin panel instead."))
+				fmt.Printf("%s\tAdmin panel URL:\t%s %s\n", red("\xE2\x96\xB6"), yellow(cmrdr.AdminPanelURL(stream)), white("You can use this URL to try attacking the camera's admin panel instead."))
 			}
 
-			fmt.Printf("Device model:\t\t%s\n\n", stream.Device)
-			fmt.Printf("IP address:\t\t%s\n", stream.Address)
-			fmt.Printf("RTSP port:\t\t%d\n", stream.Port)
+			fmt.Printf("\tDevice model:\t\t%s\n\n", stream.Device)
+			fmt.Printf("\tIP address:\t\t%s\n", stream.Address)
+			fmt.Printf("\tRTSP port:\t\t%d\n", stream.Port)
 			if stream.CredentialsFound {
-				fmt.Printf("Username:\t\t%s\n", green(stream.Username))
-				fmt.Printf("Password:\t\t%s\n", green(stream.Password))
+				fmt.Printf("\tUsername:\t\t%s\n", green(stream.Username))
+				fmt.Printf("\tPassword:\t\t%s\n", green(stream.Password))
 			} else {
-				fmt.Printf("Username:\t\t%s\n", red("not found"))
-				fmt.Printf("Password:\t\t%s\n", red("not found"))
+				fmt.Printf("\tUsername:\t\t%s\n", red("not found"))
+				fmt.Printf("\tPassword:\t\t%s\n", red("not found"))
 			}
 			if stream.RouteFound {
-				fmt.Printf("RTSP route:\t\t%s\n\n\n", green("/"+stream.Route))
+				fmt.Printf("\tRTSP route:\t\t%s\n\n\n", green("/"+stream.Route))
 			} else {
-				fmt.Printf("RTSP route:\t\t%s\n\n\n", red("not found"))
+				fmt.Printf("\tRTSP route:\t\t%s\n\n\n", red("not found"))
 			}
 		}
 		if success > 1 {

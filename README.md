@@ -29,38 +29,43 @@
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [License](#license)
 
-## Docker Image
+## Docker Image for Cameraccess
 
 Install [docker](https://docs.docker.com/engine/installation/) on your machine, and run the following command:
 
 ```bash
-docker run ullaakut/cameradar \
-           -t YOUR_TARGET
+docker run ullaakut/cameradar <command-line options>
 ```
 
-e.g.: `docker run ullaakut/cameradar -t 192.168.100.0/24` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams.
+[See command-line options](#command-line-options).
+
+e.g.: `docker run ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output lots of logs.
 
 * `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those separated by commas (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
-* if you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
+* If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
+* If you use the `-r` and `-c` options to specify your
 
 Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information and more command-line options.
 
 For more complex use of the Docker image, see the `Environment variables` part of [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/).
 
+### Library
+
 ### Dependencies of the library
 
 - `curl-dev` / `libcurl` (depending on your OS)
 - `nmap`
+- `github.com/pkg/errors`
+- `gopkg.in/go-playground/validator.v9`
+- `github.com/andelf/go-curl`
 
-### Library
-
-#### Installing
+#### Installing the library
 
 ```bash
-  $ go get github.com/EtixLabs/cameradar
+  go get github.com/EtixLabs/cameradar
 ```
 
-After this command *cameradar* is ready to use. Its source will be in:
+After this command, the *cameradar* library is ready to use. Its source will be in:
 
     $GOPATH/src/pkg/github.com/EtixLabs/cameradar
 
@@ -75,9 +80,6 @@ You can use the cameradar library for simple discovery purposes if you don't nee
 <p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Discover.png"/></p>
 The Discover function calls the RunNmap function as well as the ParseNmapResults function and returns the discovered streams without attempting any attack.
 It will use default values for its calls to RunNmap:
-
-* The nmap result file path will be set to `/tmp/cameradar_scan.xml`
-* The nmap speed preset will be set to 4 (aggressive). This is suitable for most modern networks.
 
 <p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/nmapTimePresets.png"/></p>
 This describes the nmap time presets. You can pass a value between 1 and 5 as described in this table, to the RunNmap function.
@@ -104,6 +106,18 @@ Here are the different data models useful to use the exposed functions of the ca
 
 <p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Models.png"/></p>
 
+#### Dictionary loaders
+
+The cameradar library also provides two functions that take file paths as inputs and return the appropriate data models filled.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/LoadCredentials.png"/></p>
+
+LoadCredentials takes a JSON file that has the same format as [this one](dictionary/credentials.json).
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/LoadRoutes.png"/></p>
+
+LoadRoutes takes a file that has the same format as [this one](dictionary/routes). Warning: This file is not JSON.
+
 ### Configuration
 
 The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameraccess application will scan the 554 and 8554 ports.
@@ -112,22 +126,22 @@ e.g.: `docker run ullaakut/cameradar -p "18554,19000-19010" -t localhost` will s
 
 You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
 
-e.g.: `docker run -v /my/folder/with/dictionaries:/tmp/dictionaries ullaakut/cameradar -d  -t localhost` will put the contents of your folder containing dictionaries in the docker image and will use it for the dictionary attack instead of the default dictionaries provided in the cameradar repo.
+e.g.: ```bash
+docker run -v /my/folder/with/dictionaries:/tmp/dictionaries \
+           ullaakut/cameradar \
+           -r "/tmp/dictionaries/my_routes" \
+           -c "/tmp/dictionaries/my_credentials.json" \
+           -t 172.19.124.0/24
+```
+
+This will put the contents of your folder containing dictionaries in the docker image and will use it for the dictionary attack instead of the default dictionaries provided in the cameradar repo.
 
 ## Output
 
 For each camera, Cameraccess will output this:
 
-```text
-Device accessed:  rtsp://admin:12345@192.168.100.1:554/live.sdp
-Device model:     Vivotek FD8134V
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Output.png"/></p>
 
-IP address:       173.16.100.45
-RTSP port:        554
-Username:         admin
-Password:         12345
-RTSP route:       /live.sdp
-```
 
 ## Check camera access
 
