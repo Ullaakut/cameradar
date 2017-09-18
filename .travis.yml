@@ -6,53 +6,13 @@ before_install:
 - echo "Testing Docker Hub credentials"
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
 - echo "Docker Hub credentials are working"
-- sudo apt-get update -qq
-- sudo apt-get install -y software-properties-common
-- sudo add-apt-repository -y ppa:mc3man/trusty-media
-- sudo add-apt-repository -y ppa:george-edison55/cmake-3.x
-- sudo apt-get update -qq
-- sudo apt-get install -y nmap
-- sudo apt-get install -y ffmpeg
-- sudo apt-get install -y cmake
-- sudo apt-get install -y libboost-all-dev
-- sudo apt-get install -y libgstreamer1.0-dev
-- sudo apt-get install -y gstreamer1.0-plugins-base
-- sudo apt-get install -y gstreamer1.0-plugins-good
-- sudo apt-get install -y libcurl4-openssl-dev
-- sudo apt-get install -y libmysqlclient18
-- sudo apt-get install -y mysql-client
 
 install:
-- export DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
-- export PACKAGE_NAME="cameradar_*_Debug_Linux"
-
-matrix:
-  include:
-    - os: linux
-      env: TEST_TYPE='BUILD' WORKDIR='deployment' COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 CMAKE_CXX_COMPILER=g++-5
-      addons:
-        apt:
-          packages:
-            - g++-5
-          sources: &sources
-            - ubuntu-toolchain-r-test
-    - os: linux
-      env: TEST_TYPE='TEST' WORKDIR='test' COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 CMAKE_CXX_COMPILER=g++-5
-      addons:
-        apt:
-          packages:
-            - g++-5
-          sources: &sources
-            - ubuntu-toolchain-r-test
+- docker build -t cameradar .
 
 script:
-- cd ${WORKDIR}
-- ./build_last_package.sh Debug
-- tar xvf ${PACKAGE_NAME}.tar.gz
-- find ${DEPS_DIR} -name "*.so*" -exec cp {} ${PACKAGE_NAME}/libraries \;
-- tar -czvf ${PACKAGE_NAME}.tar.gz ${PACKAGE_NAME}
-- if [[ "$TEST_TYPE" == "BUILD" ]]; then docker build -t cameradar . && docker run -v /tmp/thumbs:/tmp/thumbs cameradar; else ./test.sh ; fi
+- docker run cameradar
 
 after_success:
 - echo "Test Success - Branch($TRAVIS_BRANCH) Pull Request($TRAVIS_PULL_REQUEST) Tag($TRAVIS_TAG)"
-- if [[ "$TRAVIS_BRANCH" == "master" ]]; then echo -e "Push Container to Docker Hub" && docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && docker tag cameradar $DOCKER_REPO:$TRAVIS_TAG && docker tag cameradar $DOCKER_REPO:latest && docker push $DOCKER_REPO; fi
+- if [[ "$TRAVIS_BRANCH" == "master" ]]; then echo -e "Push Container to Docker Hub" && docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && docker tag cameradar $DOCKER_REPO:latest && docker push $DOCKER_REPO; fi
