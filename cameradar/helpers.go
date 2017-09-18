@@ -31,3 +31,8 @@ func replace(streams []Stream, new Stream) []Stream {
 func RTSPURL(stream Stream) string {
 	return "rtsp://" + stream.Username + ":" + stream.Password + "@" + stream.Address + ":" + fmt.Sprint(stream.Port) + "/" + stream.Route
 }
+
+// AdminPanelURL returns the URL to the camera's admin panel
+func AdminPanelURL(stream Stream) string {
+	return "http://" + stream.Address + "/"
+}

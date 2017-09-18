@@ -20,13 +20,9 @@ type Stream struct {
 	Route    string
 	Address  string `validate:"required"`
 	Port     uint   `validate:"required"`
-}
 
-// Attack represents the state of the attack on a stream
-type Attack struct {
-	stream           Stream
-	credentialsFound bool
-	routeFound       bool
+	CredentialsFound bool
+	RouteFound       bool
 }
 
 // Credentials is a map of credentials

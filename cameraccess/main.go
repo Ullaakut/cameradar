@@ -23,12 +23,14 @@ import (
 )
 
 type options struct {
-	Target     string `short:"t" long:"target" description:"The target on which to scan for open RTSP streams - required" required:"true"`
-	Ports      string `short:"p" long:"ports" description:"The ports on which to search for RTSP streams" default:"554,8554"`
-	OutputFile string `short:"o" long:"nmap-output" description:"The path where nmap will create its XML result file" default:"/tmp/cameradar_scan.xml"`
-	Speed      int    `short:"s" long:"speed" description:"The nmap speed preset to use" default:"4"`
-	Timeout    int    `short:"T" long:"timeout" description:"The timeout in miliseconds to use for attack attempts" default:"1000"`
-	EnableLogs bool   `short:"l" long:"log" description:"Enable the logs for nmap's output to stdout"`
+	Target      string `short:"t" long:"target" description:"The target on which to scan for open RTSP streams - required" required:"true"`
+	Ports       string `short:"p" long:"ports" description:"The ports on which to search for RTSP streams" default:"554,8554"`
+	OutputFile  string `short:"o" long:"nmap-output" description:"The path where nmap will create its XML result file" default:"/tmp/cameradar_scan.xml"`
+	Routes      string `short:"r" long:"custom-routes" description:"The path on which to load a custom routes dictionary" default:"./dictionaries/routes"`
+	Credentials string `short:"c" long:"custom-credentials" description:"The path on which to load a custom credentials JSON dictionary" default:"./dictionaries/credentials.json"`
+	Speed       int    `short:"s" long:"speed" description:"The nmap speed preset to use" default:"4"`
+	Timeout     int    `short:"T" long:"timeout" description:"The timeout in miliseconds to use for attack attempts" default:"1000"`
+	EnableLogs  bool   `short:"l" long:"log" description:"Enable the logs for nmap's output to stdout"`
 }
 
 func main() {
@@ -38,54 +40,67 @@ func main() {
 		os.Exit(0)
 	}
 
-	streams, err := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
-	if err != nil {
-		color.Red("Cloud not discover")
-	}
+	streams, _ := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
 
-	credentials, err := cmrdr.LoadCredentials("./dictionaries/credentials.json")
+	credentials, err := cmrdr.LoadCredentials(options.Credentials)
 	if err != nil {
 		color.Red("Invalid credentials dictionary: %s", err.Error())
 		return
 	}
 
-	routes, err := cmrdr.LoadRoutes("./dictionaries/routes")
+	routes, err := cmrdr.LoadRoutes(options.Routes)
 	if err != nil {
 		color.Red("Invalid routes dictionary: %s", err.Error())
 		return
 	}
 
-	streams, err = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
-	if err != nil {
-		color.Red("Could not attack routes")
-	}
+	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 
-	streams, err = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
-	if err != nil {
-		color.Red("Cloud not attack credentials")
-	}
+	streams, _ = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 
 	prettyPrint(streams)
 }
 
 func prettyPrint(streams []cmrdr.Stream) {
+	yellow := color.New(color.FgYellow, color.Bold, color.Underline).SprintFunc()
 	blue := color.New(color.FgBlue, color.Underline).SprintFunc()
 	green := color.New(color.FgGreen, color.Bold).SprintFunc()
 	red := color.New(color.FgRed, color.Bold).SprintFunc()
+	white := color.New(color.Italic).SprintFunc()
+
+	success := 0
+
 	if len(streams) > 0 {
 		for _, stream := range streams {
-			fmt.Printf("Device RTSP URL:\t%s\n", blue(cmrdr.RTSPURL(stream)))
+			if stream.CredentialsFound && stream.RouteFound {
+				fmt.Printf("Device RTSP URL:\t%s\n", blue(cmrdr.RTSPURL(stream)))
+				success++
+			} else {
+				fmt.Printf("Admin panel URL:\t%s %s\n", yellow(cmrdr.AdminPanelURL(stream)), white("You can use this URL to try attacking the camera's admin panel instead."))
+			}
+
 			fmt.Printf("Device model:\t\t%s\n\n", stream.Device)
 			fmt.Printf("IP address:\t\t%s\n", stream.Address)
 			fmt.Printf("RTSP port:\t\t%d\n", stream.Port)
-			fmt.Printf("Username:\t\t%s\n", green(stream.Username))
-			fmt.Printf("Password:\t\t%s\n", green(stream.Password))
-			fmt.Printf("RTSP route:\t\t%s\n\n\n", green("/"+stream.Route))
+			if stream.CredentialsFound {
+				fmt.Printf("Username:\t\t%s\n", green(stream.Username))
+				fmt.Printf("Password:\t\t%s\n", green(stream.Password))
+			} else {
+				fmt.Printf("Username:\t\t%s\n", red("not found"))
+				fmt.Printf("Password:\t\t%s\n", red("not found"))
+			}
+			if stream.RouteFound {
+				fmt.Printf("RTSP route:\t\t%s\n\n\n", green("/"+stream.Route))
+			} else {
+				fmt.Printf("RTSP route:\t\t%s\n\n\n", red("not found"))
+			}
 		}
-		if len(streams) > 1 {
+		if success > 1 {
 			fmt.Printf("%s Successful attack: %s devices were accessed", green("\xE2\x9C\x94"), green(len(streams)))
-		} else {
+		} else if success == 1 {
 			fmt.Printf("%s Successful attack: %s device was accessed", green("\xE2\x9C\x94"), green(len(streams)))
+		} else {
+			fmt.Printf("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.", red("\xE2\x9C\x96"))
 		}
 	} else {
 		fmt.Printf("%s No streams were found. Please make sure that your target is on an accessible network.", red("\xE2\x9C\x96"))
