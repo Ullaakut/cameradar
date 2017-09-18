@@ -21,7 +21,7 @@ import (
 	v "gopkg.in/go-playground/validator.v9"
 )
 
-// HACK: See // TODO: Add link
+// HACK: See https://stackoverflow.com/questions/3572397/lib-curl-in-c-disable-printing
 func doNotWrite([]uint8, interface{}) bool {
 	return true
 }
