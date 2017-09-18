@@ -2,20 +2,18 @@
 
 This file will give you guidelines on how to contribute if you want to, and will list known contributors to this repo.
 
-If you're not into software development or not into C++, you can still help. Updating the dictionaries for example, would be a really cool contribution! Just make sure the ids and routes you add are **default constructor credentials** and not custom credentials.
+If you're not into software development or not into Golang, you can still help. Updating the dictionaries for example, would be a really cool contribution! Just make sure the credentials and routes you add are **default constructor credentials** and not custom credentials.
 
 If you have other cool ideas, feel free to share them with me at [brendan.leglaunec@etixgroup.com](mailto:brendan.leglaunec@etixgroup.com) !
 
 ## Version 2.0.0
 
-- *Cameradar* will become the name of the library.
-- *Cameraccess* will be the name of the binary that uses Cameradar to _hack_ the cameras.
+- *Cameradar* is the name of the Golang library.
+- *Cameraccess* is the name of the binary that uses Cameradar to discover and access the cameras.
 
 This quite big refactoring comes from the fact that most users who want to access cameras either want to launch it with the basic cache manager, mostly using the docker image already provided in this repository, or will not use it because it does not integrate into their software solution without sharing their database with Cameradar, which would cause issues with database migrations for example.
 
-Transforming it into a library will allow developers to use it directly in their own code exactly as they want, allowing for a greater flexibility. The Cameraccess binary will then provide a simple use example as well as maintaining the current simple way of using Cameradar for non-developers.
-
-This is quite a huge task compared to the tiny changes I usually do on Cameradar, so it might take a long time.
+Transforming it into a library allows developers to use it directly in their own code exactly as they want, allowing for a greater flexibility. The Cameraccess binary also provides a simple use example as well as maintains the old simple way of using Cameradar for non-developers.
 
 ## Workflow
 
@@ -52,16 +50,6 @@ If Travis CI reports errors, you should be able to view the logs [by clicking he
 
 This part will tell you about what are the general coding guidelines I want to keep on this project.
 
-#### C++
-
-+ All C++ code has to be formatted using `clang-format`
-+ The namespaces should be respected and new files should implement the same namespace structure as the other files
-+ Forward declarations should be used as much as possible
-+ Use smart pointers instead of raw pointers as much as possible
-+ Each constructor with only one parameter which is not a copy or a move constructor must be marked explicit
-+ Use C++11 specifiers as much as possible *(override, noexcept)*
-+ Variable and function names must always be in *snake_case*.
-
 #### Golang
 
 + All Golang code has to be formated using `gofmt`
@@ -69,7 +57,7 @@ This part will tell you about what are the general coding guidelines I want to k
 
 #### Shell scripting
 
-+ Just make sure Codacy does not trigger warnings on your code. I probably suck more than you in shell anyway, who would I be to give you guidelines on it?
++ Just make sure Codacy does not trigger warnings on your code.
 
 ## Contributors
 

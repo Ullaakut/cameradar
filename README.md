@@ -6,7 +6,6 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
 [![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat)](https://travis-ci.org/EtixLabs/cameradar)
 [![Go Report Card](https://goreportcard.com/badge/github.com/EtixLabs/cameradar)](https://goreportcard.com/report/github.com/EtixLabs/cameradar)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6ab80cfa7069413e8e7d7e18320309e3)](https://www.codacy.com/app/brendan-le-glaunec/cameradar?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=EtixLabs/cameradar&amp;utm_campaign=Badge_Grade)
 [![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 #### Cameradar allows you to:
@@ -46,10 +45,6 @@ e.g.: `docker run ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
 * If you use the `-r` and `-c` options to specify your
 
-Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information and more command-line options.
-
-For more complex use of the Docker image, see the `Environment variables` part of [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/).
-
 ### Library
 
 ### Dependencies of the library
@@ -62,9 +57,7 @@ For more complex use of the Docker image, see the `Environment variables` part o
 
 #### Installing the library
 
-```bash
-  go get github.com/EtixLabs/cameradar
-```
+`go get github.com/EtixLabs/cameradar`
 
 After this command, the *cameradar* library is ready to use. Its source will be in:
 
@@ -82,13 +75,13 @@ You can use the cameradar library for simple discovery purposes if you don't nee
 The Discover function calls the RunNmap function as well as the ParseNmapResults function and returns the discovered streams without attempting any attack.
 It will use default values for its calls to RunNmap:
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/nmapTimePresets.png"/></p>
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/NmapPresets.png"/></p>
 This describes the nmap time presets. You can pass a value between 1 and 5 as described in this table, to the RunNmap function.
 
 <p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/RunNmap.png"/></p>
 The RunNmap function will execute nmap and generate an XML file containing the results of the scan.
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/ParseNmapResult.png"/></p>
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/ParseNmapResults.png"/></p>
 The ParseNmapResult function will open the specified XML file and return all open RTSP streams found within it.
 
 #### Attack
@@ -119,6 +112,12 @@ LoadCredentials takes a JSON file that has the same format as [this one](diction
 
 LoadRoutes takes a file that has the same format as [this one](dictionary/routes). Warning: This file is not JSON.
 
+#### Miscellaneous
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/RTSPURL.png"/></p>
+
+RTSPURL allows you to generate the full URL of a stream.
+
 ### Configuration
 
 The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameraccess application will scan the 554 and 8554 ports.
@@ -127,7 +126,9 @@ e.g.: `docker run ullaakut/cameradar -p "18554,19000-19010" -t localhost` will s
 
 You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
 
-e.g.: ```bash
+e.g.:
+
+```bash
 docker run -v /my/folder/with/dictionaries:/tmp/dictionaries \
            ullaakut/cameradar \
            -r "/tmp/dictionaries/my_routes" \
@@ -164,7 +165,7 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 
 ## Environment variables
 
-TODO
+Not yet implemented.
 
 ## Contribution
 
