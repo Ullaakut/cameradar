@@ -6,7 +6,6 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
 [![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat)](https://travis-ci.org/EtixLabs/cameradar)
 [![Go Report Card](https://goreportcard.com/badge/github.com/EtixLabs/cameradar)](https://goreportcard.com/report/github.com/EtixLabs/cameradar)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6ab80cfa7069413e8e7d7e18320309e3)](https://www.codacy.com/app/brendan-le-glaunec/cameradar?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=EtixLabs/cameradar&amp;utm_campaign=Badge_Grade)
 [![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
 
 #### Cameradar allows you to:
