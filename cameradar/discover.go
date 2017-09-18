@@ -24,7 +24,7 @@ import (
 	v "gopkg.in/go-playground/validator.v9"
 )
 
-// These constants detail the different level of nmap aggressivity
+// These constants detail the different level of nmap speed presets
 // that determine the timeout values and wether or not nmap makes use of parallelism
 const (
 	// PARANOID 	NO PARALLELISM | 5min  timeout | 100ms to 10s    round-trip time timeout	 |  5mn   scan delay
@@ -41,12 +41,12 @@ const (
 	INSANE = 5
 )
 
-// RunNmap runs nmap on the specified targets's specified ports, using the given nmapAggressivity
-func RunNmap(targets, ports string, resultFilePath string, nmapAggressivity uint8) error {
+// RunNmap runs nmap on the specified targets's specified ports, using the given nmap speed
+func RunNmap(targets, ports string, resultFilePath string, nmapSpeed uint8) error {
 	// Prepare nmap command
 	cmd := exec.Command(
 		"nmap",
-		fmt.Sprintf("-T%d", nmapAggressivity),
+		fmt.Sprintf("-T%d", nmapSpeed),
 		"-A",
 		targets,
 		"-p",

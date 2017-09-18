@@ -1,6 +1,6 @@
 # Cameradar
 
-## An RTSP surveillance camera access multitool
+## An RTSP stream access tool that comes with its library
 
 [![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat)](#license)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
@@ -11,10 +11,11 @@
 
 #### Cameradar allows you to:
 
-* **Detect open RTSP hosts** on any accessible target
-* Get their public info (hostname, port, etc.)
-* Launch automated dictionary attacks to get their **stream route** (for example /live.sdp)
+* **Detect open RTSP hosts** on any accessible target host
+* Detect which device model is streaming
+* Launch automated dictionary attacks to get their **stream route** (e.g.: `/live.sdp`)
 * Launch automated dictionary attacks to get the **username and password** of the cameras
+* Retrieve a complete and user-friendly report of the results
 
 <p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/Cameradar.png" width="350"/></p>
 
@@ -31,84 +32,70 @@
 
 ## Docker Image
 
-Install docker on your machine, and run the following command:
+Install [docker](https://docs.docker.com/engine/installation/) on your machine, and run the following command:
 
-```
+```bash
 docker run  --net=host \
-            -v /tmp/thumbs/:/tmp/thumbs \
-            -e CAMERAS_TARGET=your_target \
-            ullaakut/cameradar
+            ullaakut/cameradar \
+            -t YOUR_TARGET
 ```
 
-* `your_target` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those separated by commas (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
+e.g.: `docker run --net=host ullaakut/cameradar -t 192.168.100.0/24` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams.
+
+* `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those separated by commas (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
 * if you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
 
 Check [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/) for more information and more command-line options.
 
 For more complex use of the Docker image, see the `Environment variables` part of [Cameradar's readme on the Docker Hub](https://hub.docker.com/r/ullaakut/cameradar/).
 
+### Dependencies of the library
+
+- `curl-dev` / `libcurl` (depending on your OS)
+- `nmap`
+
+### Library
+
+Here is an overview of the exposed functions of this library
+
 ### Configuration
 
 The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameraccess application will scan the 554 and 8554 ports.
 
+e.g.: `docker run --net=host ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
+
 You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
 
-The thumbnail storage path should be a **valid and accessible directory** in which the thumbnails will be stored.
-
-The cache manager path and name variables are used to change the cache manager you want to load into Cameradar. If you want to, you can code your own cache manager using a database, a file, a remote server, [...]. Feel free to share it by creating a merge request on this repository if you developed a generic manager (It must not be specific to your company's infrastructure).
+e.g.: `docker run --net=host -v /my/folder/with/dictionaries:/tmp/dictionaries ullaakut/cameradar -d  -t localhost` will put the contents of your folder containing dictionaries in the docker image and will use it for the dictionary attack instead of the default dictionaries provided in the cameradar repo.
 
 ## Output
 
-For each camera, Cameradar will output these JSON objects :
+For each camera, Cameraccess will output this:
 
-```json
-{
-   "address" : "173.16.100.45",
-   "ids_found" : true,
-   "password" : "123456",
-   "path_found" : true,
-   "port" : 554,
-   "device" : "Vivotek FD9381-HTV",
-   "route" : "/live.sdp",
-   "username" : "admin"
-}
+```text
+Device accessed:  rtsp://admin:12345@192.168.100.1:554/live.sdp
+Device model:     Vivotek FD8134V
+
+IP address:       173.16.100.45
+RTSP port:        554
+Username:         admin
+Password:         12345
+RTSP route:       /live.sdp
 ```
 
 ## Check camera access
 
-If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI to connect to the RTSP stream using this format : `rtsp://username:password@address:port/route`
+If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI or the command-line to connect to the RTSP stream using this format : `rtsp://username:password@address:port/route`
 
-With the above result, the RTSP URL would be `rtsp://admin:123456@173.16.100.45:554/live.sdp`
-
-If you're still in your console however, you can go even faster by using **vlc in commmand-line** and just run `vlc rtsp://username:password@address:port/route` with the camera's info instead of the placeholders.
+With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:554/live.sdp`
 
 ## Command line options
 
-* **"-c"** : Set a custom path to the configuration file (-c /path/to/conf)
-* **"-s"** : Set custom target (overrides configuration) : You can use this argument in many ways, using a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`)
-* **"-p"** : Set custom ports (overrides configuration)
-* **"-m"** : Set number of threads (*Default value : 1*)
-* **"-l"** : Set log level
-  * **"-l 1"** : Log level DEBUG
-    * _Will print everything including debugging logs_
-  * **"-l 2"** : Log level INFO
-    * _Prints every normal information_
-  * **"-l 4"** : Log level WARNING
-    * _Only prints warning and errors_
-  * **"-l 5"** : Log level ERROR
-    * _Only prints errors_
-  * **"-l 6"** : Log level CRITICAL
-    * _Doesn't print anything since Cameradar can't have critical failures right now, however you can use this level to debug your own code easily or if you add new critical layers_
-* **"-d"** : Launch the discovery tool
-* **"-b"** : Launch the dictionary attack tool on all discovered devices
-  * Needs either to be launched with the -d option or to use an advanced cache manager (DB, file, ...) with data already present
-* **"-t"** : Generate thumbnails from detected cameras
-  * Needs either to be launched with the -d option or to use an advanced cache manager (DB, file, ...) with data already present
-* **"-g"** : Check if the stream can be opened with GStreamer
-  * Needs either to be launched with the -d option or to use an advanced cache manager (DB, file, ...) with data already present
-* **"-v"** : Display Cameradar's version
+* **"-t, --target"**: Set custom target.
+* **"-p, --ports"**: (Default: 554,8554) Set custom ports.
+* **"-s, --speed"**: (Default: 4) Set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
+* **"-T, --timeout"**: (Default: 2000ms) Set custom timeout value in miliseconds after which an attack attempt without an answer should give up.
 * **"-h"** : Display this help
-* **"--gst-rtsp-server"** : Use this option if the attack does not seem to work (only detects the username but not the path, or the opposite). This option will switch the order of the attacks to prioritize path over credentials, which is the way priority is handled for cameras that use GStreamer's RTSP server.
 
 ## Contribution
 
@@ -116,25 +103,25 @@ See [the contribution document](/CONTRIBUTION.md) to get started.
 
 ## Frequently Asked Questions
 
-> My camera's credentials are guessed by Cameradar but the RTSP URL is not!
-
-Your camera probably uses GST RTSP Server internally. Try the `--gst-rtsp-server` command-line option, and if it does not work, send me the Cameradar output in DEBUG mode (`-l 1`) and I will help you.
-
 > Cameradar does not detect any camera!
 
-That means that either your cameras are not streaming in RTSP or that they are not on the target you are scanning. In most cases, CCTV cameras will be on a private subnetwork. Use the `-s` option to specify your target.
+That means that either your cameras are not streaming in RTSP or that they are not on the target you are scanning. In most cases, CCTV cameras will be on a private subnetwork, isolated from the internet. Use the `-t` option to specify your target.
 
 > Cameradar detects my cameras, but does not manage to access them at all!
 
-Maybe your cameras have been configured and the credentials / URL have been changed. Cameradar only guesses using default constructor values. However, you can use your own dictionary in which you just have to add your passwords. To do that, see how the [configuration](#configuration) works. Also, maybe your camera's credentials are not yet known, in which case if you find them it would be very nice to add them to the Cameradar dictionaries to help other people in the future.
+Maybe your cameras have been configured and the credentials / URL have been changed. Cameradar only guesses using default constructor values if a custom dictionary is not provided. You can use your own dictionaries in which you just have to add your credentials and RTSP routes. To do that, see how the [configuration](#configuration) works. Also, maybe your camera's credentials are not yet known, in which case if you find them it would be very nice to add them to the Cameradar dictionaries to help other people in the future.
 
-> It does not compile :(
+> What happened to the C++ version?
 
-You probably missed the part with the dependencies! Use the quick docker deployment, it will be easier and will not pollute your machine with useless dependencies! `;)`
+You can still find it under the 1.1.4 tag on this repo, however it was less performant and stable than the current version written in Golang.
+
+> How to use the Cameradar library for my own project?
+
+See the cameraccess example. You just need to run `go get github.com/EtixLabs/cameradar/cameradar` and to use the `cmrdr` package in your code.
 
 ## License
 
-Copyright 2016 Etix Labs
+Copyright 2017 Etix Labs
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

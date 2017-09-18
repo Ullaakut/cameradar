@@ -19,24 +19,34 @@ import (
 )
 
 func main() {
-	streams, err := cmrdr.Discover("localhost", "8554")
+	streams, err := cmrdr.Discover("172.16.100.0/24", "554")
 	if err != nil {
 		log.Fatalf("Fatal Error: %v", err)
 	}
 
 	credentials := cmrdr.Credentials{}
+
+	credentials.Passwords = append(credentials.Usernames, "")
+	credentials.Usernames = append(credentials.Usernames, "root")
 	credentials.Usernames = append(credentials.Usernames, "admin")
+	credentials.Usernames = append(credentials.Usernames, "admin")
+
+	credentials.Passwords = append(credentials.Passwords, "")
+	credentials.Passwords = append(credentials.Passwords, "root")
 	credentials.Passwords = append(credentials.Passwords, "12345")
+	credentials.Passwords = append(credentials.Passwords, "password")
 
 	routes := cmrdr.Routes{}
+	routes = append(routes, "")
 	routes = append(routes, "live.sdp")
+	routes = append(routes, "/axis-media/media.amp")
 
-	streams, err = cmrdr.AttackRoute(streams, routes)
+	streams, err = cmrdr.AttackCredentials(streams, credentials)
 	if err != nil {
 		log.Fatalf("Fatal Error: %v", err)
 	}
 
-	streams, err = cmrdr.AttackCredentials(streams, credentials)
+	streams, err = cmrdr.AttackRoute(streams, routes)
 	if err != nil {
 		log.Fatalf("Fatal Error: %v", err)
 	}
