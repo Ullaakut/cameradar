@@ -14,32 +14,6 @@ package cmrdr
 
 import "encoding/xml"
 
-// Stream represents a camera's RTSP stream
-type Stream struct {
-	device   string
-	username string
-	password string
-	route    string
-	address  string `validate:"required"`
-	port     uint   `validate:"required"`
-}
-
-// Attack represents the state of the attack on a stream
-type Attack struct {
-	stream           Stream
-	credentialsFound bool
-	routeFound       bool
-}
-
-// Credentials is a map of credentials
-// usernames are keys and passwords are values
-// creds['admin'] -> 'secure_password'
-type Credentials map[string]string
-
-// Routes is a slice of Routes
-// ['/live.sdp', '/media.amp', ...]
-type Routes []string
-
 // NmapResult is the structure that holds all the information from an NMap scan
 type NmapResult struct {
 	XMLName xml.Name `xml:"nmaprun"`

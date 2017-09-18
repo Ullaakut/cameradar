@@ -16,37 +16,24 @@ import "github.com/EtixLabs/cameradar/cameradar"
 import "log"
 
 func main() {
-	log.Print("Test #1: PARSE RESULT ONLY")
-
-	streams, err := cmrdr.ParseNmapResult("/tmp/cameradar_scan.xml")
-	if err != nil {
-		log.Fatalf("Fatal Error: %v", err)
-	}
-	for _, stream := range streams {
-		log.Printf("Stream: \n%v\n", stream)
-	}
-
-	log.Print("--------------------------")
-
-	log.Print("\n")
-
-	log.Print("Test #2: DISCOVER PROCESS")
-
-	streams, err = cmrdr.Discover("localhost", "8554")
+	streams, err := cmrdr.Discover("localhost", "8554")
 	if err != nil {
 		log.Fatalf("Fatal Error: %v", err)
 	}
 
-	for _, stream := range streams {
-		log.Printf("Stream: \n%v\n", stream)
+	credentials := cmrdr.Credentials{}
+	credentials.Usernames = append(credentials.Usernames, "admin")
+	credentials.Passwords = append(credentials.Passwords, "12345")
+
+	streams, err = cmrdr.AttackCredentials(streams, credentials)
+	if err != nil {
+		log.Fatalf("Fatal Error: %v", err)
 	}
-	log.Print("--------------------------")
 
-	log.Print("\n")
+	routes := cmrdr.Routes{}
+	routes = append(routes, "/live.sdp")
 
-	log.Print("Test #2: DISCOVER PROCESS WITH BAD PORT")
-
-	streams, err = cmrdr.Discover("localhost", "8557")
+	streams, err = cmrdr.AttackRoute(streams, routes)
 	if err != nil {
 		log.Fatalf("Fatal Error: %v", err)
 	}
@@ -54,5 +41,4 @@ func main() {
 	for _, stream := range streams {
 		log.Printf("Stream: \n%v\n", stream)
 	}
-	log.Print("--------------------------")
 }

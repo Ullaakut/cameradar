@@ -12,11 +12,15 @@
 
 package cmrdr
 
-import (
-	"fmt"
-)
+func replace(streams []Stream, new Stream) []Stream {
+	updatedSlice := streams[:0]
 
-// RTSPURL generates an RTSP URL from a Stream
-func RTSPURL(stream Stream) string {
-	return "rtsp://" + stream.username + ":" + stream.password + "@" + stream.address + ":" + fmt.Sprint(stream.port) + "/" + stream.route
+	for _, old := range streams {
+		if old.address == new.address && old.port == new.port {
+			updatedSlice = append(updatedSlice, new)
+		} else {
+			updatedSlice = append(updatedSlice, old)
+		}
+	}
+	return updatedSlice
 }
