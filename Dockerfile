@@ -16,6 +16,7 @@ RUN go get github.com/andelf/go-curl
 RUN go get github.com/pkg/errors
 RUN go get gopkg.in/go-playground/validator.v9
 RUN go get github.com/jessevdk/go-flags
+RUN go get github.com/fatih/color
 
 RUN go install
 
