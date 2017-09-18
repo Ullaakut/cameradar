@@ -27,17 +27,17 @@ import (
 // These constants detail the different level of nmap aggressivity
 // that determine the timeout values and wether or not nmap makes use of parallelism
 const (
-	// PARANOIAC 	NO PARALLELISM | 5min  timeout | 100ms to 10s    rtt timeout	 |  5mn   scan delay
+	// PARANOID 	NO PARALLELISM | 5min  timeout | 100ms to 10s    round-trip time timeout	 |  5mn   scan delay
 	PARANOIAC = 0
-	// SNEAKY 		NO PARALLELISM | 15sec timeout | 100ms to 10s    rtt timeout	 |  15s   scan delay
+	// SNEAKY 		NO PARALLELISM | 15sec timeout | 100ms to 10s    round-trip time timeout	 |  15s   scan delay
 	SNEAKY = 1
-	// POLITE 		NO PARALLELISM | 1sec  timeout | 100ms to 10s    rtt timeout	 |  400ms scan delay
+	// POLITE 		NO PARALLELISM | 1sec  timeout | 100ms to 10s    round-trip time timeout	 |  400ms scan delay
 	POLITE = 2
-	// NORMAL 		PARALLELISM	   | 1sec  timeout | 100ms to 10s    rtt timeout	 |  0s    scan delay
+	// NORMAL 		PARALLELISM	   | 1sec  timeout | 100ms to 10s    round-trip time timeout	 |  0s    scan delay
 	NORMAL = 3
-	// AGGRESSIVE 	PARALLELISM	   | 500ms timeout | 100ms to 1250ms rtt timeout	 |  0s    scan delay
+	// AGGRESSIVE 	PARALLELISM	   | 500ms timeout | 100ms to 1250ms round-trip time timeout	 |  0s    scan delay
 	AGGRESSIVE = 4
-	// INSANE 		PARALLELISM	   | 250ms timeout |  50ms to 300ms  rtt timeout	 |  0s    scan delay
+	// INSANE 		PARALLELISM	   | 250ms timeout |  50ms to 300ms  round-trip time timeout	 |  0s    scan delay
 	INSANE = 5
 )
 

@@ -12,8 +12,11 @@
 
 package main
 
-import "github.com/EtixLabs/cameradar/cameradar"
-import "log"
+import (
+	"log"
+
+	"github.com/EtixLabs/cameradar/cameradar"
+)
 
 func main() {
 	streams, err := cmrdr.Discover("localhost", "8554")
@@ -25,15 +28,15 @@ func main() {
 	credentials.Usernames = append(credentials.Usernames, "admin")
 	credentials.Passwords = append(credentials.Passwords, "12345")
 
-	streams, err = cmrdr.AttackCredentials(streams, credentials)
+	routes := cmrdr.Routes{}
+	routes = append(routes, "live.sdp")
+
+	streams, err = cmrdr.AttackRoute(streams, routes)
 	if err != nil {
 		log.Fatalf("Fatal Error: %v", err)
 	}
 
-	routes := cmrdr.Routes{}
-	routes = append(routes, "/live.sdp")
-
-	streams, err = cmrdr.AttackRoute(streams, routes)
+	streams, err = cmrdr.AttackCredentials(streams, credentials)
 	if err != nil {
 		log.Fatalf("Fatal Error: %v", err)
 	}

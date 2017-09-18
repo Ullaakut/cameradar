@@ -15,6 +15,7 @@ package cmrdr
 import (
 	"fmt"
 	"log"
+	"time"
 
 	curl "github.com/andelf/go-curl"
 	"github.com/pkg/errors"
@@ -22,7 +23,7 @@ import (
 )
 
 // TODO: Rename this func
-func routeAttack(camera Stream, route string) (Stream, error) {
+func routeAttack(camera Stream, route string, timeout time.Duration) (Stream, error) {
 	easy := curl.EasyInit()
 	defer easy.Cleanup()
 
@@ -39,22 +40,16 @@ func routeAttack(camera Stream, route string) (Stream, error) {
 		// Set the RTSP STREAM URI as the camera URL
 		easy.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
 		// I don't remember what that does
-		easy.Setopt(curl.OPT_FOLLOWLOCATION, 0)
-		// I don't remember what that does
 		easy.Setopt(curl.OPT_HEADER, 0)
 		// Do not write logs when making cURL requests
-		easy.Setopt(curl.OPT_VERBOSE, 0)
-		// I don't remember what that does
+		easy.Setopt(curl.OPT_VERBOSE, 1)
+		// 2 is CURL_RTSPREQ_DESCRIBE
 		easy.Setopt(curl.OPT_RTSP_REQUEST, 2)
-		// Timeout after 2 seconds
-		easy.Setopt(curl.OPT_TIMEOUT, 2)
+		// Timeout
+		easy.Setopt(curl.OPT_TIMEOUT, int(timeout/time.Second))
 
 		// Perform the request
-		err := easy.Perform()
-		if err != nil {
-			log.Print(err.Error())
-			return camera, err
-		}
+		easy.Perform()
 
 		// Get return code for the request
 		rc, err := easy.Getinfo(curl.INFO_RESPONSE_CODE)
@@ -68,8 +63,6 @@ func routeAttack(camera Stream, route string) (Stream, error) {
 			return camera, errors.New("invalid route")
 		}
 
-		// TODO: Handle 403/401
-
 		camera.route = route
 		return camera, nil
 	}
@@ -77,7 +70,7 @@ func routeAttack(camera Stream, route string) (Stream, error) {
 }
 
 // TODO: Rename this func
-func credAttack(camera Stream, username string, password string) (Stream, error) {
+func credAttack(camera Stream, username string, password string, timeout time.Duration) (Stream, error) {
 	easy := curl.EasyInit()
 	defer easy.Cleanup()
 
@@ -94,24 +87,16 @@ func credAttack(camera Stream, username string, password string) (Stream, error)
 		// Set the RTSP STREAM URI as the camera URL
 		easy.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
 		// I don't remember what that does
-		easy.Setopt(curl.OPT_FOLLOWLOCATION, 0)
-		// I don't remember what that does
 		easy.Setopt(curl.OPT_HEADER, 0)
 		// Do not write logs when making cURL requests
-		easy.Setopt(curl.OPT_VERBOSE, 0)
-		// I don't remember what that does
+		easy.Setopt(curl.OPT_VERBOSE, 1)
+		// 2 is CURL_RTSPREQ_DESCRIBE
 		easy.Setopt(curl.OPT_RTSP_REQUEST, 2)
-		// Timeout after 2 seconds
-		easy.Setopt(curl.OPT_TIMEOUT, 2)
+		// Timeout
+		easy.Setopt(curl.OPT_TIMEOUT, int(timeout/time.Second))
 
-		log.Println("4")
 		// Perform the request
-		err := easy.Perform()
-		if err != nil {
-			log.Print(err.Error())
-			return camera, err
-		}
-		log.Println("5")
+		easy.Perform()
 
 		// Get return code for the request
 		rc, err := easy.Getinfo(curl.INFO_RESPONSE_CODE)
@@ -120,14 +105,10 @@ func credAttack(camera Stream, username string, password string) (Stream, error)
 			return camera, err
 		}
 
-		log.Println("6")
 		// If it's a 403 or a 401, it means that the credentials are not correct
 		if rc == 403 || rc == 401 {
 			return camera, errors.New("invalid credentials")
 		}
-
-		log.Println("7")
-		// TODO: Handle 404
 
 		camera.username = username
 		camera.password = password
@@ -138,16 +119,14 @@ func credAttack(camera Stream, username string, password string) (Stream, error)
 
 // TODO: Rename this func
 func attackCameraCredentials(target Stream, credentials Credentials, resultsChan chan<- Attack) {
-	log.Println("1")
 	for _, username := range credentials.Usernames {
-		log.Println("2")
 		for _, password := range credentials.Passwords {
-			log.Println("3")
-			result, err := credAttack(target, username, password)
+			result, err := credAttack(target, username, password, 1*time.Second)
 			if err == nil {
 				resultsChan <- Attack{
 					stream:           result,
 					credentialsFound: true,
+					routeFound:       true,
 				}
 				return
 			}
@@ -162,11 +141,12 @@ func attackCameraCredentials(target Stream, credentials Credentials, resultsChan
 // TODO: Rename this func
 func attackCameraRoute(target Stream, routes Routes, resultsChan chan<- Attack) {
 	for _, route := range routes {
-		result, err := routeAttack(target, route)
+		result, err := routeAttack(target, route, 1*time.Second)
 		if err == nil {
 			resultsChan <- Attack{
-				stream:     result,
-				routeFound: true,
+				stream:           result,
+				credentialsFound: true,
+				routeFound:       true,
 			}
 			return
 		}
