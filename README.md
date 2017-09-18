@@ -8,7 +8,6 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6ab80cfa7069413e8e7d7e18320309e3)](https://www.codacy.com/app/brendan-le-glaunec/cameradar?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=EtixLabs/cameradar&amp;utm_campaign=Badge_Grade)
 [![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
 
-
 #### Cameradar allows you to:
 
 * **Detect open RTSP hosts** on any accessible target host
@@ -35,12 +34,11 @@
 Install [docker](https://docs.docker.com/engine/installation/) on your machine, and run the following command:
 
 ```bash
-docker run  --net=host \
-            ullaakut/cameradar \
-            -t YOUR_TARGET
+docker run ullaakut/cameradar \
+           -t YOUR_TARGET
 ```
 
-e.g.: `docker run --net=host ullaakut/cameradar -t 192.168.100.0/24` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams.
+e.g.: `docker run ullaakut/cameradar -t 192.168.100.0/24` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams.
 
 * `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those separated by commas (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
 * if you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
@@ -56,17 +54,65 @@ For more complex use of the Docker image, see the `Environment variables` part o
 
 ### Library
 
-Here is an overview of the exposed functions of this library
+#### Installing
+
+```bash
+  $ go get github.com/EtixLabs/cameradar
+```
+
+After this command *cameradar* is ready to use. Its source will be in:
+
+    $GOPATH/src/pkg/github.com/EtixLabs/cameradar
+
+You can use `go get -u` to update the package.
+
+Here is an overview of the exposed functions of this library:
+
+#### Discovery
+
+You can use the cameradar library for simple discovery purposes if you don't need to access the cameras but just to be aware of their existence.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Discover.png"/></p>
+The Discover function calls the RunNmap function as well as the ParseNmapResults function and returns the discovered streams without attempting any attack.
+It will use default values for its calls to RunNmap:
+
+* The nmap result file path will be set to `/tmp/cameradar_scan.xml`
+* The nmap speed preset will be set to 4 (aggressive). This is suitable for most modern networks.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/nmapTimePresets.png"/></p>
+This describes the nmap time presets. You can pass a value between 1 and 5 as described in this table, to the RunNmap function.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/RunNmap.png"/></p>
+The RunNmap function will execute nmap and generate an XML file containing the results of the scan.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/ParseNmapResult.png"/></p>
+The ParseNmapResult function will open the specified XML file and return all open RTSP streams found within it.
+
+#### Attack
+
+If you already know which hosts and ports you want to attack, you can also skip the discovery part and use directly the attack functions. The attack functions also take a timeout value as a parameter.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/AttackCredentials.png"/></p>
+The AttackCredentials function takes valid streams as an input (with IP addresses and ports) and will attempt to guess their credentials using the provided dictionary.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/AttackRoute.png"/></p>
+The AttackRoute function takes valid streams as an input (with IP addresses and ports) and will attempt to guess their routes using the provided dictionary.
+
+#### Data models
+
+Here are the different data models useful to use the exposed functions of the cameradar library.
+
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Models.png"/></p>
 
 ### Configuration
 
 The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameraccess application will scan the 554 and 8554 ports.
 
-e.g.: `docker run --net=host ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
+e.g.: `docker run ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
 
 You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
 
-e.g.: `docker run --net=host -v /my/folder/with/dictionaries:/tmp/dictionaries ullaakut/cameradar -d  -t localhost` will put the contents of your folder containing dictionaries in the docker image and will use it for the dictionary attack instead of the default dictionaries provided in the cameradar repo.
+e.g.: `docker run -v /my/folder/with/dictionaries:/tmp/dictionaries ullaakut/cameradar -d  -t localhost` will put the contents of your folder containing dictionaries in the docker image and will use it for the dictionary attack instead of the default dictionaries provided in the cameradar repo.
 
 ## Output
 
@@ -94,8 +140,8 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 * **"-t, --target"**: Set custom target.
 * **"-p, --ports"**: (Default: 554,8554) Set custom ports.
 * **"-s, --speed"**: (Default: 4) Set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
-* **"-T, --timeout"**: (Default: 2000ms) Set custom timeout value in miliseconds after which an attack attempt without an answer should give up.
-* **"-h"** : Display this help
+* **"-T, --timeout"**: (Default: 1000ms) Set custom timeout value in miliseconds after which an attack attempt without an answer should give up.
+* **"-h"** : Display the usage information
 
 ## Contribution
 
@@ -118,6 +164,10 @@ You can still find it under the 1.1.4 tag on this repo, however it was less perf
 > How to use the Cameradar library for my own project?
 
 See the cameraccess example. You just need to run `go get github.com/EtixLabs/cameradar/cameradar` and to use the `cmrdr` package in your code.
+
+> I want to scan my own localhost for some reason and it does not work! What's going on?
+
+Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameraccess/main.go`.
 
 ## License
 

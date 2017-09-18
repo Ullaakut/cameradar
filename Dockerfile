@@ -1,7 +1,7 @@
 FROM golang:alpine
 WORKDIR /go/src/github.com/EtixLabs/cameradar
 
-COPY . /go/src/github.com/EtixLabs/cameradar
+COPY . /go/src/github.com/EtixLabs/cameradar/cameraccess
 
 RUN apk update && \
     apk upgrade && \
@@ -15,7 +15,8 @@ RUN apk update && \
 RUN go get github.com/andelf/go-curl
 RUN go get github.com/pkg/errors
 RUN go get gopkg.in/go-playground/validator.v9
+RUN go get github.com/jessevdk/go-flags
 
-RUN cd cameraccess ; go install
+RUN go install
 
 ENTRYPOINT /go/bin/cameraccess

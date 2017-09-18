@@ -42,7 +42,7 @@ const (
 )
 
 // RunNmap runs nmap on the specified targets's specified ports, using the given nmap speed
-func RunNmap(targets, ports string, resultFilePath string, nmapSpeed uint8) error {
+func RunNmap(targets, ports string, resultFilePath string, nmapSpeed int, enableLogs bool) error {
 	// Prepare nmap command
 	cmd := exec.Command(
 		"nmap",
@@ -69,10 +69,14 @@ func RunNmap(targets, ports string, resultFilePath string, nmapSpeed uint8) erro
 	// Scan the pipe until an end of file or an error occurs
 	in := bufio.NewScanner(stdout)
 	for in.Scan() {
-		log.Printf(in.Text())
+		if enableLogs {
+			log.Printf(in.Text())
+		}
 	}
 	if err := in.Err(); err != nil {
-		log.Printf("error: %s", err)
+		if enableLogs {
+			log.Printf("error: %s", err)
+		}
 	}
 
 	return nil
@@ -93,7 +97,7 @@ func ParseNmapResult(nmapResultFilePath string) ([]Stream, error) {
 	result := &NmapResult{}
 	err = xml.Unmarshal(content, &result)
 	if err != nil {
-		log.Println("Unmarshall error:", err)
+		return streams, err
 	}
 
 	// Iterate on hosts to try to find hosts with ports that
@@ -110,9 +114,9 @@ func ParseNmapResult(nmapResultFilePath string) ([]Stream, error) {
 				continue
 			}
 			streams = append(streams, Stream{
-				device:  port.Service.Product,
-				address: host.Address.Addr,
-				port:    port.PortID,
+				Device:  port.Service.Product,
+				Address: host.Address.Addr,
+				Port:    port.PortID,
 			})
 		}
 	}
@@ -129,14 +133,11 @@ func ParseNmapResult(nmapResultFilePath string) ([]Stream, error) {
 //    - a mix of all those separated by commas (e.g.: localhost,172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0).
 // ports - string :
 //    - one or multiple ports and port ranges separated by commas (e.g.: 554,8554-8560,18554-28554)
-func Discover(targets string, ports string) ([]Stream, error) {
+func Discover(targets string, ports string, nmapResultPath string, speed int, log bool) ([]Stream, error) {
 	var streams []Stream
 
-	// TODO: Provide configuration for this
-	nmapResultPath := "/tmp/cameradar_scan.xml"
-
 	// Run nmap command to discover open ports on the specified targets & ports
-	err := RunNmap(targets, ports, nmapResultPath, 4)
+	err := RunNmap(targets, ports, nmapResultPath, speed, log)
 	if err != nil {
 		return streams, err
 	}

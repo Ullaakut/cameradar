@@ -14,12 +14,12 @@ package cmrdr
 
 // Stream represents a camera's RTSP stream
 type Stream struct {
-	device   string
-	username string
-	password string
-	route    string
-	address  string `validate:"required"`
-	port     uint   `validate:"required"`
+	Device   string
+	Username string
+	Password string
+	Route    string
+	Address  string `validate:"required"`
+	Port     uint   `validate:"required"`
 }
 
 // Attack represents the state of the attack on a stream
@@ -33,8 +33,8 @@ type Attack struct {
 // usernames are keys and passwords are values
 // creds['admin'] -> 'secure_password'
 type Credentials struct {
-	Usernames []string
-	Passwords []string
+	Usernames []string `json:"usernames"`
+	Passwords []string `json:"passwords"`
 }
 
 // Routes is a slice of Routes
