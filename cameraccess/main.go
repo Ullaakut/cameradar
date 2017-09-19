@@ -53,8 +53,21 @@ func main() {
 	}
 
 	streams, _ := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
+
+	// Most cameras will be accessed successfully with these two attacks
 	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 	streams, _ = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+
+	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
+	// For these cameras, running another route attack will solve the problem.
+	for _, stream := range streams {
+		if stream.RouteFound == false || stream.CredentialsFound == false {
+			streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+			break
+		}
+	}
+
+	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 
 	prettyPrint(streams)
 }
