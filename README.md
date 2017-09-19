@@ -34,12 +34,12 @@
 Install [docker](https://docs.docker.com/engine/installation/) on your machine, and run the following command:
 
 ```bash
-docker run ullaakut/cameradar <command-line options>
+docker run -t ullaakut/cameradar -t <target> <other command-line options>
 ```
 
 [See command-line options](#command-line-options).
 
-e.g.: `docker run ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output lots of logs.
+e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output lots of logs.
 
 * `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those separated by commas (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
@@ -122,14 +122,14 @@ RTSPURL allows you to generate the full URL of a stream.
 
 The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameraccess application will scan the 554 and 8554 ports.
 
-e.g.: `docker run ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
+e.g.: `docker run -t ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
 
 You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
 
 e.g.:
 
 ```bash
-docker run -v /my/folder/with/dictionaries:/tmp/dictionaries \
+docker run -t -v /my/folder/with/dictionaries:/tmp/dictionaries \
            ullaakut/cameradar \
            -r "/tmp/dictionaries/my_routes" \
            -c "/tmp/dictionaries/my_credentials.json" \
@@ -192,6 +192,10 @@ See the cameraccess example. You just need to run `go get github.com/EtixLabs/ca
 > I want to scan my own localhost for some reason and it does not work! What's going on?
 
 Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameraccess/main.go`.
+
+> I don't see a colored output :(
+
+You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This tells docker to allocate a pseudo-tty for cameradar, which makes it able to use colors.
 
 ## License
 
