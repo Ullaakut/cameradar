@@ -20,4 +20,4 @@ RUN go get github.com/fatih/color
 
 RUN go install
 
-ENTRYPOINT /go/bin/cameraccess
+ENTRYPOINT ["/go/bin/cameraccess"]
