@@ -48,12 +48,22 @@ func RunNmap(targets, ports string, resultFilePath string, nmapSpeed int, enable
 		"nmap",
 		fmt.Sprintf("-T%d", nmapSpeed),
 		"-A",
-		targets,
 		"-p",
 		ports,
 		"-oX",
 		resultFilePath,
+		targets,
 	)
+
+	fmt.Println(
+		"nmap",
+		fmt.Sprintf("-T%d", nmapSpeed),
+		"-A",
+		"-p",
+		ports,
+		"-oX",
+		resultFilePath,
+		targets)
 
 	// Pipe stdout to be able to write the logs in realtime
 	stdout, err := cmd.StdoutPipe()
