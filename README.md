@@ -41,7 +41,7 @@ docker run -t ullaakut/cameradar -t <target> <other command-line options>
 
 e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output lots of logs.
 
-* `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`) or even an IP (e.g.: `172.16.100.10`), a range of IPs (e.g.: `172.16.100.10-172.16.100.20`) or a mix of all those separated by commas (e.g.: `172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0`).
+* `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`), an IP (e.g.: `172.16.100.10`), or a range of IPs (e.g.: `172.16.100.10-20`).
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
 * If you use the `-r` and `-c` options to specify your
 
@@ -163,10 +163,6 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 * **"-l, --log"**: Enable debug logs (nmap requests, curl describe requests, etc.)
 * **"-h"** : Display the usage information
 
-## Environment variables
-
-Not yet implemented.
-
 ## Contribution
 
 See [the contribution document](/CONTRIBUTION.md) to get started.
@@ -196,6 +192,11 @@ Use the `--net=host` flag when launching the cameradar image, or use the binary 
 > I don't see a colored output :(
 
 You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This tells docker to allocate a pseudo-tty for cameradar, which makes it able to use colors.
+
+## Known issues
+
+* When running Cameraccess in a docker container, specifying multiple targets does not work. Using subnetworks (such as `182.49.20.0/24`) or ranges (`182.49.20.0-44`) works.
+* There is currently no way to use environment variables instead of command-line arguments in Cameradar. This will be done at some point, but isn't a priority right now.
 
 ## License
 
