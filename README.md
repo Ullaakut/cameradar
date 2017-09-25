@@ -9,7 +9,7 @@
 [![GoDoc](https://godoc.org/github.com/EtixLabs/cameradar?status.svg)](https://godoc.org/github.com/EtixLabs/cameradar)
 [![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
 
-### Cameradar allows you to:
+### Cameradar allows you to
 
 * **Detect open RTSP hosts** on any accessible target host
 * Detect which device model is streaming
