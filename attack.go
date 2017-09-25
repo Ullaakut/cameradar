@@ -162,7 +162,7 @@ func attackCameraRoute(target Stream, routes Routes, resultsChan chan<- Stream, 
 }
 
 // AttackCredentials attempts to guess the provided targets' credentials using the given
-// dictionary or the default dictionary if none was provided by the user
+// dictionary or the default dictionary if none was provided by the user.
 func AttackCredentials(targets []Stream, credentials Credentials, timeout time.Duration, log bool) (results []Stream, err error) {
 	attacks := make(chan Stream)
 	defer close(attacks)
@@ -197,7 +197,7 @@ func AttackCredentials(targets []Stream, credentials Credentials, timeout time.D
 }
 
 // AttackRoute attempts to guess the provided targets' streaming routes using the given
-// dictionary or the default dictionary if none was provided by the user
+// dictionary or the default dictionary if none was provided by the user.
 func AttackRoute(targets []Stream, routes Routes, timeout time.Duration, log bool) (results []Stream, err error) {
 	attacks := make(chan Stream)
 	defer close(attacks)
