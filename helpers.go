@@ -27,12 +27,12 @@ func replace(streams []Stream, new Stream) []Stream {
 	return updatedSlice
 }
 
-// RTSPURL generates a stream's RTSP URL
-func RTSPURL(stream Stream) string {
+// GetCameraRTSPURL generates a stream's RTSP URL
+func GetCameraRTSPURL(stream Stream) string {
 	return "rtsp://" + stream.Username + ":" + stream.Password + "@" + stream.Address + ":" + fmt.Sprint(stream.Port) + "/" + stream.Route
 }
 
-// AdminPanelURL returns the URL to the camera's admin panel
-func AdminPanelURL(stream Stream) string {
+// GetCameraAdminPanelURL returns the URL to the camera's admin panel
+func GetCameraAdminPanelURL(stream Stream) string {
 	return "http://" + stream.Address + "/"
 }
