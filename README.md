@@ -6,9 +6,10 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
 [![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat)](https://travis-ci.org/EtixLabs/cameradar)
 [![Go Report Card](https://goreportcard.com/badge/github.com/EtixLabs/cameradar)](https://goreportcard.com/report/github.com/EtixLabs/cameradar)
+[![GoDoc](https://godoc.org/github.com/EtixLabs/cameradar?status.svg)](https://godoc.org/github.com/EtixLabs/cameradar)
 [![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
 
-#### Cameradar allows you to:
+### Cameradar allows you to:
 
 * **Detect open RTSP hosts** on any accessible target host
 * Detect which device model is streaming
@@ -20,14 +21,14 @@
 
 ## Table of content
 
-- [Docker Image](#docker-image)
-- [Configuration](#configuration)
-- [Output](#output)
-- [Check camera access](#check-camera-access)
-- [Command line options](#command-line-options)
-- [Contribution](#contribution)
-- [Frequently Asked Questions](#frequently-asked-questions)
-- [License](#license)
+* [Docker Image](#docker-image)
+* [Configuration](#configuration)
+* [Output](#output)
+* [Check camera access](#check-camera-access)
+* [Command line options](#command-line-options)
+* [Contribution](#contribution)
+* [Frequently Asked Questions](#frequently-asked-questions)
+* [License](#license)
 
 ## Docker Image for Cameraccess
 
@@ -39,21 +40,21 @@ docker run -t ullaakut/cameradar -t <target> <other command-line options>
 
 [See command-line options](#command-line-options).
 
-e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output lots of logs.
+e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output debug logs.
 
 * `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`), an IP (e.g.: `172.16.100.10`), or a range of IPs (e.g.: `172.16.100.10-20`).
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
 * If you use the `-r` and `-c` options to specify your
 
-### Library
+## Library
 
 ### Dependencies of the library
 
-- `curl-dev` / `libcurl` (depending on your OS)
-- `nmap`
-- `github.com/pkg/errors`
-- `gopkg.in/go-playground/validator.v9`
-- `github.com/andelf/go-curl`
+* `curl-dev` / `libcurl` (depending on your OS)
+* `nmap`
+* `github.com/pkg/errors`
+* `gopkg.in/go-playground/validator.v9`
+* `github.com/andelf/go-curl`
 
 #### Installing the library
 
@@ -71,62 +72,30 @@ Here is an overview of the exposed functions of this library:
 
 You can use the cameradar library for simple discovery purposes if you don't need to access the cameras but just to be aware of their existence.
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Discover.png"/></p>
-The Discover function calls the RunNmap function as well as the ParseNmapResults function and returns the discovered streams without attempting any attack.
-It will use default values for its calls to RunNmap:
-
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/NmapPresets.png"/></p>
-This describes the nmap time presets. You can pass a value between 1 and 5 as described in this table, to the RunNmap function.
-
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/RunNmap.png"/></p>
-The RunNmap function will execute nmap and generate an XML file containing the results of the scan.
-
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/ParseNmapResults.png"/></p>
-The ParseNmapResult function will open the specified XML file and return all open RTSP streams found within it.
+<p align="center"><img  width="90%" src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/NmapPresets.png"/></p>
+This describes the nmap time presets. You can pass a value between 1 and 5 as described in this table, to the NmapRun function.
 
 #### Attack
 
 If you already know which hosts and ports you want to attack, you can also skip the discovery part and use directly the attack functions. The attack functions also take a timeout value as a parameter.
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/AttackCredentials.png"/></p>
-The AttackCredentials function takes valid streams as an input (with IP addresses and ports) and will attempt to guess their credentials using the provided dictionary.
-
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/AttackRoute.png"/></p>
-The AttackRoute function takes valid streams as an input (with IP addresses and ports) and will attempt to guess their routes using the provided dictionary.
-
 #### Data models
 
 Here are the different data models useful to use the exposed functions of the cameradar library.
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Models.png"/></p>
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Models.png"/></p>
 
 #### Dictionary loaders
 
 The cameradar library also provides two functions that take file paths as inputs and return the appropriate data models filled.
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/LoadCredentials.png"/></p>
-
-LoadCredentials takes a JSON file that has the same format as [this one](dictionary/credentials.json).
-
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/LoadRoutes.png"/></p>
-
-LoadRoutes takes a file that has the same format as [this one](dictionary/routes). Warning: This file is not JSON.
-
-#### Miscellaneous
-
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/RTSPURL.png"/></p>
-
-RTSPURL allows you to generate the full URL of a stream.
-
-### Configuration
+## Configuration
 
 The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameraccess application will scan the 554 and 8554 ports.
 
-e.g.: `docker run -t ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
+`docker run -t ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
 
 You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
-
-e.g.:
 
 ```bash
 docker run -t -v /my/folder/with/dictionaries:/tmp/dictionaries \
@@ -142,8 +111,7 @@ This will put the contents of your folder containing dictionaries in the docker 
 
 For each camera, Cameraccess will output this:
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Output.png"/></p>
-
+<p align="center"><img  width="90%" src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Output.png"/></p>
 
 ## Check camera access
 
