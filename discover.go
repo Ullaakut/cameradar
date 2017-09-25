@@ -41,8 +41,8 @@ const (
 	INSANE = 5
 )
 
-// RunNmap runs nmap on the specified targets's specified ports, using the given nmap speed
-func RunNmap(targets, ports string, resultFilePath string, nmapSpeed int, enableLogs bool) error {
+// NmapRun runs nmap on the specified targets's specified ports, using the given nmap speed.
+func NmapRun(targets, ports, resultFilePath string, nmapSpeed int, enableLogs bool) error {
 	// Prepare nmap command
 	cmd := exec.Command(
 		"nmap",
@@ -82,9 +82,9 @@ func RunNmap(targets, ports string, resultFilePath string, nmapSpeed int, enable
 	return nil
 }
 
-// ParseNmapResult returns a slice of streams from an NMap XML result file
-// To generate one yourself, use the -X option when running NMap
-func ParseNmapResult(nmapResultFilePath string) ([]Stream, error) {
+// NmapParseResults returns a slice of streams from an NMap XML result file.
+// To generate one yourself, use the -X option when running NMap.
+func NmapParseResults(nmapResultFilePath string) ([]Stream, error) {
 	var streams []Stream
 
 	// Open & Read XML file
@@ -94,7 +94,7 @@ func ParseNmapResult(nmapResultFilePath string) ([]Stream, error) {
 	}
 
 	// Unmarshal content of XML file into data structure
-	result := &NmapResult{}
+	result := &nmapResult{}
 	err = xml.Unmarshal(content, &result)
 	if err != nil {
 		return streams, err
@@ -124,26 +124,29 @@ func ParseNmapResult(nmapResultFilePath string) ([]Stream, error) {
 	return streams, nil
 }
 
-// Discover scans the target networks and tries to find RTSP streams within them
-// targets - string: The addresses
+// Discover scans the target networks and tries to find RTSP streams within them.
+//
+// targets can be:
+//
 //    - a subnet (e.g.: 172.16.100.0/24)
 //    - an IP (e.g.: 172.16.100.10)
 //    - a hostname (e.g.: localhost)
-//    - a range of IPs (e.g.: 172.16.100.10-172.16.100.20)
-//    - a mix of all those separated by commas (e.g.: localhost,172.17.100.0/24,172.16.100.10-172.16.100.20,0.0.0.0).
-// ports - string :
+//    - a range of IPs (e.g.: 172.16.100.10-20)
+//
+// ports can be:
+//
 //    - one or multiple ports and port ranges separated by commas (e.g.: 554,8554-8560,18554-28554)
-func Discover(targets string, ports string, nmapResultPath string, speed int, log bool) ([]Stream, error) {
+func Discover(targets, ports, nmapResultPath string, speed int, log bool) ([]Stream, error) {
 	var streams []Stream
 
 	// Run nmap command to discover open ports on the specified targets & ports
-	err := RunNmap(targets, ports, nmapResultPath, speed, log)
+	err := NmapRun(targets, ports, nmapResultPath, speed, log)
 	if err != nil {
 		return streams, err
 	}
 
 	// Get found streams from nmap results
-	streams, err = ParseNmapResult(nmapResultPath)
+	streams, err = NmapParseResults(nmapResultPath)
 	if err != nil {
 		return streams, err
 	}
