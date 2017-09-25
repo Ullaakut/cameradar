@@ -15,47 +15,47 @@ package cmrdr
 import "encoding/xml"
 
 // NmapResult is the structure that holds all the information from an NMap scan
-type NmapResult struct {
+type nmapResult struct {
 	XMLName xml.Name `xml:"nmaprun"`
-	Hosts   []Host   `xml:"host" validate:"required"`
+	Hosts   []host   `xml:"host" validate:"required"`
 }
 
 // Host represents a host discovered during a scan
-type Host struct {
+type host struct {
 	XMLName xml.Name `xml:"host"`
-	Address Address  `xml:"address"`
-	Ports   Ports    `xml:"ports"`
+	Address address  `xml:"address"`
+	Ports   ports    `xml:"ports"`
 }
 
 // Address is a host's address discovered during a scan
-type Address struct {
+type address struct {
 	XMLName  xml.Name `xml:"address"`
 	Addr     string   `xml:"addr,attr"`
 	AddrType string   `xml:"addrType,attr"`
 }
 
 // Ports is the list of openned ports on a host
-type Ports struct {
+type ports struct {
 	XMLName xml.Name `xml:"ports"`
-	Ports   []Port   `xml:"port"`
+	Ports   []port   `xml:"port"`
 }
 
 // Port is a port found on a host during a scan
-type Port struct {
+type port struct {
 	XMLName xml.Name `xml:"port"`
 	PortID  uint     `xml:"portid,attr"`
-	State   State    `xml:"state"`
-	Service Service  `xml:"service"`
+	State   state    `xml:"state"`
+	Service service  `xml:"service"`
 }
 
 // State is the state of a port
-type State struct {
+type state struct {
 	XMLName xml.Name `xml:"state"`
 	State   string   `xml:"state,attr" validate:"required,eq=open"`
 }
 
 // Service represents the service that a port provides
-type Service struct {
+type service struct {
 	XMLName xml.Name `xml:"service"`
 	Name    string   `xml:"name,attr" validate:"required,eq=rtsp"`
 	Product string   `xml:"product,attr"`

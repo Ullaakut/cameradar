@@ -67,8 +67,6 @@ func main() {
 		}
 	}
 
-	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
-
 	prettyPrint(streams)
 }
 
@@ -84,10 +82,10 @@ func prettyPrint(streams []cmrdr.Stream) {
 	if len(streams) > 0 {
 		for _, stream := range streams {
 			if stream.CredentialsFound && stream.RouteFound {
-				fmt.Printf("%s\tDevice RTSP URL:\t%s\n", green("\xE2\x96\xB6"), blue(cmrdr.RTSPURL(stream)))
+				fmt.Printf("%s\tDevice RTSP URL:\t%s\n", green("\xE2\x96\xB6"), blue(cmrdr.GetCameraRTSPURL(stream)))
 				success++
 			} else {
-				fmt.Printf("%s\tAdmin panel URL:\t%s %s\n", red("\xE2\x96\xB6"), yellow(cmrdr.AdminPanelURL(stream)), white("You can use this URL to try attacking the camera's admin panel instead."))
+				fmt.Printf("%s\tAdmin panel URL:\t%s %s\n", red("\xE2\x96\xB6"), yellow(cmrdr.GetCameraAdminPanelURL(stream)), white("You can use this URL to try attacking the camera's admin panel instead."))
 			}
 
 			fmt.Printf("\tDevice model:\t\t%s\n\n", stream.Device)
