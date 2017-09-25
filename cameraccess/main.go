@@ -17,7 +17,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/EtixLabs/cameradar/cameradar"
+	"github.com/EtixLabs/cameradar"
 	"github.com/fatih/color"
 	"github.com/jessevdk/go-flags"
 )
