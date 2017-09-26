@@ -133,7 +133,7 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 
 ## Contribution
 
-See [the contribution document](/CONTRIBUTION.md) to get started.
+See [the contribution document](/CONTRIBUTING.md) to get started.
 
 ## Frequently Asked Questions
 
