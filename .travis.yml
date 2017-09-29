@@ -14,6 +14,7 @@ script:
 - go get github.com/andelf/go-curl
 - go get github.com/pkg/errors
 - go get gopkg.in/go-playground/validator.v9
+- go get github.com/stretchr/testify/assert
 # Run unit tests
 - go test
 # Launch a fake camera to check if cameradar is able to access it
