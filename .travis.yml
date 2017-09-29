@@ -11,6 +11,9 @@ install:
 - docker build -t cameradar .
 
 script:
+- go get github.com/andelf/go-curl
+- go get github.com/pkg/errors
+- go get gopkg.in/go-playground/validator.v9
 - go test
 - docker run cameradar
 
