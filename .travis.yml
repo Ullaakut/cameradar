@@ -1,4 +1,4 @@
-language: generic
+language: bash
 sudo: required
 dist: trusty
 
@@ -11,7 +11,26 @@ install:
 - docker build -t cameradar .
 
 script:
-- docker run cameradar
+- go get github.com/andelf/go-curl
+- go get github.com/pkg/errors
+- go get gopkg.in/go-playground/validator.v9
+- go get github.com/stretchr/testify/assert
+# Run unit tests
+- go test
+# Launch a fake camera to check if cameradar is able to access it
+- docker run -d --name=fake_camera -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -p 8554:8554 ullaakut/rtspatt
+# Launch cameradar on the local machine
+- docker run --net=host -t cameradar -t 0.0.0.0 -l > logs.txt
+- docker logs fake_camera > camera_logs.txt
+# Stop the fake camera
+- docker stop fake_camera
+# Print logs
+- cat camera_logs.txt
+- cat logs.txt
+# check if file contains more than one line
+# 1 line: Error message because no streams were found
+# More lines: Logs for all found cameras
+- if [[ $(wc -l <logs.txt) -lt 2 ]]; then exit 1; fi
 
 after_success:
 - echo "Test Success - Branch($TRAVIS_BRANCH) Pull Request($TRAVIS_PULL_REQUEST) Tag($TRAVIS_TAG)"

@@ -17,7 +17,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os/exec"
 
 	"github.com/pkg/errors"
@@ -27,7 +26,7 @@ import (
 // These constants detail the different level of nmap speed presets
 // that determine the timeout values and wether or not nmap makes use of parallelism
 const (
-	// PARANOID 	NO PARALLELISM | 5min  timeout | 100ms to 10s    round-trip time timeout	 |  5mn   scan delay
+	// PARANOIAC 	NO PARALLELISM | 5min  timeout | 100ms to 10s    round-trip time timeout	 |  5mn   scan delay
 	PARANOIAC = 0
 	// SNEAKY 		NO PARALLELISM | 15sec timeout | 100ms to 10s    round-trip time timeout	 |  15s   scan delay
 	SNEAKY = 1
@@ -41,10 +40,19 @@ const (
 	INSANE = 5
 )
 
+// Allows unit tests to override the exec function to avoid launching a real command
+// during the tests. The NmapRun method will soon be refactored with an adaptor in order
+// to make it possible to mock all external calls.
+var execCommand = exec.Command
+
 // NmapRun runs nmap on the specified targets's specified ports, using the given nmap speed.
 func NmapRun(targets, ports, resultFilePath string, nmapSpeed int, enableLogs bool) error {
+	if nmapSpeed < PARANOIAC || nmapSpeed > INSANE {
+		return fmt.Errorf("invalid nmap speed value '%d'. Should be between '%d' and '%d'", nmapSpeed, PARANOIAC, INSANE)
+	}
+
 	// Prepare nmap command
-	cmd := exec.Command(
+	cmd := execCommand(
 		"nmap",
 		fmt.Sprintf("-T%d", nmapSpeed),
 		"-A",
@@ -58,24 +66,24 @@ func NmapRun(targets, ports, resultFilePath string, nmapSpeed int, enableLogs bo
 	// Pipe stdout to be able to write the logs in realtime
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return errors.Wrap(err, "Couldn't get stdout pipe")
+		return errors.Wrap(err, "couldn't get stdout pipe")
 	}
 
 	// Execute the nmap command
 	if err := cmd.Start(); err != nil {
-		return errors.Wrap(err, "Coudln't run nmap command")
+		return errors.Wrap(err, "coudln't run nmap command")
 	}
 
 	// Scan the pipe until an end of file or an error occurs
 	in := bufio.NewScanner(stdout)
 	for in.Scan() {
 		if enableLogs {
-			log.Printf(in.Text())
+			fmt.Printf(in.Text())
 		}
 	}
 	if err := in.Err(); err != nil {
 		if enableLogs {
-			log.Printf("error: %s", err)
+			fmt.Printf("error: %s\n", err)
 		}
 	}
 
@@ -90,7 +98,7 @@ func NmapParseResults(nmapResultFilePath string) ([]Stream, error) {
 	// Open & Read XML file
 	content, err := ioutil.ReadFile(nmapResultFilePath)
 	if err != nil {
-		return streams, errors.Wrap(err, "Could not read nmap result file at "+nmapResultFilePath+":")
+		return streams, errors.Wrap(err, "could not read nmap result file at "+nmapResultFilePath+":")
 	}
 
 	// Unmarshal content of XML file into data structure

@@ -28,7 +28,7 @@ func LoadCredentials(path string) (Credentials, error) {
 	// Open & Read XML file
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		return creds, errors.Wrap(err, "Could not read credentials dictionary file at "+path+":")
+		return creds, errors.Wrap(err, "could not read credentials dictionary file at "+path+":")
 	}
 
 	// Unmarshal content of JSON file into data structure
