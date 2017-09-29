@@ -21,9 +21,11 @@ script:
 - docker run -d --name=fake_camera -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -p 8554:8554 ullaakut/rtspatt
 # Launch cameradar on the local machine
 - docker run --net=host -t cameradar -t 0.0.0.0 > logs.txt
+- docker logs fake_camera > camera_logs.txt
 # Stop the fake camera
 - docker stop fake_camera
 # Print logs
+- cat camera_logs.txt
 - cat logs.txt
 # check if file contains more than one line
 # 1 line: Error message because no streams were found

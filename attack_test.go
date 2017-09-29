@@ -65,11 +65,12 @@ func TestAttackCredentials(t *testing.T) {
 		{
 			targets:     fakeTargets,
 			credentials: fakeCredentials,
-			timeout:     0 * time.Millisecond,
+			timeout:     1 * time.Millisecond,
 			log:         false,
 
 			expectedStreams: fakeTargets,
 		},
+		// TODO: Refacto and make tests with all possible error cases
 	}
 	for i, vector := range vectors {
 		results, err := AttackCredentials(vector.targets, vector.credentials, vector.timeout, vector.log)
@@ -138,11 +139,12 @@ func TestAttackRoute(t *testing.T) {
 		{
 			targets: fakeTargets,
 			routes:  fakeRoutes,
-			timeout: 0 * time.Millisecond,
+			timeout: 1 * time.Millisecond,
 			log:     false,
 
 			expectedStreams: fakeTargets,
 		},
+		// TODO: Refacto and make tests with all possible error cases
 	}
 	for i, vector := range vectors {
 		results, err := AttackRoute(vector.targets, vector.routes, vector.timeout, vector.log)

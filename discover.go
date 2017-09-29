@@ -17,7 +17,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os/exec"
 
 	"github.com/pkg/errors"
@@ -41,7 +40,6 @@ const (
 	INSANE = 5
 )
 
-// HACK
 // Allows unit tests to override the exec function to avoid launching a real command
 // during the tests. The NmapRun method will soon be refactored with an adaptor in order
 // to make it possible to mock all external calls.
@@ -80,12 +78,12 @@ func NmapRun(targets, ports, resultFilePath string, nmapSpeed int, enableLogs bo
 	in := bufio.NewScanner(stdout)
 	for in.Scan() {
 		if enableLogs {
-			log.Printf(in.Text())
+			fmt.Printf(in.Text())
 		}
 	}
 	if err := in.Err(); err != nil {
 		if enableLogs {
-			log.Printf("error: %s", err)
+			fmt.Printf("error: %s\n", err)
 		}
 	}
 

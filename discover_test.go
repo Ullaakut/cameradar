@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// HACK: See https://golang.org/src/os/exec/exec_test.go
 func fakeExecCommand(command string, args ...string) *exec.Cmd {
 	cs := []string{"-test.run=TestExecCommandHelper", "--", command}
 	cs = append(cs, args...)
@@ -279,7 +280,7 @@ func TestNmapParseResults(t *testing.T) {
 		if vector.fileExists {
 			_, err := os.Create(filePath)
 			if err != nil {
-				fmt.Printf("could not create xml file for Discover: %v. iteration: %d. file path: %s\n", err, i, filePath)
+				fmt.Printf("could not create xml file for NmapParseResults: %v. iteration: %d. file path: %s\n", err, i, filePath)
 				os.Exit(1)
 			}
 
@@ -287,19 +288,19 @@ func TestNmapParseResults(t *testing.T) {
 			if vector.streamsXML != nil {
 				streams, err := xml.Marshal(vector.streamsXML)
 				if err != nil {
-					fmt.Printf("invalid streams for Discover: %v. iteration: %d. streams: %v\n", err, i, vector.streamsXML)
+					fmt.Printf("invalid streams for NmapParseResults: %v. iteration: %d. streams: %v\n", err, i, vector.streamsXML)
 					os.Exit(1)
 				}
 
 				err = ioutil.WriteFile(filePath, streams, 0644)
 				if err != nil {
-					fmt.Printf("could not write xml file for Discover: %v. iteration: %d. file path: %s\n", err, i, filePath)
+					fmt.Printf("could not write xml file for NmapParseResults: %v. iteration: %d. file path: %s\n", err, i, filePath)
 					os.Exit(1)
 				}
 			} else {
 				err := ioutil.WriteFile(filePath, []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><failure>"), 0644)
 				if err != nil {
-					fmt.Printf("could not write xml file for Discover: %v. iteration: %d. file path: %s\n", err, i, filePath)
+					fmt.Printf("could not write xml file for NmapParseResults: %v. iteration: %d. file path: %s\n", err, i, filePath)
 					os.Exit(1)
 				}
 			}
