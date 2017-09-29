@@ -23,6 +23,8 @@ script:
 - docker run --net=host -t cameradar -t 0.0.0.0 > logs.txt
 # Stop the fake camera
 - docker stop fake_camera
+# Print logs
+- cat logs.txt
 # check if file contains more than one line
 # 1 line: Error message because no streams were found
 # More lines: Logs for all found cameras
