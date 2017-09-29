@@ -14,8 +14,18 @@ script:
 - go get github.com/andelf/go-curl
 - go get github.com/pkg/errors
 - go get gopkg.in/go-playground/validator.v9
+# Run unit tests
 - go test
-- docker run cameradar
+# Launch a fake camera to check if cameradar is able to access it
+- docker run -d --name=fake_camera -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -p 8554:8554 ullaakut/rtspatt
+# Launch cameradar on the local machine
+- docker run --net=host -t cameradar -t 0.0.0.0 > logs.txt
+# Stop the fake camera
+- docker stop fake_camera
+# check if file contains more than one line
+# 1 line: Error message because no streams were found
+# More lines: Logs for all found cameras
+- [[ $(wc -l <logs.txt) -ge 2 ]]
 
 after_success:
 - echo "Test Success - Branch($TRAVIS_BRANCH) Pull Request($TRAVIS_PULL_REQUEST) Tag($TRAVIS_TAG)"
