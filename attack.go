@@ -190,7 +190,7 @@ func AttackCredentials(targets []Stream, credentials Credentials, timeout time.D
 		}
 	}
 	if found == 0 {
-		return targets, errors.New("No credentials found")
+		return targets, errors.New("no credentials found")
 	}
 
 	return targets, nil
@@ -225,7 +225,7 @@ func AttackRoute(targets []Stream, routes Routes, timeout time.Duration, log boo
 		}
 	}
 	if found == 0 {
-		return targets, errors.New("No routes found")
+		return targets, errors.New("no routes found")
 	}
 
 	return targets, nil
