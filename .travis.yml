@@ -11,6 +11,7 @@ install:
 - docker build -t cameradar .
 
 script:
+- go test
 - docker run cameradar
 
 after_success:
