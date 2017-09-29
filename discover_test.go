@@ -122,13 +122,13 @@ func TestNmapParseResults(t *testing.T) {
 		fileExists bool
 		streamsXML *nmapResult
 
-		streams        []Stream
-		expectedErrMsg string
+		expectedStreams []Stream
+		expectedErrMsg  string
 	}{
 		// File exists
 		// Two valid streams, no error
 		{
-			streams: []Stream{validStream1, validStream2},
+			expectedStreams: []Stream{validStream1, validStream2},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -178,8 +178,8 @@ func TestNmapParseResults(t *testing.T) {
 		// File exists
 		// Two invalid streams, no error
 		{
-			fileExists: true,
-			streams:    []Stream{invalidStreamNoPort, invalidStreamNoAddress},
+			fileExists:      true,
+			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -232,8 +232,8 @@ func TestNmapParseResults(t *testing.T) {
 		},
 		// No valid streams found
 		{
-			fileExists: true,
-			streams:    []Stream{},
+			fileExists:      true,
+			expectedStreams: []Stream{},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -267,9 +267,9 @@ func TestNmapParseResults(t *testing.T) {
 		},
 		// XML Unmarshal error
 		{
-			fileExists:     true,
-			streams:        []Stream{},
-			expectedErrMsg: "expected element type <nmaprun> but have <failure>",
+			fileExists:      true,
+			expectedStreams: []Stream{},
+			expectedErrMsg:  "expected element type <nmaprun> but have <failure>",
 		},
 	}
 	for i, vector := range vectors {
@@ -317,7 +317,7 @@ func TestNmapParseResults(t *testing.T) {
 				fmt.Printf("unexpected error: %v\n", err)
 				os.Exit(1)
 			}
-			for _, stream := range vector.streams {
+			for _, stream := range vector.expectedStreams {
 				foundStream := false
 				for _, result := range results {
 					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
@@ -327,7 +327,7 @@ func TestNmapParseResults(t *testing.T) {
 				assert.Equal(t, true, foundStream, "wrong streams parsed")
 			}
 		}
-		assert.Equal(t, len(vector.streams), len(results), "wrong streams parsed")
+		assert.Equal(t, len(vector.expectedStreams), len(results), "wrong streams parsed")
 	}
 }
 
@@ -368,12 +368,12 @@ func TestDiscover(t *testing.T) {
 		fileExists     bool
 		streamsXML     *nmapResult
 
-		streams        []Stream
-		expectedErrMsg string
+		expectedStreams []Stream
+		expectedErrMsg  string
 	}{
 		// Valid baseline
 		{
-			streams: []Stream{validStream1, validStream2},
+			expectedStreams: []Stream{validStream1, validStream2},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -427,7 +427,7 @@ func TestDiscover(t *testing.T) {
 		},
 		// Invalid speed
 		{
-			streams: []Stream{},
+			expectedStreams: []Stream{},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -484,7 +484,7 @@ func TestDiscover(t *testing.T) {
 		// File exists
 		// Two valid streams, no error
 		{
-			streams: []Stream{validStream1, validStream2},
+			expectedStreams: []Stream{validStream1, validStream2},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -539,8 +539,8 @@ func TestDiscover(t *testing.T) {
 		// File exists
 		// Two invalid streams, no error
 		{
-			fileExists: true,
-			streams:    []Stream{invalidStreamNoPort, invalidStreamNoAddress},
+			fileExists:      true,
+			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -603,8 +603,8 @@ func TestDiscover(t *testing.T) {
 		},
 		// No valid streams found
 		{
-			fileExists: true,
-			streams:    []Stream{},
+			fileExists:      true,
+			expectedStreams: []Stream{},
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					host{
@@ -643,14 +643,14 @@ func TestDiscover(t *testing.T) {
 		},
 		// XML Unmarshal error
 		{
-			fileExists:     true,
-			streams:        []Stream{},
-			expectedErrMsg: "expected element type <nmaprun> but have <failure>",
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      PARANOIAC,
-			enableLogs:     false,
+			fileExists:      true,
+			expectedStreams: []Stream{},
+			expectedErrMsg:  "expected element type <nmaprun> but have <failure>",
+			targets:         "localhost",
+			ports:           "554",
+			resultFilePath:  "/tmp/results.xml",
+			nmapSpeed:       PARANOIAC,
+			enableLogs:      false,
 		},
 	}
 	for i, vector := range vectors {
@@ -699,7 +699,7 @@ func TestDiscover(t *testing.T) {
 				fmt.Printf("unexpected error in Discover test, iteration %d: %v\n", i, err)
 				os.Exit(1)
 			}
-			for _, stream := range vector.streams {
+			for _, stream := range vector.expectedStreams {
 				foundStream := false
 				for _, result := range results {
 					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
@@ -709,6 +709,6 @@ func TestDiscover(t *testing.T) {
 				assert.Equal(t, true, foundStream, "wrong streams parsed")
 			}
 		}
-		assert.Equal(t, len(vector.streams), len(results), "wrong streams parsed")
+		assert.Equal(t, len(vector.expectedStreams), len(results), "wrong streams parsed")
 	}
 }
