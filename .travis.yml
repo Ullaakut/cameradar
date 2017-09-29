@@ -26,7 +26,7 @@ script:
 # check if file contains more than one line
 # 1 line: Error message because no streams were found
 # More lines: Logs for all found cameras
-- [[ $(wc -l <logs.txt) -ge 2 ]]
+- if [[ $(wc -l <logs.txt) -lt 2 ]]; then exit 1; fi
 
 after_success:
 - echo "Test Success - Branch($TRAVIS_BRANCH) Pull Request($TRAVIS_PULL_REQUEST) Tag($TRAVIS_TAG)"
