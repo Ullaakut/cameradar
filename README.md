@@ -1,5 +1,7 @@
 # Cameradar
 
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Cameradar.gif" width="100%"/></p>
+
 ## An RTSP stream access tool that comes with its library
 
 [![cameradar License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat)](#license)
@@ -17,7 +19,7 @@
 * Launch automated dictionary attacks to get the **username and password** of the cameras
 * Retrieve a complete and user-friendly report of the results
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/Cameradar.png" width="350"/></p>
+<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Cameradar.png" width="250"/></p>
 
 ## Table of content
 
