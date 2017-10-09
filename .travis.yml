@@ -1,11 +1,22 @@
-language: bash
-sudo: required
 dist: trusty
+sudo: required
+language: go
+
+services:  
+    - docker
 
 before_install:
 - echo "Testing Docker Hub credentials"
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
 - echo "Docker Hub credentials are working"
+# If I see one day that Travis CI updates their default docker version
+# I can remove the lines below. That's why I leave this here :-)
+- docker version
+- sudo apt-get remove docker docker-engine docker.io
+- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+- sudo apt-get update
+- sudo apt-get install -y docker-ce
+- docker version
 
 install:
 - docker build -t cameradar .

@@ -1,7 +1,8 @@
-FROM golang:alpine
-WORKDIR /go/src/github.com/EtixLabs/cameradar/cameraccess
+# Build stage
+FROM golang:alpine AS build-env
 
 COPY . /go/src/github.com/EtixLabs/cameradar
+WORKDIR /go/src/github.com/EtixLabs/cameradar/cameraccess
 
 RUN apk update && \
     apk upgrade && \
@@ -19,6 +20,14 @@ RUN go get github.com/jessevdk/go-flags
 RUN go get github.com/fatih/color
 RUN go get github.com/gernest/wow
 
-RUN go install
+RUN go build -o cameraccess
 
-ENTRYPOINT ["/go/bin/cameraccess"]
+# Final stage
+FROM alpine
+
+RUN apk --update add --no-cache nmap nmap-nselibs nmap-scripts \
+            curl-dev
+
+WORKDIR /app/cameraccess
+COPY --from=build-env /go/src/github.com/EtixLabs/cameradar/ /app/
+ENTRYPOINT ["/app/cameraccess/cameraccess"]
