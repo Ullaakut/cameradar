@@ -109,12 +109,6 @@ docker run -t -v /my/folder/with/dictionaries:/tmp/dictionaries \
 
 This will put the contents of your folder containing dictionaries in the docker image and will use it for the dictionary attack instead of the default dictionaries provided in the cameradar repo.
 
-## Output
-
-For each camera, Cameraccess will output this:
-
-<p align="center"><img  width="90%" src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Output.png"/></p>
-
 ## Check camera access
 
 If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI or the command-line to connect to the RTSP stream using this format : `rtsp://username:password@address:port/route`
