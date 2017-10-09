@@ -18,6 +18,9 @@ import (
 	"time"
 
 	"github.com/EtixLabs/cameradar"
+	"github.com/gernest/wow"
+	"github.com/gernest/wow/spin"
+
 	"github.com/fatih/color"
 	"github.com/jessevdk/go-flags"
 )
@@ -40,6 +43,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	w := wow.New(os.Stdout, spin.Get(spin.Dots), " Loading dictionaries...")
+	w.Start()
+
 	credentials, err := cmrdr.LoadCredentials(options.Credentials)
 	if err != nil {
 		color.Red("Invalid credentials dictionary: %s", err.Error())
@@ -52,21 +58,27 @@ func main() {
 		return
 	}
 
+	w.Text(" Scanning the network...")
 	streams, _ := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
 
 	// Most cameras will be accessed successfully with these two attacks
+	w.Text(" Found " + fmt.Sprint(len(streams)) + " streams. Attacking their routes...")
 	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+
+	w.Text("  Found " + fmt.Sprint(len(streams)) + " streams. Attacking their credentials...")
 	streams, _ = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 
 	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
 	// For these cameras, running another route attack will solve the problem.
 	for _, stream := range streams {
 		if stream.RouteFound == false || stream.CredentialsFound == false {
+			w.Text(" Found " + fmt.Sprint(len(streams)) + " streams. Final attack...")
 			streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 			break
 		}
 	}
 
+	clearOutput(w)
 	prettyPrint(streams)
 }
 
@@ -114,4 +126,12 @@ func prettyPrint(streams []cmrdr.Stream) {
 	} else {
 		fmt.Printf("%s No streams were found. Please make sure that your target is on an accessible network.", red("\xE2\x9C\x96"))
 	}
+}
+
+// HACK: Waiting for a fix to issue
+// https://github.com/gernest/wow/issues/5
+func clearOutput(w *wow.Wow) {
+	w.Text("\b")
+	time.Sleep(80 * time.Millisecond)
+	w.Stop()
 }
