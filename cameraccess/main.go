@@ -43,8 +43,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	w := wow.New(os.Stdout, spin.Get(spin.Dots), " Loading dictionaries...")
-	w.Start()
+	w := startSpinner(options.EnableLogs)
 
 	credentials, err := cmrdr.LoadCredentials(options.Credentials)
 	if err != nil {
@@ -58,27 +57,29 @@ func main() {
 		return
 	}
 
-	w.Text(" Scanning the network...")
+	updateSpinner(w, "Scanning the network...", options.EnableLogs)
 	streams, _ := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
 
 	// Most cameras will be accessed successfully with these two attacks
-	w.Text(" Found " + fmt.Sprint(len(streams)) + " streams. Attacking their routes...")
+
+	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their routes...", options.EnableLogs)
 	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 
-	w.Text("  Found " + fmt.Sprint(len(streams)) + " streams. Attacking their credentials...")
+	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their credentials...", options.EnableLogs)
 	streams, _ = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 
 	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
 	// For these cameras, running another route attack will solve the problem.
 	for _, stream := range streams {
 		if stream.RouteFound == false || stream.CredentialsFound == false {
-			w.Text(" Found " + fmt.Sprint(len(streams)) + " streams. Final attack...")
+
+			updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Final attack...", options.EnableLogs)
 			streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 			break
 		}
 	}
 
-	clearOutput(w)
+	clearOutput(w, options.EnableLogs)
 	prettyPrint(streams)
 }
 
@@ -128,10 +129,27 @@ func prettyPrint(streams []cmrdr.Stream) {
 	}
 }
 
+func updateSpinner(w *wow.Wow, text string, disabled bool) {
+	if !disabled {
+		w.Text(" " + text)
+	}
+}
+
+func startSpinner(disabled bool) *wow.Wow {
+	if !disabled {
+		w := wow.New(os.Stdout, spin.Get(spin.Dots), " Loading dictionaries...")
+		w.Start()
+		return w
+	}
+	return nil
+}
+
 // HACK: Waiting for a fix to issue
 // https://github.com/gernest/wow/issues/5
-func clearOutput(w *wow.Wow) {
-	w.Text("\b")
-	time.Sleep(80 * time.Millisecond)
-	w.Stop()
+func clearOutput(w *wow.Wow, disabled bool) {
+	if !disabled {
+		w.Text("\b")
+		time.Sleep(80 * time.Millisecond)
+		w.Stop()
+	}
 }
