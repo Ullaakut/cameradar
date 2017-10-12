@@ -1,16 +1,11 @@
-# Results
-result.json
-*.xml
-
 # IDE config
 .idea/
 .vscode/
 
 # Deps
-cpp/deps/jsoncpp/
-cpp/deps/mysql-connector/
-cpp/deployment/cameradar_*_Release_Linux.tar.gz
+glide.lock
+/vendor
 
-# Test
-test/cameradartest.conf.json
-test/cameradar_*_Debug_Linux.tar.gz
+# Golang
+/bin/*
+/pkg/*
