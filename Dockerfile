@@ -2,7 +2,7 @@
 FROM golang:alpine AS build-env
 
 COPY . /go/src/github.com/EtixLabs/cameradar
-WORKDIR /go/src/github.com/EtixLabs/cameradar/cameraccess
+WORKDIR /go/src/github.com/EtixLabs/cameradar/cameradar
 
 RUN apk update && \
     apk upgrade && \
@@ -13,9 +13,8 @@ RUN apk update && \
             git \
             pkgconfig
 
-RUN curl https://glide.sh/get | sh
-RUN glide install
-RUN go build -o cameraccess
+RUN curl https://glide.sh/get | sh && glide install
+RUN go build -o cameradar
 
 # Final stage
 FROM alpine
@@ -23,6 +22,6 @@ FROM alpine
 RUN apk --update add --no-cache nmap nmap-nselibs nmap-scripts \
             curl-dev
 
-WORKDIR /app/cameraccess
+WORKDIR /app/cameradar
 COPY --from=build-env /go/src/github.com/EtixLabs/cameradar/ /app/
-ENTRYPOINT ["/app/cameraccess/cameraccess"]
+ENTRYPOINT ["/app/cameradar/cameradar"]

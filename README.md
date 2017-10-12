@@ -32,7 +32,7 @@
 * [Frequently Asked Questions](#frequently-asked-questions)
 * [License](#license)
 
-## Docker Image for Cameraccess
+## Docker Image for Cameradar
 
 Install [docker](https://docs.docker.com/engine/installation/) on your machine, and run the following command:
 
@@ -47,6 +47,31 @@ e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the po
 * `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`), an IP (e.g.: `172.16.100.10`), or a range of IPs (e.g.: `172.16.100.10-20`).
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
 * If you use the `-r` and `-c` options to specify your custom dictionaries, make sure to also use a volume to add them to the docker container. Example: `docker run -t -v /path/to/dictionaries/:/tmp/ ullaakut/cameradar -r /tmp/myroutes -c /tmp/mycredentials.json -t mytarget`
+
+## Installing the binary
+
+### Dependencies
+
+* `go`
+* `glide`
+
+#### Installing [glide](https://github.com/Masterminds/glide)
+
+* OSX: `brew install glide`
+* Linux: `curl https://glide.sh/get | sh`
+* Windows: Download the binary package [here](https://github.com/Masterminds/glide/releases)
+
+### Steps to install
+
+Make sure you installed the dependencies mentionned above.
+
+1. `go get github.com/EtixLabs/cameradar`
+2. `cd $GOPATH/src/github.com/EtixLabs/cameradar`
+3. `glide install`
+4. `cd cameradar`
+5. `go install`
+
+The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
 ## Library
 
@@ -93,7 +118,7 @@ The cameradar library also provides two functions that take file paths as inputs
 
 ## Configuration
 
-The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameraccess application will scan the 554 and 8554 ports.
+The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameradar application will scan the 554 and 8554 ports.
 
 `docker run -t ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
 
@@ -146,7 +171,8 @@ To build the project without docker:
     * Linux: `curl https://glide.sh/get | sh`
     * Windows: Download the binary package [here](https://github.com/Masterminds/glide/releases)
 2. `glide install`
-3. `go build -o cameradar cameraccess/main.go`
+3. `go build` to build the library
+4. `cd cameradar && go build` to build the binary
 
 The cameradar binary is now in the root of the directory.
 
@@ -168,11 +194,11 @@ You can still find it under the 1.1.4 tag on this repo, however it was less perf
 
 > How to use the Cameradar library for my own project?
 
-See the cameraccess example. You just need to run `go get github.com/EtixLabs/cameradar/cameradar` and to use the `cmrdr` package in your code.
+See the example in `/cameradar`. You just need to run `go get github.com/EtixLabs/cameradar` and to use the `cmrdr` package in your code.
 
 > I want to scan my own localhost for some reason and it does not work! What's going on?
 
-Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameraccess/main.go`.
+Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameradar/cameradar.go` or [installing it](#installing-the-binary)
 
 > I don't see a colored output :(
 
@@ -180,7 +206,7 @@ You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This 
 
 ## Known issues
 
-* When running Cameraccess in a docker container, specifying multiple targets does not work. Using subnetworks (such as `182.49.20.0/24`) or ranges (`182.49.20.0-44`) works.
+* When running Cameradar in a docker container, specifying multiple targets does not work. Using subnetworks (such as `182.49.20.0/24`) or ranges (`182.49.20.0-44`) works.
 * There is currently no way to use environment variables instead of command-line arguments in Cameradar. This will be done at some point, but isn't a priority right now.
 
 ## License
