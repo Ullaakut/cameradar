@@ -129,6 +129,27 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 
 ## Contribution
 
+### Build
+
+#### Docker build
+
+To build the docker image, simply run `docker build -t . cameradar` in the root of the project.
+
+Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
+
+#### Go build
+
+To build the project without docker:
+
+1. install [glide](https://github.com/Masterminds/glide)
+    * OSX: `brew install glide`
+    * Linux: `curl https://glide.sh/get | sh`
+    * Windows: Download the binary package [here](https://github.com/Masterminds/glide/releases)
+2. `glide install`
+3. `go build -o cameradar cameraccess/main.go`
+
+The cameradar binary is now in the root of the directory.
+
 See [the contribution document](/CONTRIBUTING.md) to get started.
 
 ## Frequently Asked Questions
