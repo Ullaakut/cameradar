@@ -8,12 +8,11 @@ If you have other cool ideas, feel free to share them with me at [brendan.leglau
 
 ## Version 2.0.0
 
-- *Cameradar* is the name of the Golang library.
-- *Cameraccess* is the name of the binary that uses Cameradar to discover and access the cameras.
+- *Cameradar* is the name of the Golang library and the binary that serves as an example of its use.
 
 This quite big refactoring comes from the fact that most users who want to access cameras either want to launch it with the basic cache manager, mostly using the docker image already provided in this repository, or will not use it because it does not integrate into their software solution without sharing their database with Cameradar, which would cause issues with database migrations for example.
 
-Transforming it into a library allows developers to use it directly in their own code exactly as they want, allowing for a greater flexibility. The Cameraccess binary also provides a simple use example as well as maintains the old simple way of using Cameradar for non-developers.
+Transforming it into a library allows developers to use it directly in their own code exactly as they want, allowing for a greater flexibility. The Cameradar binary also provides a simple use example as well as maintains the old simple way of using Cameradar for non-developers.
 
 ## Workflow
 
