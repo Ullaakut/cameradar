@@ -7,19 +7,14 @@ WORKDIR /go/src/github.com/EtixLabs/cameradar/cameraccess
 RUN apk update && \
     apk upgrade && \
     apk add nmap nmap-nselibs nmap-scripts \
-            curl-dev \
+            curl curl-dev \
             gcc \
             libc-dev \
             git \
             pkgconfig
 
-RUN go get github.com/andelf/go-curl
-RUN go get github.com/pkg/errors
-RUN go get gopkg.in/go-playground/validator.v9
-RUN go get github.com/jessevdk/go-flags
-RUN go get github.com/fatih/color
-RUN go get github.com/gernest/wow
-
+RUN curl https://glide.sh/get | sh
+RUN glide install
 RUN go build -o cameraccess
 
 # Final stage
