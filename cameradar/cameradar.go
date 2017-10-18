@@ -32,7 +32,7 @@ type options struct {
 	Routes      string `short:"r" long:"custom-routes" description:"The path on which to load a custom routes dictionary" default:"../dictionaries/routes"`
 	Credentials string `short:"c" long:"custom-credentials" description:"The path on which to load a custom credentials JSON dictionary" default:"../dictionaries/credentials.json"`
 	Speed       int    `short:"s" long:"speed" description:"The nmap speed preset to use" default:"4"`
-	Timeout     int    `short:"T" long:"timeout" description:"The timeout in miliseconds to use for attack attempts" default:"1000"`
+	Timeout     int    `short:"T" long:"timeout" description:"The timeout in miliseconds to use for attack attempts" default:"2000"`
 	EnableLogs  bool   `short:"l" long:"log" description:"Enable the logs for nmap's output to stdout"`
 }
 

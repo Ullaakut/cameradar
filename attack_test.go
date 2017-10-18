@@ -60,6 +60,7 @@ func TestAttackCredentials(t *testing.T) {
 			log:         true,
 
 			expectedStreams: fakeTargets,
+			expectedErrMsg:  "no credentials found",
 		},
 		// Valid baseline without logs
 		{
@@ -69,6 +70,7 @@ func TestAttackCredentials(t *testing.T) {
 			log:         false,
 
 			expectedStreams: fakeTargets,
+			expectedErrMsg:  "no credentials found",
 		},
 		// TODO: Refacto and make tests with all possible error cases
 	}
@@ -134,6 +136,7 @@ func TestAttackRoute(t *testing.T) {
 			log:     true,
 
 			expectedStreams: fakeTargets,
+			expectedErrMsg:  "no routes found",
 		},
 		// Valid baseline without logs
 		{
@@ -143,6 +146,7 @@ func TestAttackRoute(t *testing.T) {
 			log:     false,
 
 			expectedStreams: fakeTargets,
+			expectedErrMsg:  "no routes found",
 		},
 		// TODO: Refacto and make tests with all possible error cases
 	}
