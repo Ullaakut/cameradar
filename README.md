@@ -145,7 +145,7 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 * **"-t, --target"**: Set custom target. Required.
 * **"-p, --ports"**: (Default: `554,8554`) Set custom ports.
 * **"-s, --speed"**: (Default: `4`) Set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
-* **"-T, --timeout"**: (Default: `1000`) Set custom timeout value in miliseconds after which an attack attempt without an answer should give up.
+* **"-T, --timeout"**: (Default: `2000`) Set custom timeout value in miliseconds after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on very performant and reliable networks.
 * **"-r, --custom-routes"**: (Default: `dictionaries/routes`) Set custom dictionary path for routes
 * **"-c, --custom-credentials"**: (Default: `dictionaries/credentials.json`) Set custom dictionary path for credentials
 * **"-o, --nmap-output"**: (Default: `/tmp/cameradar_scan.xml`) Set custom nmap output path

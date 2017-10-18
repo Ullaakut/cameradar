@@ -60,7 +60,11 @@ func routeAttack(camera Stream, route string, timeout time.Duration, enableLogs 
 		easy.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
 
 		// Perform the request
-		easy.Perform()
+		err := easy.Perform()
+		if err != nil {
+			fmt.Printf("\nERROR: curl timeout on camera '%s' reached after %s.\nconsider increasing the timeout (-T, --timeout parameter) to at least 5000ms if scanning an unstable network.\n", camera.Address, timeout.String())
+			return false
+		}
 
 		// Get return code for the request
 		rc, err := easy.Getinfo(curl.INFO_RESPONSE_CODE)
@@ -68,12 +72,11 @@ func routeAttack(camera Stream, route string, timeout time.Duration, enableLogs 
 			return false
 		}
 
-		// If it's a 404, it means that the route was not valid
-		if rc == 404 {
-			return false
+		// If it's a 401 or 403, it means that the credentials are wrong but the route might be okay
+		// If it's a 200, the camera is accessed successfully
+		if rc == 200 || rc == 401 || rc == 403 {
+			return true
 		}
-
-		return true
 	}
 	return false
 }
@@ -112,7 +115,11 @@ func credAttack(camera Stream, username string, password string, timeout time.Du
 		easy.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
 
 		// Perform the request
-		easy.Perform()
+		err := easy.Perform()
+		if err != nil {
+			fmt.Printf("\nERROR: curl timeout on camera '%s' reached after %s.\nconsider increasing the timeout (-T, --timeout parameter) to at least 5000ms if scanning an unstable network.\n", camera.Address, timeout.String())
+			return false
+		}
 
 		// Get return code for the request
 		rc, err := easy.Getinfo(curl.INFO_RESPONSE_CODE)
@@ -120,12 +127,11 @@ func credAttack(camera Stream, username string, password string, timeout time.Du
 			return false
 		}
 
-		// If it's a 403 or a 401, it means that the credentials are not correct
-		if rc == 403 || rc == 401 {
-			return false
+		// If it's a 404, it means that the route is incorrect but the credentials might be okay
+		// If it's a 200, the camera is accessed successfully
+		if rc == 200 || rc == 404 {
+			return true
 		}
-
-		return true
 	}
 	return false
 }
@@ -163,7 +169,12 @@ func attackCameraRoute(target Stream, routes Routes, resultsChan chan<- Stream, 
 
 // AttackCredentials attempts to guess the provided targets' credentials using the given
 // dictionary or the default dictionary if none was provided by the user.
-func AttackCredentials(targets []Stream, credentials Credentials, timeout time.Duration, log bool) (results []Stream, err error) {
+func AttackCredentials(targets []Stream, credentials Credentials, timeout time.Duration, log bool) ([]Stream, error) {
+	err := curl.GlobalInit(curl.GLOBAL_ALL)
+	if err != nil {
+		return targets, errors.Wrap(err, "could not initialize curl")
+	}
+
 	attacks := make(chan Stream)
 	defer close(attacks)
 
@@ -198,7 +209,12 @@ func AttackCredentials(targets []Stream, credentials Credentials, timeout time.D
 
 // AttackRoute attempts to guess the provided targets' streaming routes using the given
 // dictionary or the default dictionary if none was provided by the user.
-func AttackRoute(targets []Stream, routes Routes, timeout time.Duration, log bool) (results []Stream, err error) {
+func AttackRoute(targets []Stream, routes Routes, timeout time.Duration, log bool) ([]Stream, error) {
+	err := curl.GlobalInit(curl.GLOBAL_ALL)
+	if err != nil {
+		return targets, errors.Wrap(err, "could not initialize curl")
+	}
+
 	attacks := make(chan Stream)
 	defer close(attacks)
 
