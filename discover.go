@@ -78,7 +78,7 @@ func NmapRun(targets, ports, resultFilePath string, nmapSpeed int, enableLogs bo
 	in := bufio.NewScanner(stdout)
 	for in.Scan() {
 		if enableLogs {
-			fmt.Printf(in.Text())
+			fmt.Println(in.Text())
 		}
 	}
 	if err := in.Err(); err != nil {
