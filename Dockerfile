@@ -23,5 +23,6 @@ RUN apk --update add --no-cache nmap nmap-nselibs nmap-scripts \
             curl-dev
 
 WORKDIR /app/cameradar
-COPY --from=build-env /go/src/github.com/EtixLabs/cameradar/ /app/
-ENTRYPOINT ["/app/cameradar/cameradar"]
+COPY --from=build-env /go/src/github.com/EtixLabs/cameradar/dictionaries/ /app/dictionaries/
+COPY --from=build-env /go/src/github.com/EtixLabs/cameradar/cameradar/ /app/cameradar/
+ENTRYPOINT ["/app/cameradar/cameradar", "-r", "/app/dictionaries/routes", "-c", "/app/dictionaries/credentials.json"]
