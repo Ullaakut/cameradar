@@ -127,10 +127,10 @@ func prettyPrint(streams []cmrdr.Stream) {
 		} else if success == 1 {
 			fmt.Printf("%s Successful attack: %s device was accessed", green("\xE2\x9C\x94"), green(len(streams)))
 		} else {
-			fmt.Printf("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.", red("\xE2\x9C\x96"))
+			fmt.Printf("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.\n", red("\xE2\x9C\x96"))
 		}
 	} else {
-		fmt.Printf("%s No streams were found. Please make sure that your target is on an accessible network.", red("\xE2\x9C\x96"))
+		fmt.Printf("%s No streams were found. Please make sure that your target is on an accessible network.\n", red("\xE2\x9C\x96"))
 	}
 }
 
