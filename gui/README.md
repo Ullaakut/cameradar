@@ -1,3 +1,0 @@
-# Cameradar GUI
-
-## WIP
