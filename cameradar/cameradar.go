@@ -15,6 +15,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/EtixLabs/cameradar"
@@ -26,11 +27,11 @@ import (
 )
 
 type options struct {
-	Target      string `short:"t" long:"target" description:"The target on which to scan for open RTSP streams - required" required:"true"`
+	Target      string `short:"t" long:"target" description:"The target on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)" required:"true"`
 	Ports       string `short:"p" long:"ports" description:"The ports on which to search for RTSP streams" default:"554,8554"`
 	OutputFile  string `short:"o" long:"nmap-output" description:"The path where nmap will create its XML result file" default:"/tmp/cameradar_scan.xml"`
-	Routes      string `short:"r" long:"custom-routes" description:"The path on which to load a custom routes dictionary" default:"../dictionaries/routes"`
-	Credentials string `short:"c" long:"custom-credentials" description:"The path on which to load a custom credentials JSON dictionary" default:"../dictionaries/credentials.json"`
+	Routes      string `short:"r" long:"custom-routes" description:"The path on which to load a custom routes dictionary" default:"<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/routes"`
+	Credentials string `short:"c" long:"custom-credentials" description:"The path on which to load a custom credentials JSON dictionary" default:"<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/credentials.json"`
 	Speed       int    `short:"s" long:"speed" description:"The nmap speed preset to use" default:"4"`
 	Timeout     int    `short:"T" long:"timeout" description:"The timeout in miliseconds to use for attack attempts" default:"2000"`
 	EnableLogs  bool   `short:"l" long:"log" description:"Enable the logs for nmap's output to stdout"`
@@ -44,6 +45,10 @@ func main() {
 	}
 
 	w := startSpinner(options.EnableLogs)
+
+	gopath := os.Getenv("GOPATH")
+	options.Credentials = strings.Replace(options.Credentials, "<GOPATH>", gopath, 1)
+	options.Routes = strings.Replace(options.Routes, "<GOPATH>", gopath, 1)
 
 	credentials, err := cmrdr.LoadCredentials(options.Credentials)
 	if err != nil {
