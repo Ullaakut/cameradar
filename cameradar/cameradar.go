@@ -46,6 +46,7 @@ func main() {
 
 	w := startSpinner(options.EnableLogs)
 
+	updateSpinner(w, "Loading dictionaries...", options.EnableLogs)
 	gopath := os.Getenv("GOPATH")
 	options.Credentials = strings.Replace(options.Credentials, "<GOPATH>", gopath, 1)
 	options.Routes = strings.Replace(options.Routes, "<GOPATH>", gopath, 1)
