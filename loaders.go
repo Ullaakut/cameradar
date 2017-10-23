@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -55,4 +56,22 @@ func LoadRoutes(path string) (Routes, error) {
 	}
 
 	return routes, scanner.Err()
+}
+
+// ParseCredentialsFromString parses a dictionary string and returns its contents as a Credentials structure
+func ParseCredentialsFromString(content string) (Credentials, error) {
+	var creds Credentials
+
+	// Unmarshal content of JSON file into data structure
+	err := json.Unmarshal([]byte(content), &creds)
+	if err != nil {
+		return creds, err
+	}
+
+	return creds, nil
+}
+
+// ParseRoutesFromString parses a dictionary string and returns its contents as a Routes structure
+func ParseRoutesFromString(content string) Routes {
+	return strings.Split(content, "\n")
 }
