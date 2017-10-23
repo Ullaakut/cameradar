@@ -13,6 +13,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -25,6 +26,15 @@ type Cameradar struct {
 	Streams []cmrdr.Stream
 
 	options *Options
+
+	toClient   chan<- string
+	fromClient <-chan string
+}
+
+type request struct {
+	Method string
+	Target string
+	Ports  string
 }
 
 // Options contains all options needed to launch a complete cameradar scan
@@ -38,8 +48,8 @@ type Options struct {
 	Timeout     time.Duration
 }
 
-// NewCameradar instanciates a new Cameradar service
-func NewCameradar(routesFilePath, credentialsFilePath string) (*Cameradar, error) {
+// New instanciates a new Cameradar service
+func New(routesFilePath, credentialsFilePath string, fromClient <-chan string, toClient chan<- string) (*Cameradar, error) {
 	routes, err := cmrdr.LoadRoutes(routesFilePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't load routes dictionary")
@@ -50,7 +60,7 @@ func NewCameradar(routesFilePath, credentialsFilePath string) (*Cameradar, error
 		return nil, errors.Wrap(err, "can't load credentials dictionary")
 	}
 
-	return &Cameradar{
+	cameradar := &Cameradar{
 		Streams: nil,
 		options: &Options{
 			Ports:       "554,8554",
@@ -59,7 +69,41 @@ func NewCameradar(routesFilePath, credentialsFilePath string) (*Cameradar, error
 			Speed:       4,
 			Timeout:     2000,
 		},
-	}, nil
+
+		fromClient: fromClient,
+		toClient:   toClient,
+	}
+
+	go cameradar.Run()
+	return cameradar, nil
+}
+
+// Run launches the service that will automatically call the service methods
+// using the instructions received over websocket
+func (c *Cameradar) Run() {
+	for {
+		msg, ok := <-c.fromClient
+		if !ok {
+			println("disconnected")
+			return
+		}
+
+		var req request
+		err := json.Unmarshal([]byte(msg), &req)
+		if err != nil {
+			c.toClient <- "invalid request: " + err.Error()
+			continue
+		}
+
+		switch req.Method {
+		case "discover":
+			c.toClient <- "<discover results>"
+		case "attack":
+			c.toClient <- "<attack results>"
+		default:
+			c.toClient <- "invalid method: " + req.Method
+		}
+	}
 }
 
 // Discover launches a Cameradar scan using the service's options
