@@ -13,6 +13,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -21,28 +22,81 @@ import (
 	"github.com/EtixLabs/cameradar"
 	"github.com/gernest/wow"
 	"github.com/gernest/wow/spin"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 
 	"github.com/fatih/color"
-	"github.com/jessevdk/go-flags"
 )
 
 type options struct {
-	Target      string `short:"t" long:"target" description:"The target on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)" required:"true"`
-	Ports       string `short:"p" long:"ports" description:"The ports on which to search for RTSP streams" default:"554,8554"`
-	OutputFile  string `short:"o" long:"nmap-output" description:"The path where nmap will create its XML result file" default:"/tmp/cameradar_scan.xml"`
-	Routes      string `short:"r" long:"custom-routes" description:"The path on which to load a custom routes dictionary" default:"<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/routes"`
-	Credentials string `short:"c" long:"custom-credentials" description:"The path on which to load a custom credentials JSON dictionary" default:"<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/credentials.json"`
-	Speed       int    `short:"s" long:"speed" description:"The nmap speed preset to use" default:"4"`
-	Timeout     int    `short:"T" long:"timeout" description:"The timeout in miliseconds to use for attack attempts" default:"2000"`
-	EnableLogs  bool   `short:"l" long:"log" description:"Enable the logs for nmap's output to stdout"`
+	Target      string
+	Ports       string
+	OutputFile  string
+	Routes      string
+	Credentials string
+	Speed       int
+	Timeout     int
+	EnableLogs  bool
+}
+
+func parseArguments() error {
+
+	viper.BindEnv("target", "CAMERADAR_TARGET")
+	viper.BindEnv("ports", "CAMERADAR_PORTS")
+	viper.BindEnv("nmap-output", "CAMERADAR_NMAP_OUTPUT_FILE")
+	viper.BindEnv("custom-routes", "CAMERADAR_CUSTOM_ROUTES")
+	viper.BindEnv("custom-credentials", "CAMERADAR_CUSTOM_CREDENTIALS")
+	viper.BindEnv("speed", "CAMERADAR_SPEED")
+	viper.BindEnv("timeout", "CAMERADAR_TIMEOUT")
+	viper.BindEnv("envlogs", "CAMERADAR_LOGS")
+
+	pflag.StringP("target", "t", "", "The target on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
+	pflag.StringP("ports", "p", "554,8554", "The ports on which to search for RTSP streams")
+	pflag.StringP("nmap-output", "o", "/tmp/cameradar_scan.xml", "The path where nmap will create its XML result file")
+	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
+	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
+	pflag.IntP("speed", "s", 4, "The nmap speed preset to use")
+	pflag.IntP("timeout", "T", 2000, "The timeout in miliseconds to use for attack attempts")
+	pflag.BoolP("log", "l", false, "Enable the logs for nmap's output to stdout")
+	pflag.BoolP("help", "h", false, "displays this help message")
+
+	viper.AutomaticEnv()
+
+	pflag.Parse()
+
+	err := viper.BindPFlags(pflag.CommandLine)
+	if err != nil {
+		return err
+	}
+
+	if viper.GetBool("help") {
+		pflag.Usage()
+		os.Exit(0)
+	}
+
+	if viper.GetString("target") == "" {
+		return errors.New("target (-t, --target) argument required\n    examples:\n      - 172.16.100.0/24\n      - localhost\n      - 8.8.8.8")
+	}
+
+	return nil
 }
 
 func main() {
 	var options options
-	_, err := flags.ParseArgs(&options, os.Args[1:])
+
+	err := parseArguments()
 	if err != nil {
-		os.Exit(0)
+		printErr(err)
 	}
+
+	options.Credentials = viper.GetString("custom-credentials")
+	options.EnableLogs = viper.GetBool("log") || viper.GetBool("envlogs")
+	options.OutputFile = viper.GetString("nmap-output")
+	options.Ports = viper.GetString("ports")
+	options.Routes = viper.GetString("custom-routes")
+	options.Speed = viper.GetInt("speed")
+	options.Timeout = viper.GetInt("timeout")
+	options.Target = viper.GetString("target")
 
 	w := startSpinner(options.EnableLogs)
 
@@ -64,15 +118,24 @@ func main() {
 	}
 
 	updateSpinner(w, "Scanning the network...", options.EnableLogs)
-	streams, _ := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
+	streams, err := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
+	if err != nil && len(streams) > 0 {
+		printErr(err)
+	}
 
 	// Most cameras will be accessed successfully with these two attacks
 
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their routes...", options.EnableLogs)
-	streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+	streams, err = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+	if err != nil && len(streams) > 0 {
+		printErr(err)
+	}
 
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their credentials...", options.EnableLogs)
-	streams, _ = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+	streams, err = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+	if err != nil && len(streams) > 0 {
+		printErr(err)
+	}
 
 	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
 	// For these cameras, running another route attack will solve the problem.
@@ -80,7 +143,10 @@ func main() {
 		if stream.RouteFound == false || stream.CredentialsFound == false {
 
 			updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Final attack...", options.EnableLogs)
-			streams, _ = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+			streams, err = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+			if err != nil && len(streams) > 0 {
+				printErr(err)
+			}
 			break
 		}
 	}
@@ -133,6 +199,12 @@ func prettyPrint(streams []cmrdr.Stream) {
 	} else {
 		fmt.Printf("%s No streams were found. Please make sure that your target is on an accessible network.\n", red("\xE2\x9C\x96"))
 	}
+}
+
+func printErr(err error) {
+	red := color.New(color.FgRed, color.Bold).SprintFunc()
+	fmt.Printf("%s %v\n", red("\xE2\x9C\x96"), err)
+	os.Exit(1)
 }
 
 func updateSpinner(w *wow.Wow, text string, disabled bool) {

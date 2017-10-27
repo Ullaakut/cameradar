@@ -152,6 +152,60 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 * **"-l, --log"**: Enable debug logs (nmap requests, curl describe requests, etc.)
 * **"-h"** : Display the usage information
 
+## Environment Variables
+
+### `CAMERADAR_TARGET`
+
+This variable is mandatory and specifies the target that cameradar should scan and attempt to access RTSP streams on.
+
+Examples:
+
+* `172.16.100.0/24`
+* `192.168.1.1`
+* `localhost`
+
+### `CAMERADAR_PORTS`
+
+This variable is optional and allows you to specify the ports on which to run the scans.
+
+Default value: `554,8554`
+
+It is recommended not to change these except if you are certain that cameras have been configured to stream RTSP over a different port. 99.9% of cameras are streaming on these ports.
+
+### `CAMERADAR_NMAP_OUTPUT_FILE`
+
+This variable is optional and allows you to specify on which file nmap will write its output.
+
+Default value: `/tmp/cameradar_scan.xml`
+
+This can be useful only if you want to read the files yourself, if you don't want it to write in your `/tmp` folder, or if you want to use only the RunNmap function in cameradar, and do its parsing manually.
+
+### `CAMERADAR_CUSTOM_ROUTES`, `CAMERADAR_CUSTOM_CREDENTIALS`
+
+These variables are optional, allowing to replace the default dictionaries with custom ones, for the dictionary attack.
+
+Default values: `<CAMERADAR_GOPATH>/dictionaries/routes` and `<CAMERADAR_GOPATH>/dictionaries/credentials.json`
+
+### `CAMERADAR_SPEED`
+
+This optional variable allows you to set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
+
+Default value: `4`
+
+### `CAMERADAR_TIMEOUT`
+
+This optional variable allows you to set custom timeout value in miliseconds after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on very performant and reliable networks.
+
+Default value: `2000`
+
+### `CAMERADAR_LOGS`
+
+This optional variable allows you to enable a more verbose output to have more information about what is going on.
+
+It will output nmap results, cURL requests, etc.
+
+Default: `false`
+
 ## Contribution
 
 ### Build
