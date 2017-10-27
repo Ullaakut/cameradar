@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"strings"
 
 	"github.com/pkg/errors"
 	v "gopkg.in/go-playground/validator.v9"
@@ -51,17 +52,21 @@ func NmapRun(targets, ports, resultFilePath string, nmapSpeed int, enableLogs bo
 		return fmt.Errorf("invalid nmap speed value '%d'. Should be between '%d' and '%d'", nmapSpeed, PARANOIAC, INSANE)
 	}
 
-	// Prepare nmap command
-	cmd := execCommand(
-		"nmap",
-		fmt.Sprintf("-T%d", nmapSpeed),
-		"-A",
-		"-p",
+	cmdArgs := fmt.Sprintf(
+		"-T%d -A -p %s -oX %s %s",
+		nmapSpeed,
 		ports,
-		"-oX",
 		resultFilePath,
-		targets,
-	)
+		targets)
+
+	if enableLogs {
+		fmt.Printf("command: nmap %s\n", cmdArgs)
+	}
+
+	args := strings.Split(cmdArgs, " ")
+
+	// Prepare nmap command
+	cmd := execCommand("nmap", args...)
 
 	// Pipe stdout to be able to write the logs in realtime
 	stdout, err := cmd.StdoutPipe()
