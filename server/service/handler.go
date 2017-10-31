@@ -37,8 +37,6 @@ func (c *Cameradar) handleRequest(message string) {
 		return
 	}
 
-	println("1")
-
 	validate := v.New()
 	err = validate.Struct(request)
 	if err != nil {
@@ -50,10 +48,8 @@ func (c *Cameradar) handleRequest(message string) {
 		c.respondToClient(ret, request.ID, JSONRPCErr)
 		return
 	}
-	println("1")
 
 	c.SetOptions(request.Params)
-	println("2")
 
 	switch request.Method {
 	case "discover":
@@ -72,7 +68,6 @@ func (c *Cameradar) handleRequest(message string) {
 			Data:    "method" + request.Method + "not found",
 		}
 	}
-	println("3")
 	if err != nil {
 		JSONRPCErr = jsonrpc2.Error{
 			Code:    jsonrpc2.InternalError,
@@ -81,7 +76,6 @@ func (c *Cameradar) handleRequest(message string) {
 		}
 	}
 
-	println("4")
 	c.respondToClient(ret, request.ID, JSONRPCErr)
 }
 
@@ -139,7 +133,6 @@ func (c *Cameradar) discoverAndAttack(ID string) {
 }
 
 func (c *Cameradar) respondToClient(result []cmrdr.Stream, ID string, JSONRPCErr jsonrpc2.Error) {
-	println(result)
 	r := jsonrpc2.Response{
 		JSONRPC: "2.0",
 		Result:  result,
