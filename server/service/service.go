@@ -13,7 +13,6 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -29,12 +28,6 @@ type Cameradar struct {
 
 	toClient   chan<- string
 	fromClient <-chan string
-}
-
-type request struct {
-	Method string
-	Target string
-	Ports  string
 }
 
 // Options contains all options needed to launch a complete cameradar scan
@@ -84,56 +77,69 @@ func (c *Cameradar) Run() {
 	for {
 		msg, ok := <-c.fromClient
 		if !ok {
-			println("disconnected")
+			println("client disconnected")
 			return
 		}
+		go c.handleRequest(msg)
+	}
+}
 
-		var req request
-		err := json.Unmarshal([]byte(msg), &req)
-		if err != nil {
-			c.toClient <- "invalid request: " + err.Error()
-			continue
-		}
-
-		switch req.Method {
-		case "discover":
-			c.toClient <- "<discover results>"
-		case "attack":
-			c.toClient <- "<attack results>"
-		default:
-			c.toClient <- "invalid method: " + req.Method
+// DiscoverAndAttack launches a Cameradar scan followed by all necessary
+// attacks to access the cameras
+func (c *Cameradar) DiscoverAndAttack() ([]cmrdr.Stream, error) {
+	streams, err := c.Discover()
+	if err != nil {
+		return streams, err
+	}
+	streams, err = c.AttackRoute()
+	if err != nil {
+		return streams, err
+	}
+	streams, err = c.AttackCredentials()
+	if err != nil {
+		return streams, err
+	}
+	for _, stream := range streams {
+		if stream.RouteFound == false {
+			return c.AttackCredentials()
 		}
 	}
+	return streams, nil
 }
 
 // Discover launches a Cameradar scan using the service's options
-func (c *Cameradar) Discover() error {
+func (c *Cameradar) Discover() ([]cmrdr.Stream, error) {
 	streams, err := cmrdr.Discover(c.options.Target, c.options.Ports, c.options.OutputFile, c.options.Speed, true)
 	if err != nil {
-		return errors.Wrap(err, "could not discover streams")
+		return streams, errors.Wrap(err, "could not discover streams")
 	}
 	c.Streams = streams
-	return nil
+	return streams, nil
 }
 
 // AttackRoute launches a Cameradar route attack using the service's options
-func (c *Cameradar) AttackRoute() error {
+func (c *Cameradar) AttackRoute() ([]cmrdr.Stream, error) {
 	streams, err := cmrdr.AttackRoute(c.Streams, c.options.Routes, c.options.Timeout, true)
 	if err != nil {
-		return errors.Wrap(err, "could not discover streams")
+		return streams, errors.Wrap(err, "could not discover streams")
 	}
 	c.Streams = streams
-	return nil
+	return streams, nil
 }
 
 // AttackCredentials launches a Cameradar credential attack using the service's options
-func (c *Cameradar) AttackCredentials() error {
+func (c *Cameradar) AttackCredentials() ([]cmrdr.Stream, error) {
 	streams, err := cmrdr.AttackCredentials(c.Streams, c.options.Credentials, c.options.Timeout, true)
 	if err != nil {
-		return errors.Wrap(err, "could not discover streams")
+		return streams, errors.Wrap(err, "could not discover streams")
 	}
 	c.Streams = streams
-	return nil
+	return streams, nil
+}
+
+// SetOptions sets all options using an option structure
+func (c *Cameradar) SetOptions(options Options) {
+	c.options = &options
 }
 
 // SetNmapOutputFile sets the OutputFile option
