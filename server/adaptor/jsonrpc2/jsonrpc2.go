@@ -12,6 +12,8 @@
 
 package jsonrpc2
 
+import "github.com/EtixLabs/cameradar"
+
 // http://www.jsonrpc.org/specification
 const (
 	ParseError     = -32700 // Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text.
@@ -36,18 +38,18 @@ const (
 
 // Request represents a JSONRPC request
 type Request struct {
-	JSONRPC string `json:"jsonrpc" validate:"eq=2.0"`
-	Method  string `json:"method" validate:"required"`
-	Params  string `json:"params" validate:"required"`
-	ID      string `json:"id"`
+	JSONRPC string        `json:"jsonrpc" validate:"eq=2.0"`
+	Method  string        `json:"method" validate:"required"`
+	Params  cmrdr.Options `json:"params" validate:"required"`
+	ID      string        `json:"id"`
 }
 
 // Response represents a JSONRPC response
 type Response struct {
-	JSONRPC string `json:"jsonrpc" validate:"eq=2.0"`
-	Result  string `json:"result"`
-	Error   Error  `json:"error"`
-	ID      string `json:"id"`
+	JSONRPC string         `json:"jsonrpc" validate:"eq=2.0"`
+	Result  []cmrdr.Stream `json:"result"`
+	Error   Error          `json:"error"`
+	ID      string         `json:"id"`
 }
 
 // Error represents a JSONRPC response's error

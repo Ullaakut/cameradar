@@ -33,7 +33,11 @@ func (c *Cameradar) handleRequest(message string) {
 			Message: jsonrpc2.ParseErrorMessage,
 			Data:    err.Error(),
 		}
+		c.respondToClient(ret, "", JSONRPCErr)
+		return
 	}
+
+	println("1")
 
 	validate := v.New()
 	err = validate.Struct(request)
@@ -43,36 +47,32 @@ func (c *Cameradar) handleRequest(message string) {
 			Message: jsonrpc2.InvalidRequestMessage,
 			Data:    err.Error(),
 		}
+		c.respondToClient(ret, request.ID, JSONRPCErr)
+		return
 	}
+	println("1")
 
-	var options Options
-	err = json.Unmarshal([]byte(request.Params), &options)
-	if err != nil {
-		JSONRPCErr = jsonrpc2.Error{
-			Code:    jsonrpc2.InvalidParams,
-			Message: jsonrpc2.InvalidParamsMessage,
-			Data:    err.Error(),
-		}
-	}
-
-	c.SetOptions(options)
+	c.SetOptions(request.Params)
+	println("2")
 
 	switch request.Method {
 	case "discover":
 		ret, err = c.Discover()
 	case "attack_credentials":
-		ret, err = c.Discover()
-	case "attack_routes":
-		ret, err = c.Discover()
+		ret, err = c.AttackCredentials()
+	case "attack_route":
+		ret, err = c.AttackRoute()
 	case "discover_and_attack":
-		ret, err = c.DiscoverAndAttack()
+		c.discoverAndAttack(request.ID)
+		return
 	default:
 		JSONRPCErr = jsonrpc2.Error{
 			Code:    jsonrpc2.MethodNotFound,
 			Message: jsonrpc2.MethodNotFoundMessage,
-			Data:    err.Error(),
+			Data:    "method" + request.Method + "not found",
 		}
 	}
+	println("3")
 	if err != nil {
 		JSONRPCErr = jsonrpc2.Error{
 			Code:    jsonrpc2.InternalError,
@@ -81,18 +81,64 @@ func (c *Cameradar) handleRequest(message string) {
 		}
 	}
 
-	result, err := json.Marshal(ret)
-	if err != nil {
-		JSONRPCErr = jsonrpc2.Error{
-			Code:    jsonrpc2.InternalError,
-			Message: jsonrpc2.InternalErrorMessage,
-			Data:    err.Error(),
-		}
-	}
-	c.respondToClient(string(result), request.ID, JSONRPCErr)
+	println("4")
+	c.respondToClient(ret, request.ID, JSONRPCErr)
 }
 
-func (c *Cameradar) respondToClient(result, ID string, JSONRPCErr jsonrpc2.Error) {
+func (c *Cameradar) discoverAndAttack(ID string) {
+	var JSONRPCErr jsonrpc2.Error
+
+	streams, err := c.Discover()
+	if err != nil {
+		c.respondToClient(streams, ID, jsonrpc2.Error{
+			Code:    jsonrpc2.InternalError,
+			Message: jsonrpc2.InternalErrorMessage,
+			Data:    err.Error(),
+		})
+		return
+	}
+	c.respondToClient(streams, ID, JSONRPCErr)
+
+	streams, err = c.AttackRoute()
+	if err != nil {
+		c.respondToClient(streams, ID, jsonrpc2.Error{
+			Code:    jsonrpc2.InternalError,
+			Message: jsonrpc2.InternalErrorMessage,
+			Data:    err.Error(),
+		})
+		return
+	}
+	c.respondToClient(streams, ID, JSONRPCErr)
+
+	streams, err = c.AttackCredentials()
+	if err != nil {
+		c.respondToClient(streams, ID, jsonrpc2.Error{
+			Code:    jsonrpc2.InternalError,
+			Message: jsonrpc2.InternalErrorMessage,
+			Data:    err.Error(),
+		})
+		return
+	}
+	c.respondToClient(streams, ID, JSONRPCErr)
+
+	for _, stream := range streams {
+		if stream.RouteFound == false {
+			streams, err = c.AttackCredentials()
+			if err != nil {
+				c.respondToClient(streams, ID, jsonrpc2.Error{
+					Code:    jsonrpc2.InternalError,
+					Message: jsonrpc2.InternalErrorMessage,
+					Data:    err.Error(),
+				})
+				return
+			}
+			c.respondToClient(streams, ID, JSONRPCErr)
+			return
+		}
+	}
+}
+
+func (c *Cameradar) respondToClient(result []cmrdr.Stream, ID string, JSONRPCErr jsonrpc2.Error) {
 	println(result)
 	r := jsonrpc2.Response{
 		JSONRPC: "2.0",
