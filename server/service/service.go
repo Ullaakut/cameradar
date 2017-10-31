@@ -24,21 +24,10 @@ import (
 type Cameradar struct {
 	Streams []cmrdr.Stream
 
-	options *Options
+	options *cmrdr.Options
 
 	toClient   chan<- string
 	fromClient <-chan string
-}
-
-// Options contains all options needed to launch a complete cameradar scan
-type Options struct {
-	Target      string
-	Ports       string
-	OutputFile  string
-	Routes      cmrdr.Routes
-	Credentials cmrdr.Credentials
-	Speed       int
-	Timeout     time.Duration
 }
 
 // New instanciates a new Cameradar service
@@ -55,10 +44,11 @@ func New(routesFilePath, credentialsFilePath string, fromClient <-chan string, t
 
 	cameradar := &Cameradar{
 		Streams: nil,
-		options: &Options{
+		options: &cmrdr.Options{
 			Ports:       "554,8554",
 			Routes:      routes,
 			Credentials: credentials,
+			OutputFile:  "/tmp/cameradar_nmap_result.xml",
 			Speed:       4,
 			Timeout:     2000,
 		},
@@ -75,36 +65,9 @@ func New(routesFilePath, credentialsFilePath string, fromClient <-chan string, t
 // using the instructions received over websocket
 func (c *Cameradar) Run() {
 	for {
-		msg, ok := <-c.fromClient
-		if !ok {
-			println("client disconnected")
-			return
-		}
+		msg := <-c.fromClient
 		go c.handleRequest(msg)
 	}
-}
-
-// DiscoverAndAttack launches a Cameradar scan followed by all necessary
-// attacks to access the cameras
-func (c *Cameradar) DiscoverAndAttack() ([]cmrdr.Stream, error) {
-	streams, err := c.Discover()
-	if err != nil {
-		return streams, err
-	}
-	streams, err = c.AttackRoute()
-	if err != nil {
-		return streams, err
-	}
-	streams, err = c.AttackCredentials()
-	if err != nil {
-		return streams, err
-	}
-	for _, stream := range streams {
-		if stream.RouteFound == false {
-			return c.AttackCredentials()
-		}
-	}
-	return streams, nil
 }
 
 // Discover launches a Cameradar scan using the service's options
@@ -138,8 +101,22 @@ func (c *Cameradar) AttackCredentials() ([]cmrdr.Stream, error) {
 }
 
 // SetOptions sets all options using an option structure
-func (c *Cameradar) SetOptions(options Options) {
-	c.options = &options
+func (c *Cameradar) SetOptions(options cmrdr.Options) {
+	c.options.Target = options.Target
+
+	if len(options.Ports) > 0 {
+		c.options.Ports = options.Ports
+	}
+
+	if len(options.OutputFile) > 0 {
+		c.options.OutputFile = options.OutputFile
+	}
+
+	// TODO: Add custom dictionary support through ws
+
+	c.SetSpeed(options.Speed)
+
+	c.SetTimeout(options.Timeout)
 }
 
 // SetNmapOutputFile sets the OutputFile option
@@ -172,7 +149,7 @@ func (c *Cameradar) SetSpeed(speed int) error {
 }
 
 // SetTimeout sets the Timeout option
-func (c *Cameradar) SetTimeout(timeout int) error {
+func (c *Cameradar) SetTimeout(timeout time.Duration) error {
 	if timeout < 0 {
 		return fmt.Errorf("invalid timeout value '%d'. should be superior to 0", timeout)
 	}
