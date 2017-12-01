@@ -71,6 +71,10 @@ func parseArguments() error {
 
 	if viper.GetBool("help") {
 		pflag.Usage()
+		fmt.Println("\nExamples of usage:")
+		fmt.Println("\tScanning your home network for RTSP streams:\tcameradar -t 192.168.0.0/24")
+		fmt.Println("\tScanning a remote camera on a specific port:\tcameradar -t 172.178.10.14 -p 18554 -s 2")
+		fmt.Println("\tScanning an unstable remote network: \t\tcameradar -t 172.178.10.14/24 -s 1 --timeout 10000 -l")
 		os.Exit(0)
 	}
 
