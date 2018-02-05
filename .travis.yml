@@ -19,6 +19,11 @@ before_install:
 - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 - sudo apt-get update
 - sudo apt-get install -y docker-ce
+- go get github.com/mattn/goveralls
+- go get github.com/andelf/go-curl
+- go get github.com/pkg/errors
+- go get gopkg.in/go-playground/validator.v9
+- go get github.com/stretchr/testify/assert
 - docker version
 - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
 - chmod +x $GOPATH/bin/dep
@@ -29,7 +34,8 @@ install:
 
 script:
 # Run unit tests
-- go test
+- go test -v -covermode=count -coverprofile=coverage.out
+- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 # Launch a fake camera to check if cameradar is able to access it
 - docker run -d --name=fake_camera -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -p 8554:8554 ullaakut/rtspatt
 # Launch cameradar on the local machine
