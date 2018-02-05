@@ -87,7 +87,7 @@ The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See comman
 
 `go get github.com/EtixLabs/cameradar`
 
-After this command, the *cameradar* library is ready to use. Its source will be in:
+After this command, the _cameradar_ library is ready to use. Its source will be in:
 
     $GOPATH/src/pkg/github.com/EtixLabs/cameradar
 
@@ -221,9 +221,9 @@ Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
 To build the project without docker:
 
 1. install [glide](https://github.com/Masterminds/glide)
-    * OSX: `brew install glide`
-    * Linux: `curl https://glide.sh/get | sh`
-    * Windows: Download the binary package [here](https://github.com/Masterminds/glide/releases)
+   * OSX: `brew install glide`
+   * Linux: `curl https://glide.sh/get | sh`
+   * Windows: Download the binary package [here](https://github.com/Masterminds/glide/releases)
 2. `glide install`
 3. `go build` to build the library
 4. `cd cameradar && go build` to build the binary
@@ -257,6 +257,10 @@ Use the `--net=host` flag when launching the cameradar image, or use the binary 
 > I don't see a colored output :(
 
 You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This tells docker to allocate a pseudo-tty for cameradar, which makes it able to use colors.
+
+> I don't have a camera but I'd like to try Cameradar!
+
+Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt` and then run cameradar and it should guess that the username is admin and the password is 12345. You can try this with any default constructor credentials (they can be found [here](dictionaries/credentials.json))
 
 ## Known issues
 
