@@ -177,7 +177,7 @@ func AttackCredentials(targets []Stream, credentials Credentials, timeout time.D
 	}
 
 	attackResults := []Stream{}
-	for _ = range targets {
+	for range targets {
 		attackResults = append(attackResults, <-attacks)
 	}
 
@@ -217,7 +217,7 @@ func AttackRoute(targets []Stream, routes Routes, timeout time.Duration, log boo
 	}
 
 	attackResults := []Stream{}
-	for _ = range targets {
+	for range targets {
 		attackResults = append(attackResults, <-attacks)
 	}
 
