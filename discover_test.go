@@ -120,14 +120,14 @@ func TestNmapParseResults(t *testing.T) {
 			expectedStreams: []Stream{validStream1, validStream2},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     validStream1.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream1.Port,
 									State: state{
 										State: "open",
@@ -140,14 +140,14 @@ func TestNmapParseResults(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     validStream2.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream2.Port,
 									State: state{
 										State: "open",
@@ -171,14 +171,14 @@ func TestNmapParseResults(t *testing.T) {
 			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     invalidStreamNoAddress.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: invalidStreamNoAddress.Port,
 									State: state{
 										State: "open",
@@ -191,14 +191,14 @@ func TestNmapParseResults(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     invalidStreamNoPort.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: invalidStreamNoPort.Port,
 									State: state{
 										State: "open",
@@ -225,14 +225,14 @@ func TestNmapParseResults(t *testing.T) {
 			expectedStreams: []Stream{},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     "Camera with closed ports",
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: 0,
 									State: state{
 										State: "closed",
@@ -245,7 +245,7 @@ func TestNmapParseResults(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     "Camera with closed ports",
 							AddrType: "ipv4",
@@ -365,14 +365,14 @@ func TestDiscover(t *testing.T) {
 			expectedStreams: []Stream{validStream1, validStream2},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     validStream1.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream1.Port,
 									State: state{
 										State: "open",
@@ -385,14 +385,14 @@ func TestDiscover(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     validStream2.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream2.Port,
 									State: state{
 										State: "open",
@@ -419,14 +419,14 @@ func TestDiscover(t *testing.T) {
 			expectedStreams: []Stream{},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     validStream1.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream1.Port,
 									State: state{
 										State: "open",
@@ -439,14 +439,14 @@ func TestDiscover(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     validStream2.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream2.Port,
 									State: state{
 										State: "open",
@@ -476,14 +476,14 @@ func TestDiscover(t *testing.T) {
 			expectedStreams: []Stream{validStream1, validStream2},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     validStream1.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream1.Port,
 									State: state{
 										State: "open",
@@ -496,14 +496,14 @@ func TestDiscover(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     validStream2.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: validStream2.Port,
 									State: state{
 										State: "open",
@@ -532,14 +532,14 @@ func TestDiscover(t *testing.T) {
 			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     invalidStreamNoAddress.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: invalidStreamNoAddress.Port,
 									State: state{
 										State: "open",
@@ -552,14 +552,14 @@ func TestDiscover(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     invalidStreamNoPort.Address,
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: invalidStreamNoPort.Port,
 									State: state{
 										State: "open",
@@ -596,14 +596,14 @@ func TestDiscover(t *testing.T) {
 			expectedStreams: []Stream{},
 			streamsXML: &nmapResult{
 				Hosts: []host{
-					host{
+					{
 						Address: address{
 							Addr:     "Camera with closed ports",
 							AddrType: "ipv4",
 						},
 						Ports: ports{
 							Ports: []port{
-								port{
+								{
 									PortID: 0,
 									State: state{
 										State: "closed",
@@ -616,7 +616,7 @@ func TestDiscover(t *testing.T) {
 							},
 						},
 					},
-					host{
+					{
 						Address: address{
 							Addr:     "Camera with closed ports",
 							AddrType: "ipv4",

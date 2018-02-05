@@ -68,7 +68,7 @@ func (gf *GorillaFactory) NewIncomingWebSocket(w http.ResponseWriter, req *http.
 	return g, nil
 }
 
-// NewWebSocket attemps to connect to a ws server using Gorilla library
+// NewWebSocket attempts to connect to a ws server using Gorilla library
 func (gf *GorillaFactory) NewWebSocket(url string) (adaptor.WebSocket, error) {
 	fmt.Printf("opening new ws connection to %v\n", url)
 
