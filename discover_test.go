@@ -37,7 +37,7 @@ func TestNmapRun(t *testing.T) {
 	execCommand = fakeExecCommand
 	defer func() { execCommand = exec.Command }()
 
-	vectors := []struct {
+	testCases := []struct {
 		targets        string
 		ports          string
 		resultFilePath string
@@ -65,14 +65,14 @@ func TestNmapRun(t *testing.T) {
 			expectedErrMsg: "invalid nmap speed value",
 		},
 	}
-	for _, vector := range vectors {
-		err := NmapRun(vector.targets, vector.ports, vector.resultFilePath, vector.nmapSpeed, vector.enableLogs)
-		if len(vector.expectedErrMsg) > 0 {
+	for _, test := range testCases {
+		err := NmapRun(test.targets, test.ports, test.resultFilePath, test.nmapSpeed, test.enableLogs)
+		if len(test.expectedErrMsg) > 0 {
 			if err == nil {
-				fmt.Printf("unexpected success. expected error: %s\n", vector.expectedErrMsg)
+				fmt.Printf("unexpected success. expected error: %s\n", test.expectedErrMsg)
 				os.Exit(1)
 			}
-			assert.Contains(t, err.Error(), vector.expectedErrMsg, "wrong error message")
+			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
 		} else {
 			if err != nil {
 				fmt.Printf("unexpected error: %v\n", err)
@@ -107,7 +107,7 @@ func TestNmapParseResults(t *testing.T) {
 		Port:    1337,
 	}
 
-	vectors := []struct {
+	testCases := []struct {
 		fileExists bool
 		streamsXML *nmapResult
 
@@ -165,7 +165,7 @@ func TestNmapParseResults(t *testing.T) {
 			fileExists: true,
 		},
 		// File exists
-		// Two invalid streams, no error
+		// Two invalid targets, no error
 		{
 			fileExists:      true,
 			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
@@ -261,11 +261,11 @@ func TestNmapParseResults(t *testing.T) {
 			expectedErrMsg:  "expected element type <nmaprun> but have <failure>",
 		},
 	}
-	for i, vector := range vectors {
+	for i, test := range testCases {
 		filePath := "/tmp/cameradar_test_parse_results_" + fmt.Sprint(i) + ".xml"
 
 		// create file
-		if vector.fileExists {
+		if test.fileExists {
 			_, err := os.Create(filePath)
 			if err != nil {
 				fmt.Printf("could not create xml file for NmapParseResults: %v. iteration: %d. file path: %s\n", err, i, filePath)
@@ -273,10 +273,10 @@ func TestNmapParseResults(t *testing.T) {
 			}
 
 			// marshal and write
-			if vector.streamsXML != nil {
-				streams, err := xml.Marshal(vector.streamsXML)
+			if test.streamsXML != nil {
+				streams, err := xml.Marshal(test.streamsXML)
 				if err != nil {
-					fmt.Printf("invalid streams for NmapParseResults: %v. iteration: %d. streams: %v\n", err, i, vector.streamsXML)
+					fmt.Printf("invalid targets for NmapParseResults: %v. iteration: %d. streams: %v\n", err, i, test.streamsXML)
 					os.Exit(1)
 				}
 
@@ -295,18 +295,18 @@ func TestNmapParseResults(t *testing.T) {
 		}
 
 		results, err := NmapParseResults(filePath)
-		if len(vector.expectedErrMsg) > 0 {
+		if len(test.expectedErrMsg) > 0 {
 			if err == nil {
-				fmt.Printf("unexpected success. expected error: %s\n", vector.expectedErrMsg)
+				fmt.Printf("unexpected success. expected error: %s\n", test.expectedErrMsg)
 				os.Exit(1)
 			}
-			assert.Contains(t, err.Error(), vector.expectedErrMsg, "wrong error message")
+			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
 		} else {
 			if err != nil {
 				fmt.Printf("unexpected error: %v\n", err)
 				os.Exit(1)
 			}
-			for _, stream := range vector.expectedStreams {
+			for _, stream := range test.expectedStreams {
 				foundStream := false
 				for _, result := range results {
 					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
@@ -316,7 +316,7 @@ func TestNmapParseResults(t *testing.T) {
 				assert.Equal(t, true, foundStream, "wrong streams parsed")
 			}
 		}
-		assert.Equal(t, len(vector.expectedStreams), len(results), "wrong streams parsed")
+		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
 	}
 }
 
@@ -348,7 +348,7 @@ func TestDiscover(t *testing.T) {
 		Port:    1337,
 	}
 
-	vectors := []struct {
+	testCases := []struct {
 		targets        string
 		ports          string
 		resultFilePath string
@@ -526,7 +526,7 @@ func TestDiscover(t *testing.T) {
 			enableLogs:     false,
 		},
 		// File exists
-		// Two invalid streams, no error
+		// Two invalid targets, no error
 		{
 			fileExists:      true,
 			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
@@ -642,11 +642,11 @@ func TestDiscover(t *testing.T) {
 			enableLogs:      false,
 		},
 	}
-	for i, vector := range vectors {
+	for i, test := range testCases {
 		filePath := "/tmp/cameradar_test_discover_" + fmt.Sprint(i) + ".xml"
 
 		// create file
-		if vector.fileExists {
+		if test.fileExists {
 			_, err := os.Create(filePath)
 			if err != nil {
 				fmt.Printf("could not create xml file for Discover: %v. iteration: %d. file path: %s\n", err, i, filePath)
@@ -654,10 +654,10 @@ func TestDiscover(t *testing.T) {
 			}
 
 			// marshal and write
-			if vector.streamsXML != nil {
-				streams, err := xml.Marshal(vector.streamsXML)
+			if test.streamsXML != nil {
+				streams, err := xml.Marshal(test.streamsXML)
 				if err != nil {
-					fmt.Printf("invalid streams for Discover: %v. iteration: %d. streams: %v\n", err, i, vector.streamsXML)
+					fmt.Printf("invalid targets for Discover: %v. iteration: %d. streams: %v\n", err, i, test.streamsXML)
 					os.Exit(1)
 				}
 
@@ -675,20 +675,20 @@ func TestDiscover(t *testing.T) {
 			}
 		}
 
-		results, err := Discover(vector.targets, vector.ports, filePath, vector.nmapSpeed, vector.enableLogs)
+		results, err := Discover(test.targets, test.ports, filePath, test.nmapSpeed, test.enableLogs)
 
-		if len(vector.expectedErrMsg) > 0 {
+		if len(test.expectedErrMsg) > 0 {
 			if err == nil {
-				fmt.Printf("unexpected success in Discover test, iteration %d. expected error: %s\n", i, vector.expectedErrMsg)
+				fmt.Printf("unexpected success in Discover test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
 				os.Exit(1)
 			}
-			assert.Contains(t, err.Error(), vector.expectedErrMsg, "wrong error message")
+			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
 		} else {
 			if err != nil {
 				fmt.Printf("unexpected error in Discover test, iteration %d: %v\n", i, err)
 				os.Exit(1)
 			}
-			for _, stream := range vector.expectedStreams {
+			for _, stream := range test.expectedStreams {
 				foundStream := false
 				for _, result := range results {
 					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
@@ -698,6 +698,6 @@ func TestDiscover(t *testing.T) {
 				assert.Equal(t, true, foundStream, "wrong streams parsed")
 			}
 		}
-		assert.Equal(t, len(vector.expectedStreams), len(results), "wrong streams parsed")
+		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
 	}
 }
