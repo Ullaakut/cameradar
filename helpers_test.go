@@ -31,7 +31,7 @@ func TestReplace(t *testing.T) {
 		Port:    1337,
 	}
 
-	vectors := []struct {
+	testCases := []struct {
 		streams   []Stream
 		newStream Stream
 
@@ -45,10 +45,10 @@ func TestReplace(t *testing.T) {
 			expectedStreams: []Stream{validStream1, validStream2, invalidStreamNoPortModified},
 		},
 	}
-	for _, vector := range vectors {
-		streams := replace(vector.streams, vector.newStream)
+	for _, test := range testCases {
+		streams := replace(test.streams, test.newStream)
 
-		for _, stream := range vector.streams {
+		for _, stream := range test.streams {
 			foundStream := false
 			for _, result := range streams {
 				if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
@@ -69,7 +69,7 @@ func TestGetCameraRTSPURL(t *testing.T) {
 		Port:     1337,
 	}
 
-	vectors := []struct {
+	testCases := []struct {
 		stream Stream
 
 		expectedRTSPURL string
@@ -81,9 +81,9 @@ func TestGetCameraRTSPURL(t *testing.T) {
 			expectedRTSPURL: "rtsp://ullaakut:ba69897483886f0d2b0afb6345b76c0c@1.2.3.4:1337/cameradar.sdp",
 		},
 	}
-	for _, vector := range vectors {
-		output := GetCameraRTSPURL(vector.stream)
-		assert.Equal(t, vector.expectedRTSPURL, output, "wrong RTSP URL generated")
+	for _, test := range testCases {
+		output := GetCameraRTSPURL(test.stream)
+		assert.Equal(t, test.expectedRTSPURL, output, "wrong RTSP URL generated")
 	}
 }
 
@@ -92,7 +92,7 @@ func TestGetCameraAdminPanelURL(t *testing.T) {
 		Address: "1.2.3.4",
 	}
 
-	vectors := []struct {
+	testCases := []struct {
 		stream Stream
 
 		expectedRTSPURL string
@@ -104,8 +104,8 @@ func TestGetCameraAdminPanelURL(t *testing.T) {
 			expectedRTSPURL: "http://1.2.3.4/",
 		},
 	}
-	for _, vector := range vectors {
-		output := GetCameraAdminPanelURL(vector.stream)
-		assert.Equal(t, vector.expectedRTSPURL, output, "wrong Admin Panel URL generated")
+	for _, test := range testCases {
+		output := GetCameraAdminPanelURL(test.stream)
+		assert.Equal(t, test.expectedRTSPURL, output, "wrong Admin Panel URL generated")
 	}
 }
