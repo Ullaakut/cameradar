@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/EtixLabs/cameradar"
+
+	curl "github.com/andelf/go-curl"
+	"github.com/fatih/color"
 	"github.com/gernest/wow"
 	"github.com/gernest/wow/spin"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"github.com/fatih/color"
 )
 
 type options struct {
@@ -92,6 +93,13 @@ func main() {
 
 	w := startSpinner(options.EnableLogs)
 
+	err = curl.GlobalInit(curl.GLOBAL_ALL)
+	c := curl.EasyInit()
+	if err != nil || c == nil {
+		printErr(errors.New("libcurl initialization failed"))
+	}
+	defer curl.GlobalCleanup()
+
 	updateSpinner(w, "Loading dictionaries...", options.EnableLogs)
 	gopath := os.Getenv("GOPATH")
 	options.Credentials = strings.Replace(options.Credentials, "<GOPATH>", gopath, 1)
@@ -116,15 +124,14 @@ func main() {
 	}
 
 	// Most cameras will be accessed successfully with these two attacks
-
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their routes...", options.EnableLogs)
-	streams, err = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+	streams, err = cmrdr.AttackRoute(c, streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 	if err != nil && len(streams) > 0 {
 		printErr(err)
 	}
 
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their credentials...", options.EnableLogs)
-	streams, err = cmrdr.AttackCredentials(streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+	streams, err = cmrdr.AttackCredentials(c, streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 	if err != nil && len(streams) > 0 {
 		printErr(err)
 	}
@@ -135,7 +142,7 @@ func main() {
 		if stream.RouteFound == false || stream.CredentialsFound == false {
 
 			updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Final attack...", options.EnableLogs)
-			streams, err = cmrdr.AttackRoute(streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+			streams, err = cmrdr.AttackRoute(c, streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 			if err != nil && len(streams) > 0 {
 				printErr(err)
 			}

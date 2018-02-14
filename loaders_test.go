@@ -16,7 +16,7 @@ func TestLoadCredentials(t *testing.T) {
 		Passwords: []string{"12345", "root"},
 	}
 
-	vectors := []struct {
+	testCases := []struct {
 		input      []byte
 		fileExists bool
 
@@ -47,17 +47,17 @@ func TestLoadCredentials(t *testing.T) {
 			input:      []byte("{\"invalid\":\"json\"}"),
 		},
 	}
-	for i, vector := range vectors {
+	for i, test := range testCases {
 		filePath := "/tmp/cameradar_test_load_credentials_" + fmt.Sprint(i) + ".xml"
 		// create file
-		if vector.fileExists {
+		if test.fileExists {
 			_, err := os.Create(filePath)
 			if err != nil {
 				fmt.Printf("could not create xml file for LoadCredentials: %v. iteration: %d. file path: %s\n", err, i, filePath)
 				os.Exit(1)
 			}
 
-			err = ioutil.WriteFile(filePath, vector.input, 0644)
+			err = ioutil.WriteFile(filePath, test.input, 0644)
 			if err != nil {
 				fmt.Printf("could not write xml file for LoadCredentials: %v. iteration: %d. file path: %s\n", err, i, filePath)
 				os.Exit(1)
@@ -65,18 +65,18 @@ func TestLoadCredentials(t *testing.T) {
 		}
 
 		result, err := LoadCredentials(filePath)
-		if len(vector.expectedErrMsg) > 0 {
+		if len(test.expectedErrMsg) > 0 {
 			if err == nil {
-				fmt.Printf("unexpected success in LoadCredentials test, iteration %d. expected error: %s\n", i, vector.expectedErrMsg)
+				fmt.Printf("unexpected success in LoadCredentials test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
 				os.Exit(1)
 			}
-			assert.Contains(t, err.Error(), vector.expectedErrMsg, "wrong error message")
+			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
 		} else {
 			if err != nil {
 				fmt.Printf("unexpected error in LoadCredentials test, iteration %d: %v\n", i, err)
 				os.Exit(1)
 			}
-			for _, expectedUsername := range vector.expectedOutput.Usernames {
+			for _, expectedUsername := range test.expectedOutput.Usernames {
 				foundUsername := false
 				for _, username := range result.Usernames {
 					if username == expectedUsername {
@@ -85,7 +85,7 @@ func TestLoadCredentials(t *testing.T) {
 				}
 				assert.Equal(t, true, foundUsername, "wrong usernames parsed")
 			}
-			for _, expectedPassword := range vector.expectedOutput.Passwords {
+			for _, expectedPassword := range test.expectedOutput.Passwords {
 				foundPassword := false
 				for _, password := range result.Passwords {
 					if password == expectedPassword {
@@ -102,7 +102,7 @@ func TestLoadRoutes(t *testing.T) {
 	routesJSONString := []byte("admin\nroot")
 	validRoutes := Routes{"admin", "root"}
 
-	vectors := []struct {
+	testCases := []struct {
 		input      []byte
 		fileExists bool
 
@@ -127,17 +127,17 @@ func TestLoadRoutes(t *testing.T) {
 			input:      []byte(""),
 		},
 	}
-	for i, vector := range vectors {
+	for i, test := range testCases {
 		filePath := "/tmp/cameradar_test_load_routes_" + fmt.Sprint(i) + ".xml"
 		// create file
-		if vector.fileExists {
+		if test.fileExists {
 			_, err := os.Create(filePath)
 			if err != nil {
 				fmt.Printf("could not create xml file for LoadRoutes: %v. iteration: %d. file path: %s\n", err, i, filePath)
 				os.Exit(1)
 			}
 
-			err = ioutil.WriteFile(filePath, vector.input, 0644)
+			err = ioutil.WriteFile(filePath, test.input, 0644)
 			if err != nil {
 				fmt.Printf("could not write xml file for LoadRoutes: %v. iteration: %d. file path: %s\n", err, i, filePath)
 				os.Exit(1)
@@ -145,18 +145,18 @@ func TestLoadRoutes(t *testing.T) {
 		}
 
 		result, err := LoadRoutes(filePath)
-		if len(vector.expectedErrMsg) > 0 {
+		if len(test.expectedErrMsg) > 0 {
 			if err == nil {
-				fmt.Printf("unexpected success in LoadRoutes test, iteration %d. expected error: %s\n", i, vector.expectedErrMsg)
+				fmt.Printf("unexpected success in LoadRoutes test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
 				os.Exit(1)
 			}
-			assert.Contains(t, err.Error(), vector.expectedErrMsg, "wrong error message")
+			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
 		} else {
 			if err != nil {
 				fmt.Printf("unexpected error in LoadRoutes test, iteration %d: %v\n", i, err)
 				os.Exit(1)
 			}
-			for _, expectedRoute := range vector.expectedOutput {
+			for _, expectedRoute := range test.expectedOutput {
 				foundRoute := false
 				for _, route := range result {
 					if route == expectedRoute {
@@ -166,5 +166,97 @@ func TestLoadRoutes(t *testing.T) {
 				assert.Equal(t, true, foundRoute, "wrong routes parsed")
 			}
 		}
+	}
+}
+
+func TestParseCredentialsFromString(t *testing.T) {
+	defaultCredentials := Credentials{
+		Usernames: []string{
+			"",
+			"admin",
+			"Admin",
+			"Administrator",
+			"root",
+			"supervisor",
+			"ubnt",
+			"service",
+			"Dinion",
+			"administrator",
+			"admin1",
+		},
+		Passwords: []string{
+			"",
+			"admin",
+			"9999",
+			"123456",
+			"pass",
+			"camera",
+			"1234",
+			"12345",
+			"fliradmin",
+			"system",
+			"jvc",
+			"meinsm",
+			"root",
+			"4321",
+			"111111",
+			"1111111",
+			"password",
+			"ikwd",
+			"supervisor",
+			"ubnt",
+			"wbox123",
+			"service",
+		},
+	}
+
+	testCases := []struct {
+		str            string
+		expectedResult Credentials
+	}{
+		{
+			str:            "{\"usernames\":[\"\",\"admin\",\"Admin\",\"Administrator\",\"root\",\"supervisor\",\"ubnt\",\"service\",\"Dinion\",\"administrator\",\"admin1\"],\"passwords\":[\"\",\"admin\",\"9999\",\"123456\",\"pass\",\"camera\",\"1234\",\"12345\",\"fliradmin\",\"system\",\"jvc\",\"meinsm\",\"root\",\"4321\",\"111111\",\"1111111\",\"password\",\"ikwd\",\"supervisor\",\"ubnt\",\"wbox123\",\"service\"]}",
+			expectedResult: defaultCredentials,
+		},
+		{
+			str:            "{}",
+			expectedResult: Credentials{},
+		},
+		{
+			str:            "{\"invalid_field\":42}",
+			expectedResult: Credentials{},
+		},
+		{
+			str:            "not json",
+			expectedResult: Credentials{},
+		},
+	}
+	for _, test := range testCases {
+		parsedCredentials, _ := ParseCredentialsFromString(test.str)
+		assert.Equal(t, test.expectedResult, parsedCredentials, "unexpected result, parse error")
+	}
+}
+
+func TestParseRoutesFromString(t *testing.T) {
+	testCases := []struct {
+		str            string
+		expectedResult Routes
+	}{
+		{
+			str:            "a\nb\nc",
+			expectedResult: []string{"a", "b", "c"},
+		},
+		{
+			str:            "a",
+			expectedResult: []string{"a"},
+		},
+		{
+			str:            "",
+			expectedResult: []string{""},
+		},
+	}
+	for _, test := range testCases {
+		parsedRoutes := ParseRoutesFromString(test.str)
+		assert.Equal(t, test.expectedResult, parsedRoutes, "unexpected result, parse error")
 	}
 }
