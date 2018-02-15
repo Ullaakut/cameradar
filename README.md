@@ -7,6 +7,7 @@
 [![cameradar License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](#license)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
 [![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat)](https://travis-ci.org/EtixLabs/cameradar)
+[![Coverage Status](https://coveralls.io/repos/github/EtixLabs/cameradar/badge.svg?branch=master)](https://coveralls.io/github/EtixLabs/cameradar?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/EtixLabs/cameradar)](https://goreportcard.com/report/github.com/EtixLabs/cameradar)
 [![GoDoc](https://godoc.org/github.com/EtixLabs/cameradar?status.svg)](https://godoc.org/github.com/EtixLabs/cameradar)
 [![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
