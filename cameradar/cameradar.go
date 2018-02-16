@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EtixLabs/cameradar"
+	"github.com/Ullaakut/cameradar"
 
 	curl "github.com/andelf/go-curl"
 	"github.com/fatih/color"
@@ -42,8 +42,8 @@ func parseArguments() error {
 	pflag.StringP("target", "t", "", "The target on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
 	pflag.StringP("ports", "p", "554,8554", "The ports on which to search for RTSP streams")
 	pflag.StringP("nmap-output", "o", "/tmp/cameradar_scan.xml", "The path where nmap will create its XML result file")
-	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
-	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/EtixLabs/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
+	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
+	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
 	pflag.IntP("speed", "s", 4, "The nmap speed preset to use")
 	pflag.IntP("timeout", "T", 2000, "The timeout in miliseconds to use for attack attempts")
 	pflag.BoolP("log", "l", false, "Enable the logs for nmap's output to stdout")

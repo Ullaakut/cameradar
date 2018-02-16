@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/EtixLabs/cameradar"
-	"github.com/EtixLabs/cameradar/server/adaptor/jsonrpc2"
+	"github.com/Ullaakut/cameradar"
+	"github.com/Ullaakut/cameradar/server/adaptor/jsonrpc2"
 	v "gopkg.in/go-playground/validator.v9"
 )
 
