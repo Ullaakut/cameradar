@@ -1,8 +1,8 @@
 # Build stage
 FROM golang:alpine AS build-env
 
-COPY . /go/src/github.com/EtixLabs/cameradar
-WORKDIR /go/src/github.com/EtixLabs/cameradar/cameradar
+COPY . /go/src/github.com/Ullaakut/cameradar
+WORKDIR /go/src/github.com/Ullaakut/cameradar/cameradar
 
 RUN apk update && \
     apk upgrade && \
@@ -25,6 +25,6 @@ RUN apk --update add --no-cache nmap nmap-nselibs nmap-scripts \
     curl-dev
 
 WORKDIR /app/cameradar
-COPY --from=build-env /go/src/github.com/EtixLabs/cameradar/dictionaries/ /app/dictionaries/
-COPY --from=build-env /go/src/github.com/EtixLabs/cameradar/cameradar/ /app/cameradar/
+COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/dictionaries/ /app/dictionaries/
+COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/cameradar/ /app/cameradar/
 ENTRYPOINT ["/app/cameradar/cameradar", "-r", "/app/dictionaries/routes", "-c", "/app/dictionaries/credentials.json"]
