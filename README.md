@@ -25,7 +25,7 @@
 ## Table of content
 
 * [Docker Image](#docker-image)
-* [Configuration](#configuration)
+* [Configuration](#configuration)`
 * [Output](#output)
 * [Check camera access](#check-camera-access)
 * [Command line options](#command-line-options)
@@ -49,18 +49,18 @@ e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the po
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
 * If you use the `-r` and `-c` options to specify your custom dictionaries, make sure to also use a volume to add them to the docker container. Example: `docker run -t -v /path/to/dictionaries/:/tmp/ ullaakut/cameradar -r /tmp/myroutes -c /tmp/mycredentials.json -t mytarget`
 
-## Installing the binary
+## Installing the binary on your machine
+
+Only use this solution if for some reason using docker is not an option for you or if you want to locally build Cameradar on your machine.
 
 ### Dependencies
 
 * `go`
-* `glide`
 
-#### Installing [glide](https://github.com/Masterminds/glide)
+#### Installing dep
 
-* OSX: `brew install glide`
-* Linux: `curl https://glide.sh/get | sh`
-* Windows: Download the binary package [here](https://github.com/Masterminds/glide/releases)
+* OSX: `brew install dep` and `brew upgrade dep`
+* Others: Download the release package for your OS [here](https://github.com/golang/dep/releases)
 
 ### Steps to install
 
@@ -68,7 +68,7 @@ Make sure you installed the dependencies mentionned above.
 
 1. `go get github.com/Ullaakut/cameradar`
 2. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
-3. `glide install`
+3. `dep ensure`
 4. `cd cameradar`
 5. `go install`
 
@@ -221,11 +221,10 @@ Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
 
 To build the project without docker:
 
-1. install [glide](https://github.com/Masterminds/glide)
-   * OSX: `brew install glide`
-   * Linux: `curl https://glide.sh/get | sh`
-   * Windows: Download the binary package [here](https://github.com/Masterminds/glide/releases)
-2. `glide install`
+1. Install dep
+   * OSX: `brew install dep` and `brew upgrade dep`
+   * Others: Download the release package for your OS [here](https://github.com/golang/dep/releases)
+2. `dep ensure`
 3. `go build` to build the library
 4. `cd cameradar && go build` to build the binary
 
