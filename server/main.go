@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/EtixLabs/cameradar/server/actor/server"
-	"github.com/EtixLabs/cameradar/server/adaptor/websocket"
-	"github.com/EtixLabs/cameradar/server/service"
+	"github.com/Ullaakut/cameradar/server/actor/server"
+	"github.com/Ullaakut/cameradar/server/adaptor/websocket"
+	"github.com/Ullaakut/cameradar/server/service"
 	graceful "gopkg.in/tylerb/graceful.v1"
 )
 
@@ -19,8 +19,8 @@ func main() {
 	server := server.New(webSocketFactory, fromClient, toClient)
 
 	_, err := service.New(
-		"/Users/ullaakut/Work/go/src/github.com/EtixLabs/cameradar/dictionaries/routes",
-		"/Users/ullaakut/Work/go/src/github.com/EtixLabs/cameradar/dictionaries/credentials.json",
+		"/Users/ullaakut/Work/go/src/github.com/Ullaakut/cameradar/dictionaries/routes",
+		"/Users/ullaakut/Work/go/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json",
 		fromClient,
 		toClient,
 	)

@@ -1,6 +1,6 @@
 package jsonrpc2
 
-import "github.com/EtixLabs/cameradar"
+import "github.com/Ullaakut/cameradar"
 
 // http://www.jsonrpc.org/specification
 const (

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EtixLabs/cameradar"
+	"github.com/Ullaakut/cameradar"
 	"github.com/pkg/errors"
 )
 

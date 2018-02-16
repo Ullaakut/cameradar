@@ -43,7 +43,7 @@ When your pull request is created, GitHub will first check for conflicts, Codacy
 
 If GitHub reports conflicts with the develop branch, you should resolve them by yourself using your git command-line interface. The easiest and cleanest way is to use `git rebase -i origin/develop` and follow git's instructions.
 If Codacy reports new issues, they will be added in the comments of the PR to let you know what you should fix.
-If Travis CI reports errors, you should be able to view the logs [by clicking here](https://travis-ci.org/EtixLabs/cameradar/builds) and you should fix it. No PR will be merged before all tests are passing correctly.
+If Travis CI reports errors, you should be able to view the logs [by clicking here](https://travis-ci.org/Ullaakut/cameradar/builds) and you should fix it. No PR will be merged before all tests are passing correctly.
 
 ### Coding guidelines
 

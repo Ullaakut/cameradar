@@ -1,16 +1,16 @@
 # Cameradar
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Cameradar.gif" width="100%"/></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Cameradar.gif" width="100%"/></p>
 
 ## An RTSP stream access tool that comes with its library
 
 [![cameradar License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](#license)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
-[![Build](https://img.shields.io/travis/EtixLabs/cameradar/master.svg?style=flat)](https://travis-ci.org/EtixLabs/cameradar)
-[![Coverage Status](https://coveralls.io/repos/github/EtixLabs/cameradar/badge.svg?branch=master)](https://coveralls.io/github/EtixLabs/cameradar?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/EtixLabs/cameradar)](https://goreportcard.com/report/github.com/EtixLabs/cameradar)
-[![GoDoc](https://godoc.org/github.com/EtixLabs/cameradar?status.svg)](https://godoc.org/github.com/EtixLabs/cameradar)
-[![Latest release](https://img.shields.io/github/release/EtixLabs/cameradar.svg?style=flat)](https://github.com/EtixLabs/cameradar/releases/latest)
+[![Build](https://img.shields.io/travis/Ullaakut/cameradar/master.svg?style=flat)](https://travis-ci.org/Ullaakut/cameradar)
+[![Coverage Status](https://coveralls.io/repos/github/Ullaakut/cameradar/badge.svg?branch=master)](https://coveralls.io/github/Ullaakut/cameradar?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Ullaakut/cameradar)](https://goreportcard.com/report/github.com/Ullaakut/cameradar)
+[![GoDoc](https://godoc.org/github.com/Ullaakut/cameradar?status.svg)](https://godoc.org/github.com/Ullaakut/cameradar)
+[![Latest release](https://img.shields.io/github/release/Ullaakut/cameradar.svg?style=flat)](https://github.com/Ullaakut/cameradar/releases/latest)
 
 ### Cameradar allows you to
 
@@ -20,7 +20,7 @@
 * Launch automated dictionary attacks to get the **username and password** of the cameras
 * Retrieve a complete and user-friendly report of the results
 
-<p align="center"><img src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Cameradar.png" width="250"/></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Cameradar.png" width="250"/></p>
 
 ## Table of content
 
@@ -66,8 +66,8 @@ e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the po
 
 Make sure you installed the dependencies mentionned above.
 
-1. `go get github.com/EtixLabs/cameradar`
-2. `cd $GOPATH/src/github.com/EtixLabs/cameradar`
+1. `go get github.com/Ullaakut/cameradar`
+2. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
 3. `glide install`
 4. `cd cameradar`
 5. `go install`
@@ -86,11 +86,11 @@ The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See comman
 
 #### Installing the library
 
-`go get github.com/EtixLabs/cameradar`
+`go get github.com/Ullaakut/cameradar`
 
 After this command, the _cameradar_ library is ready to use. Its source will be in:
 
-    $GOPATH/src/pkg/github.com/EtixLabs/cameradar
+    $GOPATH/src/pkg/github.com/Ullaakut/cameradar
 
 You can use `go get -u` to update the package.
 
@@ -100,7 +100,7 @@ Here is an overview of the exposed functions of this library:
 
 You can use the cameradar library for simple discovery purposes if you don't need to access the cameras but just to be aware of their existence.
 
-<p align="center"><img  width="90%" src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/NmapPresets.png"/></p>
+<p align="center"><img  width="90%" src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/NmapPresets.png"/></p>
 This describes the nmap time presets. You can pass a value between 1 and 5 as described in this table, to the NmapRun function.
 
 #### Attack
@@ -111,7 +111,7 @@ If you already know which hosts and ports you want to attack, you can also skip 
 
 Here are the different data models useful to use the exposed functions of the cameradar library.
 
-<p align="center"><img width="60%" src="https://raw.githubusercontent.com/EtixLabs/cameradar/master/images/Models.png"/></p>
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Models.png"/></p>
 
 #### Dictionary loaders
 
@@ -249,7 +249,7 @@ You can still find it under the 1.1.4 tag on this repo, however it was less perf
 
 > How to use the Cameradar library for my own project?
 
-See the example in `/cameradar`. You just need to run `go get github.com/EtixLabs/cameradar` and to use the `cmrdr` package in your code.
+See the example in `/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cmrdr` package in your code.
 
 > I want to scan my own localhost for some reason and it does not work! What's going on?
 
@@ -270,7 +270,7 @@ Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=1234
 
 ## License
 
-Copyright 2017 EtixLabs
+Copyright 2017 Ullaakut
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/EtixLabs/cameradar/server/adaptor"
+	"github.com/Ullaakut/cameradar/server/adaptor"
 )
 
 // WebSocket manages server communication using a websocket adaptor

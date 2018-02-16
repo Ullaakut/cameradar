@@ -3,7 +3,7 @@ package websocket
 import (
 	"net/http"
 
-	"github.com/EtixLabs/cameradar/server/adaptor"
+	"github.com/Ullaakut/cameradar/server/adaptor"
 
 	"github.com/stretchr/testify/mock"
 )

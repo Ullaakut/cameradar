@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EtixLabs/cameradar/server/adaptor"
+	"github.com/Ullaakut/cameradar/server/adaptor"
 
 	gorilla "github.com/gorilla/websocket"
 	"github.com/pkg/errors"
