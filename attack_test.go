@@ -110,7 +110,6 @@ func TestAttackCredentials(t *testing.T) {
 			performErr: errors.New("dummy error"),
 
 			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no credentials found",
 		},
 		// curl getinfo fails
 		{
@@ -121,19 +120,6 @@ func TestAttackCredentials(t *testing.T) {
 			getInfoErr: errors.New("dummy error"),
 
 			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no credentials found",
-		},
-		// Credentials not found
-		{
-			targets:     fakeTargets,
-			credentials: fakeCredentials,
-			timeout:     1 * time.Millisecond,
-			log:         true,
-
-			status: 403,
-
-			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no credentials found",
 		},
 		// Logging disabled
 		{
@@ -145,7 +131,17 @@ func TestAttackCredentials(t *testing.T) {
 			status: 403,
 
 			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no credentials found",
+		},
+		// Logging enabled
+		{
+			targets:     fakeTargets,
+			credentials: fakeCredentials,
+			timeout:     1 * time.Millisecond,
+			log:         true,
+
+			status: 403,
+
+			expectedStreams: fakeTargets,
 		},
 	}
 	for i, test := range testCases {
@@ -272,7 +268,6 @@ func TestAttackRoute(t *testing.T) {
 			performErr: errors.New("dummy error"),
 
 			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no routes found",
 		},
 		// curl getinfo fails
 		{
@@ -283,17 +278,6 @@ func TestAttackRoute(t *testing.T) {
 			getInfoErr: errors.New("dummy error"),
 
 			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no routes found",
-		},
-		// Routes not found
-		{
-			targets: fakeTargets,
-			routes:  fakeRoutes,
-			timeout: 1 * time.Millisecond,
-			log:     true,
-
-			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no routes found",
 		},
 		// Logs disabled
 		{
@@ -303,7 +287,15 @@ func TestAttackRoute(t *testing.T) {
 			log:     false,
 
 			expectedStreams: fakeTargets,
-			expectedErrMsg:  "no routes found",
+		},
+		// Logs enabled
+		{
+			targets: fakeTargets,
+			routes:  fakeRoutes,
+			timeout: 1 * time.Millisecond,
+			log:     true,
+
+			expectedStreams: fakeTargets,
 		},
 	}
 	for i, test := range testCases {
