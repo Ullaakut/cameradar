@@ -166,15 +166,10 @@ func AttackCredentials(c Curler, targets []Stream, credentials Credentials, time
 		attackResults = append(attackResults, <-attacks)
 	}
 
-	found := 0
 	for _, result := range attackResults {
 		if result.CredentialsFound == true {
 			targets = replace(targets, result)
-			found++
 		}
-	}
-	if found == 0 {
-		return targets, errors.New("no credentials found")
 	}
 
 	return targets, nil
@@ -201,15 +196,10 @@ func AttackRoute(c Curler, targets []Stream, routes Routes, timeout time.Duratio
 		attackResults = append(attackResults, <-attacks)
 	}
 
-	found := 0
 	for _, result := range attackResults {
 		if result.RouteFound == true {
 			targets = replace(targets, result)
-			found++
 		}
-	}
-	if found == 0 {
-		return targets, errors.New("no routes found")
 	}
 
 	return targets, nil
