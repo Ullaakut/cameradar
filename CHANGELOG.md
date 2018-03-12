@@ -7,8 +7,8 @@ This file lists all versions of the repository and precises all changes.
 #### Major changes:
 
 * Cameradar is no longer a C++ application but a Golang library
-* Cameraccess is a Golang application replacing the former C++ one (the C++ Cameradar image can still be used with the tag `1.1.4`)
-* The docker image for Cameraccess is lighter than the one for Cameradar
+* It is also a Golang application replacing the former C++ one (the C++ Cameradar image can still be used with the tag `1.1.4`)
+* The new docker image is twice lighter (14MB vs 379MB before)
 * The Cameradar golang library enables users to build their own application around camera discovery and attack. Example of applications could be an automatic camera discovery daemon with scheduled scans, a security audit tool to check if CCTV cameras are protected from attacks by being isolated and having strong passwords, etc.
 
 ## v1.1.4
