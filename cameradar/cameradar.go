@@ -94,10 +94,11 @@ func main() {
 	w := startSpinner(options.EnableLogs)
 
 	err = curl.GlobalInit(curl.GLOBAL_ALL)
-	c := curl.EasyInit()
-	if err != nil || c == nil {
+	handle := curl.EasyInit()
+	if err != nil || handle == nil {
 		printErr(errors.New("libcurl initialization failed"))
 	}
+	c := &cmrdr.Curl{CURL: handle}
 	defer curl.GlobalCleanup()
 
 	updateSpinner(w, "Loading dictionaries...", options.EnableLogs)
