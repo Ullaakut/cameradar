@@ -32,6 +32,8 @@ func routeAttack(c Curler, camera Stream, route string, timeout time.Duration, e
 		c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
 	}
 
+	// Do not use signals (would break multithreading)
+	c.Setopt(curl.OPT_NOSIGNAL, 1)
 	// Do not send a body in the describe request
 	c.Setopt(curl.OPT_NOBODY, 1)
 	// Send a request to the URL of the camera we want to attack
@@ -82,6 +84,8 @@ func credAttack(c Curler, camera Stream, username string, password string, timeo
 		c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
 	}
 
+	// Do not use signals (would break multithreading)
+	c.Setopt(curl.OPT_NOSIGNAL, 1)
 	// Do not send a body in the describe request
 	c.Setopt(curl.OPT_NOBODY, 1)
 	// Send a request to the URL of the camera we want to attack
@@ -117,7 +121,7 @@ func credAttack(c Curler, camera Stream, username string, password string, timeo
 func attackCameraCredentials(c Curler, target Stream, credentials Credentials, resultsChan chan<- Stream, timeout time.Duration, log bool) {
 	for _, username := range credentials.Usernames {
 		for _, password := range credentials.Passwords {
-			ok := credAttack(c, target, username, password, timeout, log)
+			ok := credAttack(c.Duphandle(), target, username, password, timeout, log)
 			if ok {
 				target.CredentialsFound = true
 				target.Username = username
@@ -133,7 +137,7 @@ func attackCameraCredentials(c Curler, target Stream, credentials Credentials, r
 
 func attackCameraRoute(c Curler, target Stream, routes Routes, resultsChan chan<- Stream, timeout time.Duration, log bool) {
 	for _, route := range routes {
-		ok := routeAttack(c, target, route, timeout, log)
+		ok := routeAttack(c.Duphandle(), target, route, timeout, log)
 		if ok {
 			target.RouteFound = true
 			target.Route = route

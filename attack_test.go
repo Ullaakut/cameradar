@@ -31,6 +31,10 @@ func (m *CurlerMock) Getinfo(info curl.CurlInfo) (interface{}, error) {
 	return args.Int(0), args.Error(1)
 }
 
+func (m *CurlerMock) Duphandle() Curler {
+	return m
+}
+
 func TestAttackCredentials(t *testing.T) {
 	validStream1 := Stream{
 		Device:  "fakeDevice",
