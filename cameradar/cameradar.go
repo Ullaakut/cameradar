@@ -93,6 +93,11 @@ func main() {
 
 	w := startSpinner(options.EnableLogs)
 
+	options.Target, err = cmrdr.ParseTargetsFile(options.Target)
+	if err != nil {
+		printErr(err)
+	}
+
 	err = curl.GlobalInit(curl.GLOBAL_ALL)
 	handle := curl.EasyInit()
 	if err != nil || handle == nil {

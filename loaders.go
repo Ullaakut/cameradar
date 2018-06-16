@@ -3,12 +3,34 @@ package cmrdr
 import (
 	"bufio"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/pkg/errors"
 )
+
+var fs fileSystem = osFS{}
+
+type fileSystem interface {
+	Open(name string) (file, error)
+	Stat(name string) (os.FileInfo, error)
+}
+
+type file interface {
+	io.Closer
+	io.Reader
+	io.ReaderAt
+	io.Seeker
+	Stat() (os.FileInfo, error)
+}
+
+// osFS implements fileSystem using the local disk.
+type osFS struct{}
+
+func (osFS) Open(name string) (file, error)        { return os.Open(name) }
+func (osFS) Stat(name string) (os.FileInfo, error) { return os.Stat(name) }
 
 // LoadCredentials opens a dictionary file and returns its contents as a Credentials structure
 func LoadCredentials(path string) (Credentials, error) {
@@ -62,4 +84,25 @@ func ParseCredentialsFromString(content string) (Credentials, error) {
 // ParseRoutesFromString parses a dictionary string and returns its contents as a Routes structure
 func ParseRoutesFromString(content string) Routes {
 	return strings.Split(content, "\n")
+}
+
+// ParseTargetsFile parses an input file containing hosts to targets
+func ParseTargetsFile(path string) (string, error) {
+	_, err := fs.Stat(path)
+	if err != nil {
+		return path, nil
+	}
+
+	file, err := fs.Open(path)
+	if err != nil {
+		return path, err
+	}
+	defer file.Close()
+
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return path, err
+	}
+
+	return strings.Replace(string(bytes), "\n", " ", -1), nil
 }
