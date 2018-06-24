@@ -283,7 +283,7 @@ You can still find it under the 1.1.4 tag on this repo, however it was less perf
 
 > How to use the Cameradar library for my own project?
 
-See the example in `/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cmrdr` package in your code.
+See the example in `/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cmrdr` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/Ullaakut/cameradar).
 
 > I want to scan my own localhost for some reason and it does not work! What's going on?
 
@@ -301,16 +301,11 @@ Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=1234
 
 > Running cameradar on your own machine to scan for default ports
 
-`docker run --net=host -t cameradar -t localhost`
+`docker run --net=host -t ullaakut/cameradar -t localhost`
 
 > Running cameradar with an input file, logs enabled on port 8554
 
-`docker run -v /tmp:/tmp --net=host -t cameradar -t /tmp/test.txt -p 8554 -l`
-
-## Known issues
-
-* When running Cameradar in a docker container, specifying multiple targets does not work. Using subnetworks (such as `182.49.20.0/24`) or ranges (`182.49.20.0-44`) works.
-* There is currently no way to use environment variables instead of command-line arguments in Cameradar. This will be done at some point, but isn't a priority right now.
+`docker run -v /tmp:/tmp --net=host -t ullaakut/cameradar -t /tmp/test.txt -p 8554 -l`
 
 ## License
 
