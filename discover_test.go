@@ -207,6 +207,42 @@ func TestNmapParseResults(t *testing.T) {
 			},
 		},
 		// File exists
+		// Valid stream, an ipv4 address and a mac address
+		{
+			fileExists:      true,
+			expectedStreams: []Stream{validStream1},
+			streamsXML: &nmapResult{
+				Hosts: []host{
+					{
+						Addresses: []address{
+							address{
+								Addr:     invalidStreamMACAddress.Address,
+								AddrType: "mac",
+							},
+							address{
+								Addr:     validStream1.Address,
+								AddrType: "ipv4",
+							},
+						},
+						Ports: ports{
+							Ports: []port{
+								{
+									PortID: validStream1.Port,
+									State: state{
+										State: "open",
+									},
+									Service: service{
+										Name:    "rtsp",
+										Product: validStream1.Device,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// File exists
 		// Two invalid targets, no error
 		{
 			fileExists:      true,
