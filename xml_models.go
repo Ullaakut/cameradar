@@ -19,7 +19,7 @@ type host struct {
 type address struct {
 	XMLName  xml.Name `xml:"address"`
 	Addr     string   `xml:"addr,attr"`
-	AddrType string   `xml:"addrType,attr" validate:"eq=ipv4|eq=ipv6"`
+	AddrType string   `xml:"addrtype,attr" validate:"required,eq=ipv4|eq=ipv6"`
 }
 
 // Ports is the list of openned ports on a host

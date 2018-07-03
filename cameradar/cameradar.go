@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Ullaakut/cameradar"
+	"github.com/ullaakut/cameradar"
 
 	curl "github.com/andelf/go-curl"
 	"github.com/fatih/color"
