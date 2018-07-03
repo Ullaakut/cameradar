@@ -107,6 +107,12 @@ func TestNmapParseResults(t *testing.T) {
 		Port:    1337,
 	}
 
+	invalidStreamMACAddress := Stream{
+		Device:  "invalidDevice",
+		Address: "00:12:16:FB:02:17",
+		Port:    1337,
+	}
+
 	testCases := []struct {
 		fileExists bool
 		streamsXML *nmapResult
@@ -121,9 +127,11 @@ func TestNmapParseResults(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     validStream1.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream1.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -141,9 +149,11 @@ func TestNmapParseResults(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     validStream2.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream2.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -165,6 +175,38 @@ func TestNmapParseResults(t *testing.T) {
 			fileExists: true,
 		},
 		// File exists
+		// Invalid stream, only a mac address
+		{
+			fileExists:      true,
+			expectedStreams: []Stream{},
+			streamsXML: &nmapResult{
+				Hosts: []host{
+					{
+						Addresses: []address{
+							address{
+								Addr:     invalidStreamMACAddress.Address,
+								AddrType: "mac",
+							},
+						},
+						Ports: ports{
+							Ports: []port{
+								{
+									PortID: invalidStreamMACAddress.Port,
+									State: state{
+										State: "open",
+									},
+									Service: service{
+										Name:    "rtsp",
+										Product: invalidStreamMACAddress.Device,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// File exists
 		// Two invalid targets, no error
 		{
 			fileExists:      true,
@@ -172,9 +214,11 @@ func TestNmapParseResults(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     invalidStreamNoAddress.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     invalidStreamNoAddress.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -192,9 +236,11 @@ func TestNmapParseResults(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     invalidStreamNoPort.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     invalidStreamNoPort.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -226,9 +272,11 @@ func TestNmapParseResults(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     "Camera with closed ports",
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     "Camera with closed ports",
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -246,9 +294,11 @@ func TestNmapParseResults(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     "Camera with closed ports",
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     "Camera with closed ports",
+								AddrType: "ipv4",
+							},
 						},
 					},
 				},
@@ -314,6 +364,9 @@ func TestNmapParseResults(t *testing.T) {
 					}
 				}
 				assert.Equal(t, true, foundStream, "wrong streams parsed")
+				if foundStream == false {
+					fmt.Printf("%+v\n", results)
+				}
 			}
 		}
 		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
@@ -366,9 +419,11 @@ func TestDiscover(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     validStream1.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream1.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -386,9 +441,11 @@ func TestDiscover(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     validStream2.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream2.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -420,9 +477,11 @@ func TestDiscover(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     validStream1.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream1.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -440,9 +499,11 @@ func TestDiscover(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     validStream2.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream2.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -477,9 +538,11 @@ func TestDiscover(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     validStream1.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream1.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -497,9 +560,11 @@ func TestDiscover(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     validStream2.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     validStream2.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -533,9 +598,11 @@ func TestDiscover(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     invalidStreamNoAddress.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     invalidStreamNoAddress.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -553,9 +620,11 @@ func TestDiscover(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     invalidStreamNoPort.Address,
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     invalidStreamNoPort.Address,
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -597,9 +666,11 @@ func TestDiscover(t *testing.T) {
 			streamsXML: &nmapResult{
 				Hosts: []host{
 					{
-						Address: address{
-							Addr:     "Camera with closed ports",
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     "Camera with closed ports",
+								AddrType: "ipv4",
+							},
 						},
 						Ports: ports{
 							Ports: []port{
@@ -617,9 +688,11 @@ func TestDiscover(t *testing.T) {
 						},
 					},
 					{
-						Address: address{
-							Addr:     "Camera with closed ports",
-							AddrType: "ipv4",
+						Addresses: []address{
+							address{
+								Addr:     "Camera with closed ports",
+								AddrType: "ipv4",
+							},
 						},
 					},
 				},
