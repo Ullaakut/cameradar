@@ -114,11 +114,19 @@ func NmapParseResults(nmapResultFilePath string) ([]Stream, error) {
 			if err != nil {
 				continue
 			}
-			streams = append(streams, Stream{
-				Device:  port.Service.Product,
-				Address: host.Address.Addr,
-				Port:    port.PortID,
-			})
+
+			for _, addr := range host.Addresses {
+				err = validate.Struct(addr)
+				if err != nil {
+					continue
+				}
+
+				streams = append(streams, Stream{
+					Device:  port.Service.Product,
+					Address: addr.Addr,
+					Port:    port.PortID,
+				})
+			}
 		}
 	}
 

@@ -10,16 +10,16 @@ type nmapResult struct {
 
 // Host represents a host discovered during a scan
 type host struct {
-	XMLName xml.Name `xml:"host"`
-	Address address  `xml:"address"`
-	Ports   ports    `xml:"ports"`
+	XMLName   xml.Name  `xml:"host"`
+	Addresses []address `xml:"address"`
+	Ports     ports     `xml:"ports"`
 }
 
 // Address is a host's address discovered during a scan
 type address struct {
 	XMLName  xml.Name `xml:"address"`
 	Addr     string   `xml:"addr,attr"`
-	AddrType string   `xml:"addrType,attr"`
+	AddrType string   `xml:"addrType,attr" validate:"eq=ipv4|eq=ipv6"`
 }
 
 // Ports is the list of openned ports on a host
