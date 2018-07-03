@@ -3,12 +3,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/Ullaakut/cameradar"
-  packages = ["."]
-  revision = "7711e34b5c437adc438ab1bbb4b5c633177a4799"
-
-[[projects]]
-  branch = "master"
   name = "github.com/andelf/go-curl"
   packages = ["."]
   revision = "f8b334df3789fbdf98df3b3b22815e958b956c19"
@@ -214,6 +208,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8edbf6b1ec61fc8dae79000a7ccfea2523471e840756e5879421fca896a0d0cb"
+  inputs-digest = "cd90160a373567d6046fe1f1f30e822740533c06a766bcb75d2ed83820cd8526"
   solver-name = "gps-cdcl"
   solver-version = 1
