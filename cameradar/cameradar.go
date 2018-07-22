@@ -151,6 +151,12 @@ func main() {
 		}
 	}
 
+	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Validating their availability...", options.EnableLogs)
+	streams, err = cmrdr.ValidateStreams(c, streams, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+	if err != nil && len(streams) > 0 {
+		printErr(err)
+	}
+
 	clearOutput(w, options.EnableLogs)
 	prettyPrint(streams)
 }
@@ -166,7 +172,7 @@ func prettyPrint(streams []cmrdr.Stream) {
 
 	if len(streams) > 0 {
 		for _, stream := range streams {
-			if stream.CredentialsFound && stream.RouteFound {
+			if stream.CredentialsFound && stream.RouteFound && stream.Available {
 				fmt.Printf("%s\tDevice RTSP URL:\t%s\n", green("\xE2\x96\xB6"), blue(cmrdr.GetCameraRTSPURL(stream)))
 				success++
 			} else {
@@ -174,6 +180,13 @@ func prettyPrint(streams []cmrdr.Stream) {
 			}
 
 			fmt.Printf("\tDevice model:\t\t%s\n\n", stream.Device)
+
+			if stream.Available {
+				fmt.Printf("\tAvailable:\t\t%s\n", green("yes"))
+			} else {
+				fmt.Printf("\tAvailable:\t\t%s\n", red("no"))
+			}
+
 			fmt.Printf("\tIP address:\t\t%s\n", stream.Address)
 			fmt.Printf("\tRTSP port:\t\t%d\n", stream.Port)
 			if stream.CredentialsFound {

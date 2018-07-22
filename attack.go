@@ -163,6 +163,8 @@ func validateStream(c Curler, stream Stream, timeout time.Duration, enableLogs b
 	// Set custom timeout
 	c.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
 
+	c.Setopt(curl.OPT_RTSP_TRANSPORT, "RTP/AVP;unicast;client_port=33332-33333")
+
 	// Perform the request
 	err := c.Perform()
 	if err != nil {
@@ -186,7 +188,7 @@ func validateStream(c Curler, stream Stream, timeout time.Duration, enableLogs b
 // ValidateStreams tries to setup the stream to validate whether or not it is available
 func ValidateStreams(c Curler, targets []Stream, timeout time.Duration, log bool) ([]Stream, error) {
 	for idx, target := range targets {
-		targets[idx].StreamAvailable = validateStream(c, target, timeout, log)
+		targets[idx].Available = validateStream(c, target, timeout, log)
 	}
 
 	return targets, nil
