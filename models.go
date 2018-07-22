@@ -13,7 +13,7 @@ type Stream struct {
 
 	CredentialsFound bool `json:"credentials_found"`
 	RouteFound       bool `json:"route_found"`
-	StreamAvailable  bool `json:"stream_available"`
+	Available        bool `json:"available"`
 }
 
 // Credentials is a map of credentials
