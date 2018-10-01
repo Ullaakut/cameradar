@@ -247,7 +247,7 @@ func AttackCredentials(c Curler, targets []Stream, credentials Credentials, time
 	}
 
 	for _, result := range attackResults {
-		if result.CredentialsFound == true {
+		if result.CredentialsFound {
 			targets = replace(targets, result)
 		}
 	}
@@ -277,7 +277,7 @@ func AttackRoute(c Curler, targets []Stream, routes Routes, timeout time.Duratio
 	}
 
 	for _, result := range attackResults {
-		if result.RouteFound == true {
+		if result.RouteFound {
 			targets = replace(targets, result)
 		}
 	}

@@ -400,7 +400,7 @@ func TestNmapParseResults(t *testing.T) {
 					}
 				}
 				assert.Equal(t, true, foundStream, "wrong streams parsed")
-				if foundStream == false {
+				if !foundStream {
 					fmt.Printf("%+v\n", results)
 				}
 			}

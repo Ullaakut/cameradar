@@ -140,7 +140,7 @@ func main() {
 	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
 	// For these cameras, running another route attack will solve the problem.
 	for _, stream := range streams {
-		if stream.RouteFound == false || stream.CredentialsFound == false {
+		if !stream.RouteFound || !stream.CredentialsFound {
 
 			updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Final attack...", options.EnableLogs)
 			streams, err = cmrdr.AttackRoute(c, streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
