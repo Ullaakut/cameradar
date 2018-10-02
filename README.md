@@ -1,16 +1,37 @@
 # Cameradar
 
-<p align="center"><img src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Cameradar.gif" width="100%"/></p>
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Cameradar.gif" width="100%"/>
+</p>
+
+<p align="center">
+    <a href="#license">
+        <img src="https://img.shields.io/badge/license-Apache-blue.svg?style=flat" />
+    </a>
+    <a href="https://hub.docker.com/r/ullaakut/cameradar/">
+        <img src="https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat" />
+    </a>
+    <a href="https://travis-ci.org/Ullaakut/cameradar">
+        <img src="https://travis-ci.org/Ullaakut/cameradar.svg?branch=master" />
+    </a>
+    <a href='https://coveralls.io/github/Ullaakut/cameradar?branch=master'>
+        <img src='https://coveralls.io/repos/github/Ullaakut/cameradar/badge.svg?branch=master' alt='Coverage Status' />
+    </a>
+    <a href="https://golangci.com/r/github.com/Ullaakut/cameradar">
+        <img src="https://golangci.com/badges/github.com/Ullaakut/cameradar.svg" />
+    </a>
+    <a href="https://goreportcard.com/report/github.com/Ullaakut/cameradar">
+        <img src="https://goreportcard.com/badge/github.com/Ullaakut/cameradar" />
+    </a>
+    <a href="https://github.com/Ullaakut/cameradar/releases/latest">
+        <img src="https://img.shields.io/github/release/Ullaakut/cameradar.svg?style=flat" />
+    </a>
+    <a href="https://godoc.org/github.com/Ullaakut/cameradar">
+        <img src="https://godoc.org/github.com/Ullaakut/cameradar?status.svg" />
+    </a>
+</p>
 
 ## An RTSP stream access tool that comes with its library
-
-[![cameradar License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](#license)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat)](https://hub.docker.com/r/ullaakut/cameradar/)
-[![Build](https://img.shields.io/travis/Ullaakut/cameradar/master.svg?style=flat)](https://travis-ci.org/Ullaakut/cameradar)
-[![Coverage Status](https://coveralls.io/repos/github/Ullaakut/cameradar/badge.svg?branch=master)](https://coveralls.io/github/Ullaakut/cameradar?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Ullaakut/cameradar)](https://goreportcard.com/report/github.com/Ullaakut/cameradar)
-[![GoDoc](https://godoc.org/github.com/Ullaakut/cameradar?status.svg)](https://godoc.org/github.com/Ullaakut/cameradar)
-[![Latest release](https://img.shields.io/github/release/Ullaakut/cameradar.svg?style=flat)](https://github.com/Ullaakut/cameradar/releases/latest)
 
 ### Cameradar allows you to
 
