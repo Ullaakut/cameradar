@@ -77,6 +77,7 @@ Only use this solution if for some reason using docker is not an option for you 
 ### Dependencies
 
 * `go`
+* `dep`
 
 #### Installing dep
 
