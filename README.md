@@ -165,7 +165,7 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 
 ## Command line options
 
-* **"-t, --target"**: Set custom target. Required.
+* **"-t, --target"**: Set target. Required. Target can be a file (see [instructions on how to format the file](#format-input-file)), an IP, an IP range, a subnetwork, or a combination of those.
 * **"-p, --ports"**: (Default: `554,8554`) Set custom ports.
 * **"-s, --speed"**: (Default: `4`) Set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
 * **"-T, --timeout"**: (Default: `2000`) Set custom timeout value in miliseconds after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on very performant and reliable networks.
@@ -174,6 +174,18 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 * **"-o, --nmap-output"**: (Default: `/tmp/cameradar_scan.xml`) Set custom nmap output path
 * **"-l, --log"**: Enable debug logs (nmap requests, curl describe requests, etc.)
 * **"-h"** : Display the usage information
+
+## Format input file
+
+The file can contain IPs, hostnames, IP ranges and subnetwork, separated by newlines. Example:
+
+```
+0.0.0.0
+localhost
+192.17.0.0/16
+192.168.1.140-255
+192.168.2-3.0-255
+```
 
 ## Environment Variables
 
@@ -186,6 +198,8 @@ Examples:
 * `172.16.100.0/24`
 * `192.168.1.1`
 * `localhost`
+* `192.168.1.140-255`
+* `192.168.2-3.0-255`
 
 ### `CAMERADAR_PORTS`
 
@@ -270,7 +284,7 @@ You can still find it under the 1.1.4 tag on this repo, however it was less perf
 
 > How to use the Cameradar library for my own project?
 
-See the example in `/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cmrdr` package in your code.
+See the example in `/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cmrdr` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/Ullaakut/cameradar).
 
 > I want to scan my own localhost for some reason and it does not work! What's going on?
 
@@ -284,10 +298,15 @@ You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This 
 
 Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt` and then run cameradar and it should guess that the username is admin and the password is 12345. You can try this with any default constructor credentials (they can be found [here](dictionaries/credentials.json))
 
-## Known issues
+## Examples
 
-* When running Cameradar in a docker container, specifying multiple targets does not work. Using subnetworks (such as `182.49.20.0/24`) or ranges (`182.49.20.0-44`) works.
-* There is currently no way to use environment variables instead of command-line arguments in Cameradar. This will be done at some point, but isn't a priority right now.
+> Running cameradar on your own machine to scan for default ports
+
+`docker run --net=host -t ullaakut/cameradar -t localhost`
+
+> Running cameradar with an input file, logs enabled on port 8554
+
+`docker run -v /tmp:/tmp --net=host -t ullaakut/cameradar -t /tmp/test.txt -p 8554 -l`
 
 ## License
 
