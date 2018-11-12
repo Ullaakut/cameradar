@@ -46,7 +46,7 @@
 ## Table of content
 
 * [Docker Image](#docker-image)
-* [Configuration](#configuration)`
+* [Configuration](#configuration)
 * [Output](#output)
 * [Check camera access](#check-camera-access)
 * [Command line options](#command-line-options)
