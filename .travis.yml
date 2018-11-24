@@ -3,7 +3,7 @@ sudo: required
 language: go
 
 env:
-  - DEP_VERSION="0.4.1"
+  - DEP_VERSION="0.5.0"
 
 services:  
     - docker
