@@ -5,7 +5,7 @@ language: go
 env:
   - DEP_VERSION="0.5.0"
 
-services:  
+services:
     - docker
 
 before_install:
@@ -35,7 +35,7 @@ install:
 script:
 # Run unit tests
 - go test -v -covermode=count -coverprofile=coverage.out
-- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken=$COVERALLS_TOKEN
 # Launch a fake camera to check if cameradar is able to access it
 - docker run -d --name=fake_camera -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -p 8554:8554 ullaakut/rtspatt
 # Launch cameradar on the local machine
