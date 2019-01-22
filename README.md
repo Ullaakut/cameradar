@@ -64,7 +64,7 @@ docker run -t ullaakut/cameradar -t <target> <other command-line options>
 
 [See command-line options](#command-line-options).
 
-e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output debug logs.
+e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554, 5554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output debug logs.
 
 * `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`), an IP (e.g.: `172.16.100.10`), or a range of IPs (e.g.: `172.16.100.10-20`).
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
@@ -141,7 +141,7 @@ The cameradar library also provides two functions that take file paths as inputs
 
 ## Configuration
 
-The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameradar application will scan the 554 and 8554 ports.
+The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameradar application will scan the 554, 5554 and 8554 ports.
 
 `docker run -t --net=host ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
 
@@ -165,9 +165,9 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 
 ## Command line options
 
-* **"-t, --target"**: Set target. Required. Target can be a file (see [instructions on how to format the file](#format-input-file)), an IP, an IP range, a subnetwork, or a combination of those.
-* **"-p, --ports"**: (Default: `554,8554`) Set custom ports.
-* **"-s, --speed"**: (Default: `4`) Set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
+* **"-t, --targets"**: Set target. Required. Target can be a file (see [instructions on how to format the file](#format-input-file)), an IP, an IP range, a subnetwork, or a combination of those. Example: `--targets="192.168.1.72,192.168.1.74"`
+* **"-p, --ports"**: (Default: `554,5554,8554`) Set custom ports.
+* **"-s, --speed"**: (Default: `4`) Set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. You might also want to keep it low to keep your discovery stealthy. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
 * **"-T, --timeout"**: (Default: `2000`) Set custom timeout value in miliseconds after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on very performant and reliable networks.
 * **"-r, --custom-routes"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/routes`) Set custom dictionary path for routes
 * **"-c, --custom-credentials"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/credentials.json`) Set custom dictionary path for credentials
@@ -179,7 +179,7 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 
 The file can contain IPs, hostnames, IP ranges and subnetwork, separated by newlines. Example:
 
-```
+```go
 0.0.0.0
 localhost
 192.17.0.0/16
@@ -205,7 +205,7 @@ Examples:
 
 This variable is optional and allows you to specify the ports on which to run the scans.
 
-Default value: `554,8554`
+Default value: `554,5554,8554`
 
 It is recommended not to change these except if you are certain that cameras have been configured to stream RTSP over a different port. 99.9% of cameras are streaming on these ports.
 
@@ -235,7 +235,7 @@ This optional variable allows you to set custom timeout value in miliseconds aft
 
 Default value: `2000`
 
-### `CAMERADAR_LOGS`
+### `CAMERADAR_LOGGING`
 
 This optional variable allows you to enable a more verbose output to have more information about what is going on.
 

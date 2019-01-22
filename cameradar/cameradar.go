@@ -18,9 +18,8 @@ import (
 )
 
 type options struct {
-	Target      string
-	Ports       string
-	OutputFile  string
+	Targets     []string
+	Ports       []string
 	Routes      string
 	Credentials string
 	Speed       int
@@ -30,21 +29,20 @@ type options struct {
 
 func parseArguments() error {
 
-	viper.BindEnv("target", "CAMERADAR_TARGET")
-	viper.BindEnv("ports", "CAMERADAR_PORTS")
-	viper.BindEnv("nmap-output", "CAMERADAR_NMAP_OUTPUT_FILE")
-	viper.BindEnv("custom-routes", "CAMERADAR_CUSTOM_ROUTES")
-	viper.BindEnv("custom-credentials", "CAMERADAR_CUSTOM_CREDENTIALS")
-	viper.BindEnv("speed", "CAMERADAR_SPEED")
-	viper.BindEnv("timeout", "CAMERADAR_TIMEOUT")
-	viper.BindEnv("envlogs", "CAMERADAR_LOGS")
+	viper.SetEnvPrefix("cameradar")
+	viper.BindEnv("targets")
+	viper.BindEnv("ports")
+	viper.BindEnv("custom-routes")
+	viper.BindEnv("custom-credentials")
+	viper.BindEnv("speed")
+	viper.BindEnv("timeout")
+	viper.BindEnv("logging")
 
-	pflag.StringP("target", "t", "", "The target on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
-	pflag.StringP("ports", "p", "554,8554", "The ports on which to search for RTSP streams")
-	pflag.StringP("nmap-output", "o", "/tmp/cameradar_scan.xml", "The path where nmap will create its XML result file")
+	pflag.StringSliceP("targets", "t", nil, "The targets on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
+	pflag.StringSliceP("ports", "p", []string{"554", "5554", "8554"}, "The ports on which to search for RTSP streams")
 	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
 	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
-	pflag.IntP("speed", "s", 4, "The nmap speed preset to use")
+	pflag.IntP("speed", "s", 4, "The nmap speed preset to use for discovery")
 	pflag.IntP("timeout", "T", 2000, "The timeout in miliseconds to use for attack attempts")
 	pflag.BoolP("log", "l", false, "Enable the logs for nmap's output to stdout")
 	pflag.BoolP("help", "h", false, "displays this help message")
@@ -67,8 +65,8 @@ func parseArguments() error {
 		os.Exit(0)
 	}
 
-	if viper.GetString("target") == "" {
-		return errors.New("target (-t, --target) argument required\n    examples:\n      - 172.16.100.0/24\n      - localhost\n      - 8.8.8.8")
+	if viper.GetStringSlice("targets") == nil {
+		return errors.New("targets (-t, --targets) argument required\n    examples:\n      - 172.16.100.0/24\n      - localhost\n      - 8.8.8.8")
 	}
 
 	return nil
@@ -83,19 +81,20 @@ func main() {
 	}
 
 	options.Credentials = viper.GetString("custom-credentials")
-	options.EnableLogs = viper.GetBool("log") || viper.GetBool("envlogs")
-	options.OutputFile = viper.GetString("nmap-output")
-	options.Ports = viper.GetString("ports")
+	options.EnableLogs = viper.GetBool("log") || viper.GetBool("logging")
+	options.Ports = viper.GetStringSlice("ports")
 	options.Routes = viper.GetString("custom-routes")
 	options.Speed = viper.GetInt("speed")
 	options.Timeout = viper.GetInt("timeout")
-	options.Target = viper.GetString("target")
+	options.Targets = viper.GetStringSlice("targets")
 
 	w := startSpinner(options.EnableLogs)
 
-	options.Target, err = cmrdr.ParseTargetsFile(options.Target)
-	if err != nil {
-		printErr(err)
+	if len(options.Targets) == 1 {
+		options.Targets, err = cmrdr.ParseTargetsFile(options.Targets[0])
+		if err != nil {
+			printErr(err)
+		}
 	}
 
 	err = curl.GlobalInit(curl.GLOBAL_ALL)
@@ -103,6 +102,7 @@ func main() {
 	if err != nil || handle == nil {
 		printErr(errors.New("libcurl initialization failed"))
 	}
+
 	c := &cmrdr.Curl{CURL: handle}
 	defer curl.GlobalCleanup()
 
@@ -124,7 +124,7 @@ func main() {
 	}
 
 	updateSpinner(w, "Scanning the network...", options.EnableLogs)
-	streams, err := cmrdr.Discover(options.Target, options.Ports, options.OutputFile, options.Speed, options.EnableLogs)
+	streams, err := cmrdr.Discover(options.Targets, options.Ports, options.Speed)
 	if err != nil && len(streams) > 0 {
 		printErr(err)
 	}
@@ -146,12 +146,12 @@ func main() {
 	// For these cameras, running another route attack will solve the problem.
 	for _, stream := range streams {
 		if !stream.RouteFound || !stream.CredentialsFound {
-
 			updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Final attack...", options.EnableLogs)
 			streams, err = cmrdr.AttackRoute(c, streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 			if err != nil && len(streams) > 0 {
 				printErr(err)
 			}
+
 			break
 		}
 	}
@@ -163,6 +163,7 @@ func main() {
 	}
 
 	clearOutput(w, options.EnableLogs)
+
 	prettyPrint(streams)
 }
 

@@ -62,7 +62,6 @@ func routeAttack(c Curler, stream Stream, route string, timeout time.Duration, e
 	// Perform the request
 	err := c.Perform()
 	if err != nil {
-		fmt.Printf("\nERROR: curl timeout on stream '%s' reached after %s.\nconsider increasing the timeout (-T, --timeout parameter) to at least 5000ms if scanning an unstable network.\n", stream.Address, timeout.String())
 		return false
 	}
 
@@ -114,7 +113,6 @@ func credAttack(c Curler, stream Stream, username string, password string, timeo
 	// Perform the request
 	err := c.Perform()
 	if err != nil {
-		fmt.Printf("\nERROR: curl timeout on stream '%s' reached after %s.\nconsider increasing the timeout (-T, --timeout parameter) to at least 5000ms if scanning an unstable network.\n", stream.Address, timeout.String())
 		return false
 	}
 
@@ -168,7 +166,6 @@ func validateStream(c Curler, stream Stream, timeout time.Duration, enableLogs b
 	// Perform the request
 	err := c.Perform()
 	if err != nil {
-		fmt.Printf("\nERROR: curl timeout on stream '%s' reached after %s.\nconsider increasing the timeout (-T, --timeout parameter) to at least 5000ms if scanning an unstable network.\n", stream.Address, timeout.String())
 		return false
 	}
 

@@ -1,418 +1,72 @@
 package cmrdr
 
 import (
-	"encoding/xml"
-	"fmt"
-	"io/ioutil"
+	"errors"
 	"os"
-	"os/exec"
-	"strconv"
 	"testing"
 
+	"github.com/Ullaakut/nmap"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-// HACK: See https://golang.org/src/os/exec/exec_test.go
-func fakeExecCommand(command string, args ...string) *exec.Cmd {
-	cs := []string{"-test.run=TestExecCommandHelper", "--", command}
-	cs = append(cs, args...)
-	cmd := exec.Command(os.Args[0], cs...)
-	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1",
-		"STDOUT= ",
-		"EXIT_STATUS=0"}
-	return cmd
+type nmapMock struct {
+	mock.Mock
 }
 
-func TestExecCommandHelper(t *testing.T) {
-	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
-		return
+func (m *nmapMock) Run() (*nmap.Run, error) {
+	args := m.Called()
+
+	if args.Get(0) != nil {
+		return args.Get(0).(*nmap.Run), args.Error(1)
 	}
-
-	fmt.Fprintf(os.Stdout, os.Getenv("STDOUT"))
-	i, _ := strconv.Atoi(os.Getenv("EXIT_STATUS"))
-	os.Exit(i)
-}
-
-func TestNmapRun(t *testing.T) {
-	execCommand = fakeExecCommand
-	defer func() { execCommand = exec.Command }()
-
-	testCases := []struct {
-		targets        string
-		ports          string
-		resultFilePath string
-		nmapSpeed      int
-		enableLogs     bool
-
-		expectedErrMsg string
-	}{
-		// Valid baseline with logs enabled
-		{
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      PARANOIAC,
-			enableLogs:     true,
-		},
-		// Invalid speed
-		{
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      INSANE + 1,
-			enableLogs:     false,
-
-			expectedErrMsg: "invalid nmap speed value",
-		},
-	}
-	for _, test := range testCases {
-		err := NmapRun(test.targets, test.ports, test.resultFilePath, test.nmapSpeed, test.enableLogs)
-		if len(test.expectedErrMsg) > 0 {
-			if err == nil {
-				fmt.Printf("unexpected success. expected error: %s\n", test.expectedErrMsg)
-				os.Exit(1)
-			}
-			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
-		} else {
-			if err != nil {
-				fmt.Printf("unexpected error: %v\n", err)
-				os.Exit(1)
-			}
-		}
-	}
-}
-
-func TestNmapParseResults(t *testing.T) {
-	validStream1 := Stream{
-		Device:  "fakeDevice",
-		Address: "fakeAddress",
-		Port:    1337,
-	}
-
-	validStream2 := Stream{
-		Device:  "fakeDevice",
-		Address: "differentFakeAddress",
-		Port:    1337,
-	}
-
-	invalidStreamNoPort := Stream{
-		Device:  "invalidDevice",
-		Address: "fakeAddress",
-		Port:    0,
-	}
-
-	invalidStreamNoAddress := Stream{
-		Device:  "invalidDevice",
-		Address: "",
-		Port:    1337,
-	}
-
-	invalidStreamMACAddress := Stream{
-		Device:  "invalidDevice",
-		Address: "00:12:16:FB:02:17",
-		Port:    1337,
-	}
-
-	testCases := []struct {
-		fileExists bool
-		streamsXML *nmapResult
-
-		expectedStreams []Stream
-		expectedErrMsg  string
-	}{
-		// File exists
-		// Two valid streams, no error
-		{
-			expectedStreams: []Stream{validStream1, validStream2},
-			streamsXML: &nmapResult{
-				Hosts: []host{
-					{
-						Addresses: []address{
-							address{
-								Addr:     validStream1.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream1.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream1.Device,
-									},
-								},
-							},
-						},
-					},
-					{
-						Addresses: []address{
-							address{
-								Addr:     validStream2.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream2.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream2.Device,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			fileExists: true,
-		},
-		// File exists
-		// Invalid stream, only a mac address
-		{
-			fileExists:      true,
-			expectedStreams: []Stream{},
-			streamsXML: &nmapResult{
-				Hosts: []host{
-					{
-						Addresses: []address{
-							address{
-								Addr:     invalidStreamMACAddress.Address,
-								AddrType: "mac",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: invalidStreamMACAddress.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: invalidStreamMACAddress.Device,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		// File exists
-		// Valid stream, an ipv4 address and a mac address
-		{
-			fileExists:      true,
-			expectedStreams: []Stream{validStream1},
-			streamsXML: &nmapResult{
-				Hosts: []host{
-					{
-						Addresses: []address{
-							address{
-								Addr:     invalidStreamMACAddress.Address,
-								AddrType: "mac",
-							},
-							address{
-								Addr:     validStream1.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream1.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream1.Device,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		// File exists
-		// Two invalid targets, no error
-		{
-			fileExists:      true,
-			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
-			streamsXML: &nmapResult{
-				Hosts: []host{
-					{
-						Addresses: []address{
-							address{
-								Addr:     invalidStreamNoAddress.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: invalidStreamNoAddress.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: invalidStreamNoAddress.Device,
-									},
-								},
-							},
-						},
-					},
-					{
-						Addresses: []address{
-							address{
-								Addr:     invalidStreamNoPort.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: invalidStreamNoPort.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: invalidStreamNoPort.Device,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		// File does not exist, error
-		{
-			fileExists:     false,
-			expectedErrMsg: "could not read nmap result file",
-		},
-		// No valid streams found
-		{
-			fileExists:      true,
-			expectedStreams: []Stream{},
-			streamsXML: &nmapResult{
-				Hosts: []host{
-					{
-						Addresses: []address{
-							address{
-								Addr:     "Camera with closed ports",
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: 0,
-									State: state{
-										State: "closed",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: "Camera without closed ports",
-									},
-								},
-							},
-						},
-					},
-					{
-						Addresses: []address{
-							address{
-								Addr:     "Camera with closed ports",
-								AddrType: "ipv4",
-							},
-						},
-					},
-				},
-			},
-		},
-		// XML Unmarshal error
-		{
-			fileExists:      true,
-			expectedStreams: []Stream{},
-			expectedErrMsg:  "expected element type <nmaprun> but have <failure>",
-		},
-	}
-	for i, test := range testCases {
-		filePath := "/tmp/cameradar_test_parse_results_" + fmt.Sprint(i) + ".xml"
-
-		// create file
-		if test.fileExists {
-			_, err := os.Create(filePath)
-			if err != nil {
-				fmt.Printf("could not create xml file for NmapParseResults: %v. iteration: %d. file path: %s\n", err, i, filePath)
-				os.Exit(1)
-			}
-
-			// marshal and write
-			if test.streamsXML != nil {
-				streams, err := xml.Marshal(test.streamsXML)
-				if err != nil {
-					fmt.Printf("invalid targets for NmapParseResults: %v. iteration: %d. streams: %v\n", err, i, test.streamsXML)
-					os.Exit(1)
-				}
-
-				err = ioutil.WriteFile(filePath, streams, 0644)
-				if err != nil {
-					fmt.Printf("could not write xml file for NmapParseResults: %v. iteration: %d. file path: %s\n", err, i, filePath)
-					os.Exit(1)
-				}
-			} else {
-				err := ioutil.WriteFile(filePath, []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><failure>"), 0644)
-				if err != nil {
-					fmt.Printf("could not write xml file for NmapParseResults: %v. iteration: %d. file path: %s\n", err, i, filePath)
-					os.Exit(1)
-				}
-			}
-		}
-
-		results, err := NmapParseResults(filePath)
-		if len(test.expectedErrMsg) > 0 {
-			if err == nil {
-				fmt.Printf("unexpected success. expected error: %s\n", test.expectedErrMsg)
-				os.Exit(1)
-			}
-			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
-		} else {
-			if err != nil {
-				fmt.Printf("unexpected error: %v\n", err)
-				os.Exit(1)
-			}
-			for _, stream := range test.expectedStreams {
-				foundStream := false
-				for _, result := range results {
-					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
-						foundStream = true
-					}
-				}
-				assert.Equal(t, true, foundStream, "wrong streams parsed")
-				if !foundStream {
-					fmt.Printf("%+v\n", results)
-				}
-			}
-		}
-		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
-	}
+	return nil, args.Error(1)
 }
 
 func TestDiscover(t *testing.T) {
-	execCommand = fakeExecCommand
-	defer func() { execCommand = exec.Command }()
+	tests := []struct {
+		description string
 
+		targets    []string
+		ports      []string
+		speed      int
+		removePath bool
+
+		expectedErr    error
+		expectedResult []Stream
+	}{
+		{
+			description: "create new scanner and call scan, no error",
+
+			targets: []string{"localhost"},
+			ports:   []string{"80"},
+			speed:   5,
+		},
+		{
+			description: "create new scanner with missing nmap installation",
+
+			removePath: true,
+			ports:      []string{"80"},
+
+			expectedErr: errors.New("'nmap' binary was not found"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			if test.removePath {
+				os.Setenv("PATH", "")
+			}
+
+			result, err := Discover(test.targets, test.ports, test.speed)
+
+			assert.Equal(t, test.expectedErr, err)
+			assert.Equal(t, test.expectedResult, result)
+		})
+	}
+}
+
+func TestScan(t *testing.T) {
 	validStream1 := Stream{
 		Device:  "fakeDevice",
 		Address: "fakeAddress",
@@ -438,375 +92,212 @@ func TestDiscover(t *testing.T) {
 	}
 
 	testCases := []struct {
-		targets        string
-		ports          string
-		resultFilePath string
-		nmapSpeed      int
-		enableLogs     bool
-		fileExists     bool
-		streamsXML     *nmapResult
+		description string
+		nmapResult  *nmap.Run
+		nmapError   error
 
 		expectedStreams []Stream
-		expectedErrMsg  string
+		expectedErr     error
 	}{
-		// Valid baseline
 		{
-			expectedStreams: []Stream{validStream1, validStream2},
-			streamsXML: &nmapResult{
-				Hosts: []host{
-					{
-						Addresses: []address{
-							address{
-								Addr:     validStream1.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream1.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream1.Device,
-									},
-								},
-							},
-						},
-					},
-					{
-						Addresses: []address{
-							address{
-								Addr:     validStream2.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream2.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream2.Device,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			fileExists:     true,
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      PARANOIAC,
-			enableLogs:     false,
-		},
-		// Invalid speed
-		{
-			expectedStreams: []Stream{},
-			streamsXML: &nmapResult{
-				Hosts: []host{
-					{
-						Addresses: []address{
-							address{
-								Addr:     validStream1.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream1.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream1.Device,
-									},
-								},
-							},
-						},
-					},
-					{
-						Addresses: []address{
-							address{
-								Addr:     validStream2.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream2.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream2.Device,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			fileExists:     true,
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      INSANE + 1,
-			enableLogs:     false,
+			description: "valid streams",
 
-			expectedErrMsg: "invalid nmap speed value",
-		},
-		// File exists
-		// Two valid streams, no error
-		{
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: validStream1.Address,
+							},
+						},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
+								},
+								ID: validStream1.Port,
+								Service: nmap.Service{
+									Name:    "rtsp",
+									Product: validStream1.Device,
+								},
+							},
+						},
+					},
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: validStream2.Address,
+							},
+						},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: validStream2.Device,
+								},
+							},
+						},
+					},
+				},
+			},
+
 			expectedStreams: []Stream{validStream1, validStream2},
-			streamsXML: &nmapResult{
-				Hosts: []host{
+		},
+		{
+			description: "two invalid targets, no error",
+
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
 					{
-						Addresses: []address{
-							address{
-								Addr:     validStream1.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream1.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream1.Device,
-									},
-								},
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
 							},
 						},
 					},
 					{
-						Addresses: []address{
-							address{
-								Addr:     validStream2.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: validStream2.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: validStream2.Device,
-									},
+						Addresses: []nmap.Address{},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
 								},
 							},
 						},
 					},
 				},
 			},
-			fileExists:     true,
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      PARANOIAC,
-			enableLogs:     false,
+
+			expectedStreams: nil,
 		},
-		// File exists
-		// Two invalid targets, no error
 		{
-			fileExists:      true,
-			expectedStreams: []Stream{invalidStreamNoPort, invalidStreamNoAddress},
-			streamsXML: &nmapResult{
-				Hosts: []host{
+			description: "different port states, no error",
+
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
 					{
-						Addresses: []address{
-							address{
-								Addr:     invalidStreamNoAddress.Address,
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: invalidStreamNoAddress.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: invalidStreamNoAddress.Device,
-									},
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "closed",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
 								},
 							},
 						},
 					},
 					{
-						Addresses: []address{
-							address{
-								Addr:     invalidStreamNoPort.Address,
-								AddrType: "ipv4",
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "unfiltered",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
+								},
 							},
 						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: invalidStreamNoPort.Port,
-									State: state{
-										State: "open",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: invalidStreamNoPort.Device,
-									},
+					},
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "filtered",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
 								},
 							},
 						},
 					},
 				},
 			},
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      PARANOIAC,
-			enableLogs:     false,
+
+			expectedStreams: nil,
 		},
-		// File does not exist, error
 		{
-			fileExists:     false,
-			expectedErrMsg: "could not read nmap result file",
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      PARANOIAC,
-			enableLogs:     false,
-		},
-		// No valid streams found
-		{
-			fileExists:      true,
-			expectedStreams: []Stream{},
-			streamsXML: &nmapResult{
-				Hosts: []host{
+			description: "not rtsp, no error",
+
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
 					{
-						Addresses: []address{
-							address{
-								Addr:     "Camera with closed ports",
-								AddrType: "ipv4",
-							},
-						},
-						Ports: ports{
-							Ports: []port{
-								{
-									PortID: 0,
-									State: state{
-										State: "closed",
-									},
-									Service: service{
-										Name:    "rtsp",
-										Product: "Camera without closed ports",
-									},
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
 								},
-							},
-						},
-					},
-					{
-						Addresses: []address{
-							address{
-								Addr:     "Camera with closed ports",
-								AddrType: "ipv4",
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "tcp",
+									Product: invalidStreamNoAddress.Device,
+								},
 							},
 						},
 					},
 				},
 			},
-			targets:        "localhost",
-			ports:          "554",
-			resultFilePath: "/tmp/results.xml",
-			nmapSpeed:      PARANOIAC,
-			enableLogs:     false,
+
+			expectedStreams: nil,
 		},
-		// XML Unmarshal error
 		{
-			fileExists:      true,
-			expectedStreams: []Stream{},
-			expectedErrMsg:  "expected element type <nmaprun> but have <failure>",
-			targets:         "localhost",
-			ports:           "554",
-			resultFilePath:  "/tmp/results.xml",
-			nmapSpeed:       PARANOIAC,
-			enableLogs:      false,
+			description: "no hosts found",
+
+			nmapResult:      &nmap.Run{},
+			expectedStreams: nil,
+		},
+		{
+			description: "scan failed",
+
+			nmapError:   errors.New("scan failed"),
+			expectedErr: errors.New("scan failed"),
 		},
 	}
-	for i, test := range testCases {
-		filePath := "/tmp/cameradar_test_discover_" + fmt.Sprint(i) + ".xml"
 
-		// create file
-		if test.fileExists {
-			_, err := os.Create(filePath)
-			if err != nil {
-				fmt.Printf("could not create xml file for Discover: %v. iteration: %d. file path: %s\n", err, i, filePath)
-				os.Exit(1)
-			}
+	for _, test := range testCases {
+		t.Run(test.description, func(t *testing.T) {
+			nmapMock := &nmapMock{}
 
-			// marshal and write
-			if test.streamsXML != nil {
-				streams, err := xml.Marshal(test.streamsXML)
-				if err != nil {
-					fmt.Printf("invalid targets for Discover: %v. iteration: %d. streams: %v\n", err, i, test.streamsXML)
-					os.Exit(1)
-				}
+			nmapMock.On("Run").Return(test.nmapResult, test.nmapError)
 
-				err = ioutil.WriteFile(filePath, streams, 0644)
-				if err != nil {
-					fmt.Printf("could not write xml file for Discover: %v. iteration: %d. file path: %s\n", err, i, filePath)
-					os.Exit(1)
-				}
-			} else {
-				err := ioutil.WriteFile(filePath, []byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?><failure>"), 0644)
-				if err != nil {
-					fmt.Printf("could not write xml file for Discover: %v. iteration: %d. file path: %s\n", err, i, filePath)
-					os.Exit(1)
-				}
-			}
-		}
+			results, err := scan(nmapMock)
 
-		results, err := Discover(test.targets, test.ports, filePath, test.nmapSpeed, test.enableLogs)
+			assert.Equal(t, test.expectedErr, err)
+			assert.Equal(t, test.expectedStreams, results, "wrong streams parsed")
+			assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
 
-		if len(test.expectedErrMsg) > 0 {
-			if err == nil {
-				fmt.Printf("unexpected success in Discover test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
-				os.Exit(1)
-			}
-			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
-		} else {
-			if err != nil {
-				fmt.Printf("unexpected error in Discover test, iteration %d: %v\n", i, err)
-				os.Exit(1)
-			}
-			for _, stream := range test.expectedStreams {
-				foundStream := false
-				for _, result := range results {
-					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
-						foundStream = true
-					}
-				}
-				assert.Equal(t, true, foundStream, "wrong streams parsed")
-			}
-		}
-		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
+			nmapMock.AssertExpectations(t)
+		})
 	}
 }
