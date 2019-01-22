@@ -1,0 +1,3 @@
+[submodule "cli-spinners"]
+	path = cli-spinners
+	url = https://github.com/sindresorhus/cli-spinners

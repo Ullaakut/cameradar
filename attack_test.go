@@ -302,6 +302,7 @@ func TestAttackRoute(t *testing.T) {
 			expectedStreams: fakeTargets,
 		},
 	}
+
 	for i, test := range testCases {
 		curlerMock := &CurlerMock{}
 
@@ -320,12 +321,14 @@ func TestAttackRoute(t *testing.T) {
 				fmt.Printf("unexpected success in AttackRoute test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
 				os.Exit(1)
 			}
+
 			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
 		} else {
 			if err != nil {
 				fmt.Printf("unexpected error in AttackRoute test, iteration %d: %v\n", i, err)
 				os.Exit(1)
 			}
+
 			for _, stream := range test.expectedStreams {
 				foundStream := false
 				for _, result := range results {
@@ -333,10 +336,13 @@ func TestAttackRoute(t *testing.T) {
 						foundStream = true
 					}
 				}
+
 				assert.Equal(t, true, foundStream, "wrong streams parsed")
 			}
 		}
+
 		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
+
 		curlerMock.AssertExpectations(t)
 	}
 }
@@ -483,12 +489,14 @@ func TestValidateStreams(t *testing.T) {
 					fmt.Printf("unexpected success in ValidateStream test, iteration %d. expected error: %s\n", i, tC.expectedErrMsg)
 					os.Exit(1)
 				}
+
 				assert.Contains(t, err.Error(), tC.expectedErrMsg, "wrong error message")
 			} else {
 				if err != nil {
 					fmt.Printf("unexpected error in ValidateStream test, iteration %d: %v\n", i, err)
 					os.Exit(1)
 				}
+
 				for _, stream := range tC.expectedStreams {
 					foundStream := false
 					for _, result := range results {
@@ -496,15 +504,18 @@ func TestValidateStreams(t *testing.T) {
 							foundStream = true
 						}
 					}
+
 					assert.Equal(t, true, foundStream, "wrong streams parsed")
 				}
 			}
+
 			assert.Equal(t, len(tC.expectedStreams), len(results), "wrong streams parsed")
+
 			curlerMock.AssertExpectations(t)
 		})
 	}
 }
 
-func TestDotWrite(t *testing.T) {
+func TestDoNotWrite(t *testing.T) {
 	assert.Equal(t, true, doNotWrite(nil, nil))
 }

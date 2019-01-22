@@ -9,7 +9,7 @@ type Stream struct {
 	Password string `json:"password"`
 	Route    string `json:"route"`
 	Address  string `json:"address" validate:"required"`
-	Port     uint   `json:"port" validate:"required"`
+	Port     uint16 `json:"port" validate:"required"`
 
 	CredentialsFound bool `json:"credentials_found"`
 	RouteFound       bool `json:"route_found"`
@@ -30,9 +30,8 @@ type Routes []string
 
 // Options contains all options needed to launch a complete cameradar scan
 type Options struct {
-	Target      string        `json:"target" validate:"required"`
-	Ports       string        `json:"ports"`
-	OutputFile  string        `json:"output_file"`
+	Targets     []string      `json:"target" validate:"required"`
+	Ports       []string      `json:"ports"`
 	Routes      Routes        `json:"routes"`
 	Credentials Credentials   `json:"credentials"`
 	Speed       int           `json:"speed"`

@@ -18,12 +18,8 @@ before_install:
 - sudo apt-get remove docker docker-engine docker.io
 - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 - sudo apt-get update
-- sudo apt-get install -y docker-ce
+- sudo apt-get install -y docker-ce nmap
 - go get github.com/mattn/goveralls
-- go get github.com/andelf/go-curl
-- go get github.com/pkg/errors
-- go get gopkg.in/go-playground/validator.v9
-- go get github.com/stretchr/testify/assert
 - docker version
 - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
 - chmod +x $GOPATH/bin/dep

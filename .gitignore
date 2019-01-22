@@ -2,9 +2,6 @@
 .idea/
 .vscode/
 
-# Deps
-/vendor
-
 # Golang
 /bin/*
 /pkg/*

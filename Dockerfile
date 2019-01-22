@@ -21,7 +21,9 @@ RUN go build -o cameradar
 # Final stage
 FROM alpine
 
-RUN apk --update add --no-cache nmap nmap-nselibs nmap-scripts \
+RUN apk --update add --no-cache nmap \
+    nmap-nselibs \
+    nmap-scripts \
     curl-dev
 
 WORKDIR /app/cameradar

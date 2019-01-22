@@ -61,6 +61,7 @@ func LoadRoutes(path string) (Routes, error) {
 
 	var routes Routes
 	scanner := bufio.NewScanner(file)
+
 	for scanner.Scan() {
 		routes = append(routes, scanner.Text())
 	}
@@ -87,22 +88,22 @@ func ParseRoutesFromString(content string) Routes {
 }
 
 // ParseTargetsFile parses an input file containing hosts to targets
-func ParseTargetsFile(path string) (string, error) {
+func ParseTargetsFile(path string) ([]string, error) {
 	_, err := fs.Stat(path)
 	if err != nil {
-		return path, nil
+		return []string{path}, nil
 	}
 
 	file, err := fs.Open(path)
 	if err != nil {
-		return path, err
+		return []string{path}, err
 	}
 	defer file.Close()
 
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		return path, err
+		return []string{path}, err
 	}
 
-	return strings.Replace(string(bytes), "\n", " ", -1), nil
+	return strings.Split(string(bytes), "\n"), nil
 }

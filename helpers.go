@@ -12,6 +12,7 @@ func replace(streams []Stream, new Stream) []Stream {
 			updatedSlice = append(updatedSlice, old)
 		}
 	}
+
 	return updatedSlice
 }
 
