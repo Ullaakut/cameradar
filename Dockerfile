@@ -29,4 +29,8 @@ RUN apk --update add --no-cache nmap \
 WORKDIR /app/cameradar
 COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/dictionaries/ /app/dictionaries/
 COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/cameradar/ /app/cameradar/
-ENTRYPOINT ["/app/cameradar/cameradar", "-r", "/app/dictionaries/routes", "-c", "/app/dictionaries/credentials.json"]
+
+ENV CAMERADAR_CUSTOM_ROUTES="/app/dictionaries/routes"
+ENV CAMERADAR_CUSTOM_CREDENTIALS="/app/dictionaries/credentials.json"
+
+ENTRYPOINT ["/app/cameradar/cameradar"]

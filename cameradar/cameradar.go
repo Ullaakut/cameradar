@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Ullaakut/cameradar"
+	"github.com/ullaakut/cameradar"
 
 	curl "github.com/andelf/go-curl"
 	"github.com/fatih/color"
@@ -28,17 +28,10 @@ type options struct {
 }
 
 func parseArguments() error {
-
 	viper.SetEnvPrefix("cameradar")
-	viper.BindEnv("targets")
-	viper.BindEnv("ports")
-	viper.BindEnv("custom-routes")
-	viper.BindEnv("custom-credentials")
-	viper.BindEnv("speed")
-	viper.BindEnv("timeout")
-	viper.BindEnv("logging")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
-	pflag.StringSliceP("targets", "t", nil, "The targets on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
+	pflag.StringSliceP("targets", "t", []string{}, "The targets on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
 	pflag.StringSliceP("ports", "p", []string{"554", "5554", "8554"}, "The ports on which to search for RTSP streams")
 	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
 	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
