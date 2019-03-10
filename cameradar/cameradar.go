@@ -7,12 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/gernest/wow"
 	"github.com/gernest/wow/spin"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	cmrdr "github.com/ullaakut/cameradar"
+	"github.com/ullaakut/disgo/logger"
+	log "github.com/ullaakut/disgo/logger"
+	"github.com/ullaakut/disgo/symbol"
 	curl "github.com/ullaakut/go-curl"
 )
 
@@ -66,10 +68,14 @@ func parseArguments() error {
 
 func main() {
 	var options options
-
-	err := parseArguments()
+	logger, err := log.New(os.Stdout, log.WithErrorOutput(os.Stderr))
 	if err != nil {
-		printErr(err)
+		fmt.Fprintf(os.Stderr, "Unable to create logger: %v", err)
+	}
+
+	err = parseArguments()
+	if err != nil {
+		printErr(logger, err)
 	}
 
 	options.Credentials = viper.GetString("custom-credentials")
@@ -85,14 +91,14 @@ func main() {
 	if len(options.Targets) == 1 {
 		options.Targets, err = cmrdr.ParseTargetsFile(options.Targets[0])
 		if err != nil {
-			printErr(err)
+			printErr(logger, err)
 		}
 	}
 
 	err = curl.GlobalInit(curl.GLOBAL_ALL)
 	handle := curl.EasyInit()
 	if err != nil || handle == nil {
-		printErr(errors.New("libcurl initialization failed"))
+		printErr(logger, errors.New("libcurl initialization failed"))
 	}
 
 	c := &cmrdr.Curl{CURL: handle}
@@ -105,33 +111,33 @@ func main() {
 
 	credentials, err := cmrdr.LoadCredentials(options.Credentials)
 	if err != nil {
-		color.Red("Invalid credentials dictionary: %s", err.Error())
+		printErr(logger, fmt.Errorf("Invalid credentials dictionary %q: %v", options.Credentials, err))
 		return
 	}
 
 	routes, err := cmrdr.LoadRoutes(options.Routes)
 	if err != nil {
-		color.Red("Invalid routes dictionary: %s", err.Error())
+		printErr(logger, fmt.Errorf("Invalid routes dictionary %q: %v", options.Routes, err))
 		return
 	}
 
 	updateSpinner(w, "Scanning the network...", options.EnableLogs)
 	streams, err := cmrdr.Discover(options.Targets, options.Ports, options.Speed)
 	if err != nil && len(streams) > 0 {
-		printErr(err)
+		printErr(logger, err)
 	}
 
 	// Most cameras will be accessed successfully with these two attacks
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their routes...", options.EnableLogs)
 	streams, err = cmrdr.AttackRoute(c, streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 	if err != nil && len(streams) > 0 {
-		printErr(err)
+		printErr(logger, err)
 	}
 
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their credentials...", options.EnableLogs)
 	streams, err = cmrdr.AttackCredentials(c, streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 	if err != nil && len(streams) > 0 {
-		printErr(err)
+		printErr(logger, err)
 	}
 
 	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
@@ -141,7 +147,7 @@ func main() {
 			updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Final attack...", options.EnableLogs)
 			streams, err = cmrdr.AttackRoute(c, streams, routes, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 			if err != nil && len(streams) > 0 {
-				printErr(err)
+				printErr(logger, err)
 			}
 
 			break
@@ -151,70 +157,62 @@ func main() {
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Validating their availability...", options.EnableLogs)
 	streams, err = cmrdr.ValidateStreams(c, streams, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 	if err != nil && len(streams) > 0 {
-		printErr(err)
+		printErr(logger, err)
 	}
 
 	clearOutput(w, options.EnableLogs)
 
-	prettyPrint(streams)
+	prettyPrint(logger, streams)
 }
 
-func prettyPrint(streams []cmrdr.Stream) {
-	yellow := color.New(color.FgYellow, color.Bold, color.Underline).SprintFunc()
-	blue := color.New(color.FgBlue, color.Underline).SprintFunc()
-	green := color.New(color.FgGreen, color.Bold).SprintFunc()
-	red := color.New(color.FgRed, color.Bold).SprintFunc()
-	white := color.New(color.Italic).SprintFunc()
-
+func prettyPrint(logger *logger.Logger, streams []cmrdr.Stream) {
 	success := 0
-
 	if len(streams) > 0 {
 		for _, stream := range streams {
 			if stream.CredentialsFound && stream.RouteFound && stream.Available {
-				fmt.Printf("%s\tDevice RTSP URL:\t%s\n", green("\xE2\x96\xB6"), blue(cmrdr.GetCameraRTSPURL(stream)))
+				logger.Infof("%s\tDevice RTSP URL:\t%s\n", log.Success(symbol.RightTriangle), log.Link(cmrdr.GetCameraRTSPURL(stream)))
 				success++
 			} else {
-				fmt.Printf("%s\tAdmin panel URL:\t%s %s\n", red("\xE2\x96\xB6"), yellow(cmrdr.GetCameraAdminPanelURL(stream)), white("You can use this URL to try attacking the camera's admin panel instead."))
+				logger.Infof("%s\tAdmin panel URL:\t%s You can use this URL to try attacking the camera's admin panel instead.\n", log.Failure(symbol.Cross), log.Link(cmrdr.GetCameraAdminPanelURL(stream)))
 			}
 
-			fmt.Printf("\tDevice model:\t\t%s\n\n", stream.Device)
+			logger.Infof("\tDevice model:\t\t%s\n\n", stream.Device)
 
 			if stream.Available {
-				fmt.Printf("\tAvailable:\t\t%s\n", green("yes"))
+				logger.Infof("\tAvailable:\t\t%s\n", log.Success(symbol.Check))
 			} else {
-				fmt.Printf("\tAvailable:\t\t%s\n", red("no"))
+				logger.Infof("\tAvailable:\t\t%s\n", log.Failure(symbol.Cross))
 			}
 
-			fmt.Printf("\tIP address:\t\t%s\n", stream.Address)
-			fmt.Printf("\tRTSP port:\t\t%d\n", stream.Port)
+			logger.Infof("\tIP address:\t\t%s\n", stream.Address)
+			logger.Infof("\tRTSP port:\t\t%d\n", stream.Port)
 			if stream.CredentialsFound {
-				fmt.Printf("\tUsername:\t\t%s\n", green(stream.Username))
-				fmt.Printf("\tPassword:\t\t%s\n", green(stream.Password))
+				logger.Infof("\tUsername:\t\t%s\n", log.Success(stream.Username))
+				logger.Infof("\tPassword:\t\t%s\n", log.Success(stream.Password))
 			} else {
-				fmt.Printf("\tUsername:\t\t%s\n", red("not found"))
-				fmt.Printf("\tPassword:\t\t%s\n", red("not found"))
+				logger.Infof("\tUsername:\t\t%s\n", log.Failure("not found"))
+				logger.Infof("\tPassword:\t\t%s\n", log.Failure("not found"))
 			}
 			if stream.RouteFound {
-				fmt.Printf("\tRTSP route:\t\t%s\n\n\n", green("/"+stream.Route))
+				logger.Infof("\tRTSP route:\t\t%s\n\n\n", log.Success("/"+stream.Route))
 			} else {
-				fmt.Printf("\tRTSP route:\t\t%s\n\n\n", red("not found"))
+				logger.Infof("\tRTSP route:\t\t%s\n\n\n", log.Failure("not found"))
 			}
 		}
 		if success > 1 {
-			fmt.Printf("%s Successful attack: %s devices were accessed", green("\xE2\x9C\x94"), green(len(streams)))
+			logger.Infof("%s Successful attack: %s devices were accessed", log.Success(symbol.Check), log.Success(len(streams)))
 		} else if success == 1 {
-			fmt.Printf("%s Successful attack: %s device was accessed", green("\xE2\x9C\x94"), green(len(streams)))
+			logger.Infof("%s Successful attack: %s device was accessed", log.Success(symbol.Check), log.Success(len(streams)))
 		} else {
-			fmt.Printf("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.\n", red("\xE2\x9C\x96"))
+			logger.Infof("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.\n", log.Failure("\xE2\x9C\x96"))
 		}
 	} else {
-		fmt.Printf("%s No streams were found. Please make sure that your target is on an accessible network.\n", red("\xE2\x9C\x96"))
+		logger.Infof("%s No streams were found. Please make sure that your target is on an accessible network.\n", log.Failure(symbol.Cross))
 	}
 }
 
-func printErr(err error) {
-	red := color.New(color.FgRed, color.Bold).SprintFunc()
-	fmt.Printf("%s %v\n", red("\xE2\x9C\x96"), err)
+func printErr(logger *logger.Logger, err error) {
+	logger.Errorln(log.Failure(symbol.Cross), err)
 	os.Exit(1)
 }
 
