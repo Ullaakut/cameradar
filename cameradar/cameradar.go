@@ -7,9 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ullaakut/cameradar"
-
-	curl "github.com/andelf/go-curl"
+	cmrdr "github.com/Ullaakut/cameradar"
+	curl "github.com/Ullaakut/go-curl"
 	"github.com/fatih/color"
 	"github.com/gernest/wow"
 	"github.com/gernest/wow/spin"

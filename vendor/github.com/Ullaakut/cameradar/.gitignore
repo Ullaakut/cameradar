@@ -1,0 +1,7 @@
+# IDE config
+.idea/
+.vscode/
+
+# Golang
+/bin/*
+/pkg/*
