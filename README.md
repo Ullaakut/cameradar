@@ -101,7 +101,7 @@ The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See comman
 ### Dependencies of the library
 
 * `curl-dev` / `libcurl` (depending on your OS)
-* `nmap`
+* `github.com/ullaakut/nmap`
 * `github.com/pkg/errors`
 * `gopkg.in/go-playground/validator.v9`
 * `github.com/andelf/go-curl`
@@ -310,7 +310,7 @@ Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=1234
 
 ## License
 
-Copyright 2017 Ullaakut
+Copyright 2019 Ullaakut
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
