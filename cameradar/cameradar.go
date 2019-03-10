@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	cmrdr "github.com/Ullaakut/cameradar"
-	curl "github.com/Ullaakut/go-curl"
 	"github.com/fatih/color"
 	"github.com/gernest/wow"
 	"github.com/gernest/wow/spin"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	cmrdr "github.com/ullaakut/cameradar"
+	curl "github.com/ullaakut/go-curl"
 )
 
 type options struct {
@@ -32,8 +32,8 @@ func parseArguments() error {
 
 	pflag.StringSliceP("targets", "t", []string{}, "The targets on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
 	pflag.StringSliceP("ports", "p", []string{"554", "5554", "8554"}, "The ports on which to search for RTSP streams")
-	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
-	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
+	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
+	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
 	pflag.IntP("speed", "s", 4, "The nmap speed preset to use for discovery")
 	pflag.IntP("timeout", "T", 2000, "The timeout in miliseconds to use for attack attempts")
 	pflag.BoolP("log", "l", false, "Enable the logs for nmap's output to stdout")

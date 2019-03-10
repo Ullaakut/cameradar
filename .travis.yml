@@ -2,9 +2,6 @@ dist: trusty
 sudo: required
 language: go
 
-env:
-  - DEP_VERSION="0.5.0"
-
 services:
     - docker
 
@@ -21,11 +18,8 @@ before_install:
 - sudo apt-get install -y docker-ce nmap
 - go get github.com/mattn/goveralls
 - docker version
-- curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-- chmod +x $GOPATH/bin/dep
 
 install:
-- dep ensure
 - docker build -t cameradar .
 
 script:

@@ -3,7 +3,7 @@
 // IP Cameras, often for surveillance.
 //
 // A simple example usage of the library can be found in
-// https://github.com/Ullaakut/cameradar/tree/master/cameradar
+// https://github.com/ullaakut/cameradar/tree/master/cameradar
 //
 // The example usage is complete enough for most users to
 // ignore the library, but for users with specific needs

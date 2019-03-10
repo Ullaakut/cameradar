@@ -1,7 +1,7 @@
 package cmrdr
 
 import (
-	curl "github.com/andelf/go-curl"
+	curl "github.com/ullaakut/go-curl"
 )
 
 // Curler is an interface that implements the CURL interface of the go-curl library

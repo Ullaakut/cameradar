@@ -1,7 +1,0 @@
-# https://github.com/golangci/golangci/wiki/Configuration
-
-service:
-  project-path: github.com/Ullaakut/cameradar
-  prepare:
-    - apt-get update && apt-get install -y libcurl4-gnutls-dev
-    - dep ensure

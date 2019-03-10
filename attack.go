@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	curl "github.com/andelf/go-curl"
+	curl "github.com/ullaakut/go-curl"
 	"github.com/pkg/errors"
 	v "gopkg.in/go-playground/validator.v9"
 )
