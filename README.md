@@ -17,17 +17,17 @@
     <a href='https://coveralls.io/github/Ullaakut/cameradar?branch=master'>
         <img src='https://coveralls.io/repos/github/Ullaakut/cameradar/badge.svg?branch=master' alt='Coverage Status' />
     </a>
-    <a href="https://golangci.com/r/github.com/Ullaakut/cameradar">
-        <img src="https://golangci.com/badges/github.com/Ullaakut/cameradar.svg" />
+    <a href="https://golangci.com/r/github.com/ullaakut/cameradar">
+        <img src="https://golangci.com/badges/github.com/ullaakut/cameradar.svg" />
     </a>
-    <a href="https://goreportcard.com/report/github.com/Ullaakut/cameradar">
-        <img src="https://goreportcard.com/badge/github.com/Ullaakut/cameradar" />
+    <a href="https://goreportcard.com/report/github.com/ullaakut/cameradar">
+        <img src="https://goreportcard.com/badge/github.com/ullaakut/cameradar" />
     </a>
-    <a href="https://github.com/Ullaakut/cameradar/releases/latest">
+    <a href="https://github.com/ullaakut/cameradar/releases/latest">
         <img src="https://img.shields.io/github/release/Ullaakut/cameradar.svg?style=flat" />
     </a>
-    <a href="https://godoc.org/github.com/Ullaakut/cameradar">
-        <img src="https://godoc.org/github.com/Ullaakut/cameradar?status.svg" />
+    <a href="https://godoc.org/github.com/ullaakut/cameradar">
+        <img src="https://godoc.org/github.com/ullaakut/cameradar?status.svg" />
     </a>
 </p>
 
@@ -88,8 +88,8 @@ Only use this solution if for some reason using docker is not an option for you 
 
 Make sure you installed the dependencies mentionned above.
 
-1. `go get github.com/Ullaakut/cameradar`
-2. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
+1. `go get github.com/ullaakut/cameradar`
+2. `cd $GOPATH/src/github.com/ullaakut/cameradar`
 3. `dep ensure`
 4. `cd cameradar`
 5. `go install`
@@ -104,15 +104,15 @@ The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See comman
 * `github.com/ullaakut/nmap`
 * `github.com/pkg/errors`
 * `gopkg.in/go-playground/validator.v9`
-* `github.com/andelf/go-curl`
+* `github.com/ullaakut/go-curl`
 
 #### Installing the library
 
-`go get github.com/Ullaakut/cameradar`
+`go get github.com/ullaakut/cameradar`
 
 After this command, the _cameradar_ library is ready to use. Its source will be in:
 
-    $GOPATH/src/pkg/github.com/Ullaakut/cameradar
+    $GOPATH/src/pkg/github.com/ullaakut/cameradar
 
 You can use `go get -u` to update the package.
 
@@ -284,7 +284,7 @@ You can still find it under the 1.1.4 tag on this repo, however it was less perf
 
 > How to use the Cameradar library for my own project?
 
-See the example in `/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cmrdr` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/Ullaakut/cameradar).
+See the example in `/cameradar`. You just need to run `go get github.com/ullaakut/cameradar` and to use the `cmrdr` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/ullaakut/cameradar).
 
 > I want to scan my own localhost for some reason and it does not work! What's going on?
 

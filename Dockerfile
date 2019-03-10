@@ -1,8 +1,8 @@
 # Build stage
 FROM golang:alpine AS build-env
 
-COPY . /go/src/github.com/Ullaakut/cameradar
-WORKDIR /go/src/github.com/Ullaakut/cameradar/cameradar
+COPY . /go/src/github.com/ullaakut/cameradar
+WORKDIR /go/src/github.com/ullaakut/cameradar/cameradar
 
 RUN apk update && \
     apk upgrade && \
@@ -12,10 +12,8 @@ RUN apk update && \
     libc-dev \
     git \
     pkgconfig
-ENV DEP_VERSION="0.5.0"
-RUN curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-RUN chmod +x $GOPATH/bin/dep
-RUN dep ensure
+ENV GO111MODULE=on
+RUN go version
 RUN go build -o cameradar
 
 # Final stage
@@ -27,8 +25,8 @@ RUN apk --update add --no-cache nmap \
     curl-dev
 
 WORKDIR /app/cameradar
-COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/dictionaries/ /app/dictionaries/
-COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/cameradar/ /app/cameradar/
+COPY --from=build-env /go/src/github.com/ullaakut/cameradar/dictionaries/ /app/dictionaries/
+COPY --from=build-env /go/src/github.com/ullaakut/cameradar/cameradar/ /app/cameradar/
 
 ENV CAMERADAR_CUSTOM_ROUTES="/app/dictionaries/routes"
 ENV CAMERADAR_CUSTOM_CREDENTIALS="/app/dictionaries/credentials.json"

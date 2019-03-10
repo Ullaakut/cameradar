@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Ullaakut/nmap"
+	"github.com/ullaakut/nmap"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

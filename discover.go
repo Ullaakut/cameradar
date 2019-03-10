@@ -3,7 +3,7 @@ package cmrdr
 import (
 	"strings"
 
-	"github.com/Ullaakut/nmap"
+	"github.com/ullaakut/nmap"
 )
 
 // Discover scans the target networks and tries to find RTSP streams within them.

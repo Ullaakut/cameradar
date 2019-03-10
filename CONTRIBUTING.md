@@ -4,7 +4,7 @@ This file will give you guidelines on how to contribute if you want to, and will
 
 If you're not into software development or not into Golang, you can still help. Updating the dictionaries for example, would be a really cool contribution! Just make sure the credentials and routes you add are **default constructor credentials** and not custom credentials.
 
-If you have other cool ideas, feel free to share them with me at [brendan.leglaunec@etixgroup.com](mailto:brendan.leglaunec@etixgroup.com) or to directly [create an issue](https://github.com/Ullaakut/cameradar/issues)!
+If you have other cool ideas, feel free to share them with me at [brendan.leglaunec@etixgroup.com](mailto:brendan.leglaunec@etixgroup.com) or to directly [create an issue](https://github.com/ullaakut/cameradar/issues)!
 
 ## Version 2.0.0
 
@@ -67,7 +67,7 @@ Once everything is in order, we will merge your pull request.
 
 Your code should just
 
-- Not decrease the results of Cameradar on https://goreportcard.com/report/github.com/Ullaakut/cameradar
+- Not decrease the results of Cameradar on https://goreportcard.com/report/github.com/ullaakut/cameradar
 - Pass the code review
 
 #### Golang
@@ -77,6 +77,6 @@ Your code should just
 
 ## Contributors
 
-- **Brendan Le Glaunec** - [@Ullaakut](https://github.com/Ullaakut) - brendan.leglaunec@etixgroup.com : *Original developer & Maintainer*
+- **Brendan Le Glaunec** - [@Ullaakut](https://github.com/ullaakut) - brendan.leglaunec@etixgroup.com : *Original developer & Maintainer*
 - **Jeremy Letang** - [@jeremyletang](https://github.com/jeremyletang) - letang.jeremy@gmail.com : *Idea of the project & Mentorship*
 - **ishanjain28** - [@ishanjain28](https://github.com/ishanjain28) - ishanjain28@gmail.com : *Implemented the environment variables support*
