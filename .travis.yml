@@ -2,8 +2,11 @@ dist: trusty
 sudo: required
 language: go
 
+env:
+  - GO111MODULE=on
+
 services:
-    - docker
+  - docker
 
 before_install:
 - echo "Testing Docker Hub credentials"
