@@ -47,6 +47,8 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/ullaakut/disgo v0.0.0-20190310161027-e17c43d71b3d h1:tObr2ILgSQwrhpQRiVUKHtXF+0V5gYnnd/zBQGAmfuQ=
 github.com/ullaakut/disgo v0.0.0-20190310161027-e17c43d71b3d/go.mod h1:UOgLVyqihzJ7yihrHjYZikivT+AHb9NhT3r1OyPCJqg=
+github.com/ullaakut/disgo v0.3.0 h1:2zrEyNBfPRgDVDgzM/qLXZ4Yqt3Lxz7ERvZUSmqSY2M=
+github.com/ullaakut/disgo v0.3.0/go.mod h1:UOgLVyqihzJ7yihrHjYZikivT+AHb9NhT3r1OyPCJqg=
 github.com/ullaakut/go-curl v0.0.0-20190310175419-50acab4cef70 h1:3q4hgRu9NT894aYmnoMFl5wPvdNhpHYmdi2+Njyxq5U=
 github.com/ullaakut/go-curl v0.0.0-20190310175419-50acab4cef70/go.mod h1:FTfXm4jC9Ff1yqc3/HMXCyr+SGO03vJyijJCQlNyF10=
 github.com/ullaakut/nmap v0.0.0-20190306183004-e38898a9bead h1:Pw5wKSAfxi8GcYJSc3GdcwtPG5tyg7zg9E3hAHbLPO0=
