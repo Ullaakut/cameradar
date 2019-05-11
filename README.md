@@ -76,23 +76,16 @@ Only use this solution if for some reason using docker is not an option for you 
 
 ### Dependencies
 
-* `go`
-* `dep`
-
-#### Installing dep
-
-* OSX: `brew install dep` and `brew upgrade dep`
-* Others: Download the release package for your OS [here](https://github.com/golang/dep/releases)
+* `go` (> `1.10`)
 
 ### Steps to install
 
-Make sure you installed the dependencies mentionned above.
+Make sure you installed the dependencies mentionned above, and that you have Go modules enabled (`GO111MODULE=on`)
 
 1. `go get github.com/ullaakut/cameradar`
 2. `cd $GOPATH/src/github.com/ullaakut/cameradar`
-3. `dep ensure`
-4. `cd cameradar`
-5. `go install`
+3. `cd cameradar`
+4. `go install`
 
 The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
