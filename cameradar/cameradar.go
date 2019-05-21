@@ -130,6 +130,9 @@ func main() {
 		printErr(term, err)
 	}
 
+	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Detecting their authentication methods...", options.EnableLogs)
+	streams, err = cmrdr.DetectAuthMethods(c, streams, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
+
 	updateSpinner(w, "Found "+fmt.Sprint(len(streams))+" streams. Attacking their credentials...", options.EnableLogs)
 	streams, err = cmrdr.AttackCredentials(c, streams, credentials, time.Duration(options.Timeout)*time.Millisecond, options.EnableLogs)
 	if err != nil && len(streams) > 0 {
@@ -163,47 +166,61 @@ func main() {
 
 func prettyPrint(term *log.Terminal, streams []cmrdr.Stream) {
 	success := 0
-	if len(streams) > 0 {
-		for _, stream := range streams {
-			if stream.CredentialsFound && stream.RouteFound && stream.Available {
-				term.Infof("%s\tDevice RTSP URL:\t%s\n", style.Success(style.SymbolRightTriangle), style.Link(cmrdr.GetCameraRTSPURL(stream)))
-				success++
-			} else {
-				term.Infof("%s\tAdmin panel URL:\t%s You can use this URL to try attacking the camera's admin panel instead.\n", style.Failure(style.SymbolCross), style.Link(cmrdr.GetCameraAdminPanelURL(stream)))
-			}
-
-			term.Infof("\tDevice model:\t\t%s\n\n", stream.Device)
-
-			if stream.Available {
-				term.Infof("\tAvailable:\t\t%s\n", style.Success(style.SymbolCheck))
-			} else {
-				term.Infof("\tAvailable:\t\t%s\n", style.Failure(style.SymbolCross))
-			}
-
-			term.Infof("\tIP address:\t\t%s\n", stream.Address)
-			term.Infof("\tRTSP port:\t\t%d\n", stream.Port)
-			if stream.CredentialsFound {
-				term.Infof("\tUsername:\t\t%s\n", style.Success(stream.Username))
-				term.Infof("\tPassword:\t\t%s\n", style.Success(stream.Password))
-			} else {
-				term.Infof("\tUsername:\t\t%s\n", style.Failure("not found"))
-				term.Infof("\tPassword:\t\t%s\n", style.Failure("not found"))
-			}
-			if stream.RouteFound {
-				term.Infof("\tRTSP route:\t\t%s\n\n\n", style.Success("/"+stream.Route))
-			} else {
-				term.Infof("\tRTSP route:\t\t%s\n\n\n", style.Failure("not found"))
-			}
-		}
-		if success > 1 {
-			term.Infof("%s Successful attack: %s devices were accessed", style.Success(style.SymbolCheck), style.Success(len(streams)))
-		} else if success == 1 {
-			term.Infof("%s Successful attack: %s device was accessed", style.Success(style.SymbolCheck), style.Success(len(streams)))
-		} else {
-			term.Infof("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.\n", style.Failure("\xE2\x9C\x96"))
-		}
-	} else {
+	if len(streams) == 0 {
 		term.Infof("%s No streams were found. Please make sure that your target is on an accessible network.\n", style.Failure(style.SymbolCross))
+	}
+
+	for _, stream := range streams {
+		if stream.CredentialsFound && stream.RouteFound && stream.Available {
+			term.Infof("%s\tDevice RTSP URL:\t%s\n", style.Success(style.SymbolRightTriangle), style.Link(cmrdr.GetCameraRTSPURL(stream)))
+			success++
+		} else {
+			term.Infof("%s\tAdmin panel URL:\t%s You can use this URL to try attacking the camera's admin panel instead.\n", style.Failure(style.SymbolCross), style.Link(cmrdr.GetCameraAdminPanelURL(stream)))
+		}
+
+		if len(stream.Device) > 0 {
+			term.Infof("\tDevice model:\t\t%s\n\n", stream.Device)
+		}
+
+		if stream.Available {
+			term.Infof("\tAvailable:\t\t%s\n", style.Success(style.SymbolCheck))
+		} else {
+			term.Infof("\tAvailable:\t\t%s\n", style.Failure(style.SymbolCross))
+		}
+
+		term.Infof("\tIP address:\t\t%s\n", stream.Address)
+		term.Infof("\tRTSP port:\t\t%d\n", stream.Port)
+
+		switch stream.AuthenticationType {
+		case curl.AUTH_NONE:
+			term.Infoln("\tThis camera does not require authentication")
+		case curl.AUTH_BASIC:
+			term.Infoln("\tAuth type:\t\tbasic")
+		case curl.AUTH_DIGEST:
+			term.Infoln("\tAuth type:\t\tdigest")
+		}
+
+		if stream.CredentialsFound {
+			term.Infof("\tUsername:\t\t%s\n", style.Success(stream.Username))
+			term.Infof("\tPassword:\t\t%s\n", style.Success(stream.Password))
+		} else {
+			term.Infof("\tUsername:\t\t%s\n", style.Failure("not found"))
+			term.Infof("\tPassword:\t\t%s\n", style.Failure("not found"))
+		}
+
+		if stream.RouteFound {
+			term.Infof("\tRTSP route:\t\t%s\n\n\n", style.Success("/"+stream.Route))
+		} else {
+			term.Infof("\tRTSP route:\t\t%s\n\n\n", style.Failure("not found"))
+		}
+	}
+
+	if success > 1 {
+		term.Infof("%s Successful attack: %s devices were accessed", style.Success(style.SymbolCheck), style.Success(len(streams)))
+	} else if success == 1 {
+		term.Infof("%s Successful attack: %s device was accessed", style.Success(style.SymbolCheck), style.Success(len(streams)))
+	} else {
+		term.Infof("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.\n", style.Failure("\xE2\x9C\x96"))
 	}
 }
 
