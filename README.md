@@ -248,14 +248,12 @@ Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
 
 #### Go build
 
-To build the project without docker:
+Make sure you installed the [dependencies](#dependencies), and that you have Go modules enabled (`GO111MODULE=on`)
 
-1. Install dep
-   * OSX: `brew install dep` and `brew upgrade dep`
-   * Others: Download the release package for your OS [here](https://github.com/golang/dep/releases)
-2. `dep ensure`
-3. `go build` to build the library
-4. `cd cameradar && go build` to build the binary
+1. `go get github.com/ullaakut/cameradar`
+2. `cd $GOPATH/src/github.com/ullaakut/cameradar`
+3. `cd cameradar`
+4. `go build`
 
 The cameradar binary is now in the root of the directory.
 
