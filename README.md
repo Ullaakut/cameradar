@@ -291,6 +291,10 @@ You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This 
 
 Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt` and then run cameradar and it should guess that the username is admin and the password is 12345. You can try this with any default constructor credentials (they can be found [here](dictionaries/credentials.json))
 
+> What authentication types does Cameradar support?
+
+Cameradar supports both basic and digest authentication.
+
 ## Examples
 
 > Running cameradar on your own machine to scan for default ports

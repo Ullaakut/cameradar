@@ -14,6 +14,8 @@ type Stream struct {
 	CredentialsFound bool `json:"credentials_found"`
 	RouteFound       bool `json:"route_found"`
 	Available        bool `json:"available"`
+
+	AuthenticationType int `json:"authentication_type"`
 }
 
 // Credentials is a map of credentials
