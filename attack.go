@@ -101,13 +101,7 @@ func DetectAuthMethods(c Curler, targets []Stream, timeout time.Duration, log bo
 	attacks := make(chan Stream)
 	defer close(attacks)
 
-	validate := v.New()
 	for i := range targets {
-		err := validate.Struct(targets[i])
-		if err != nil {
-			return targets, errors.Wrap(err, "invalid targets")
-		}
-
 		targets[i].AuthenticationType = detectAuthMethod(c, targets[i], timeout, log)
 	}
 
