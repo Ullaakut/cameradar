@@ -168,7 +168,10 @@ func loadRoutes(url string, bar *mpb.Bar) {
 		}
 
 		switch rtspURL {
-		case "", "[Details]", "rtsp://ip-addr/", "http://ip-addr/":
+		case "",
+			"rtsp://ip-addr/",
+			"rtsp://ip-addr",
+			"rtsp://ip-addr:pass@10.0.0.5:6667/blinkhd":
 			return
 		default:
 			route := strings.TrimSpace(strings.TrimPrefix(rtspURL, "rtsp://ip-addr/"))
