@@ -3,12 +3,11 @@ package cameradar
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 var fs fileSystem = osFS{}
@@ -32,48 +31,44 @@ type osFS struct{}
 func (osFS) Open(name string) (file, error)        { return os.Open(name) }
 func (osFS) Stat(name string) (os.FileInfo, error) { return os.Stat(name) }
 
-// LoadCredentials opens a dictionary file and returns its contents as a Credentials structure
-func LoadCredentials(path string) (Credentials, error) {
-	var creds Credentials
-
-	// Open & Read XML file
-	content, err := ioutil.ReadFile(path)
+// LoadCredentials opens a dictionary file and returns its contents as a Credentials structure.
+func (s *Scanner) LoadCredentials() error {
+	// Open & Read XML file.
+	content, err := ioutil.ReadFile(s.credentialDictionaryPath)
 	if err != nil {
-		return creds, errors.Wrap(err, "could not read credentials dictionary file at "+path+":")
+		return fmt.Errorf("could not read credentials dictionary file at %q: %v", s.credentialDictionaryPath, err)
 	}
 
-	// Unmarshal content of JSON file into data structure
-	err = json.Unmarshal(content, &creds)
+	// Unmarshal content of JSON file into data structure.
+	err = json.Unmarshal(content, &s.credentials)
 	if err != nil {
-		return creds, err
+		return err
 	}
 
-	return creds, nil
+	return nil
 }
 
-// LoadRoutes opens a dictionary file and returns its contents as a Routes structure
-func LoadRoutes(path string) (Routes, error) {
-	file, err := os.Open(path)
+// LoadRoutes opens a dictionary file and returns its contents as a Routes structure.
+func (s *Scanner) LoadRoutes() error {
+	file, err := os.Open(s.routeDictionaryPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 
-	var routes Routes
 	scanner := bufio.NewScanner(file)
-
 	for scanner.Scan() {
-		routes = append(routes, scanner.Text())
+		s.routes = append(s.routes, scanner.Text())
 	}
 
-	return routes, scanner.Err()
+	return scanner.Err()
 }
 
-// ParseCredentialsFromString parses a dictionary string and returns its contents as a Credentials structure
+// ParseCredentialsFromString parses a dictionary string and returns its contents as a Credentials structure.
 func ParseCredentialsFromString(content string) (Credentials, error) {
 	var creds Credentials
 
-	// Unmarshal content of JSON file into data structure
+	// Unmarshal content of JSON file into data structure.
 	err := json.Unmarshal([]byte(content), &creds)
 	if err != nil {
 		return creds, err
@@ -82,28 +77,36 @@ func ParseCredentialsFromString(content string) (Credentials, error) {
 	return creds, nil
 }
 
-// ParseRoutesFromString parses a dictionary string and returns its contents as a Routes structure
+// ParseRoutesFromString parses a dictionary string and returns its contents as a Routes structure.
 func ParseRoutesFromString(content string) Routes {
 	return strings.Split(content, "\n")
 }
 
-// ParseTargetsFile parses an input file containing hosts to targets
-func ParseTargetsFile(path string) ([]string, error) {
+// LoadTargets parses the file containing hosts to targets, if the targets are
+// just set to a file name.
+func (s *Scanner) LoadTargets() error {
+	if len(s.targets) != 1 {
+		return nil
+	}
+
+	path := s.targets[0]
+
 	_, err := fs.Stat(path)
 	if err != nil {
-		return []string{path}, nil
+		return nil
 	}
 
 	file, err := fs.Open(path)
 	if err != nil {
-		return []string{path}, err
+		return fmt.Errorf("unable to open targets file %q: %v", path, err)
 	}
 	defer file.Close()
 
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		return []string{path}, err
+		return fmt.Errorf("unable to read targets file %q: %v", path, err)
 	}
 
-	return strings.Split(string(bytes), "\n"), nil
+	s.targets = strings.Split(string(bytes), "\n")
+	return nil
 }

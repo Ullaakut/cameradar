@@ -5,7 +5,8 @@ import (
 	curl "github.com/ullaakut/go-curl"
 )
 
-func (s *Scanner) installSummary(streams []cameradar.Stream) {
+// PrintStreams prints information on each stream.
+func (s *Scanner) PrintStreams(streams []Stream) {
 	success := 0
 	if len(streams) == 0 {
 		s.term.Infof("%s No streams were found. Please make sure that your target is on an accessible network.\n", style.Failure(style.SymbolCross))
@@ -16,7 +17,7 @@ func (s *Scanner) installSummary(streams []cameradar.Stream) {
 			s.term.Infof("%s\tDevice RTSP URL:\t%s\n", style.Success(style.SymbolRightTriangle), style.Link(GetCameraRTSPURL(stream)))
 			success++
 		} else {
-			s.term.Infof("%s\tAdmin panel URL:\t%s You can use this URL to try attacking the camera's admin panel instead.\n", style.Failure(style.SymbolCross), style.Link(cameradar.GetCameraAdminPanelURL(stream)))
+			s.term.Infof("%s\tAdmin panel URL:\t%s You can use this URL to try attacking the camera's admin panel instead.\n", style.Failure(style.SymbolCross), style.Link(GetCameraAdminPanelURL(stream)))
 		}
 
 		if len(stream.Device) > 0 {
