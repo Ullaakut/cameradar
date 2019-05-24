@@ -1,4 +1,4 @@
-package cmrdr
+package cameradar
 
 import (
 	curl "github.com/ullaakut/go-curl"

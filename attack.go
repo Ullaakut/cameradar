@@ -1,4 +1,4 @@
-package cmrdr
+package cameradar
 
 import (
 	"fmt"
@@ -24,9 +24,9 @@ const (
 )
 
 // ValidateStreams tries to setup the stream to validate whether or not it is available
-func ValidateStreams(c Curler, targets []Stream, timeout time.Duration, log bool) ([]Stream, error) {
+func (s *Scanner) ValidateStreams(targets []Stream) ([]Stream, error) {
 	for i := range targets {
-		targets[i].Available = validateStream(c, targets[i], timeout, log)
+		targets[i].Available = validateStream(targets[i])
 	}
 
 	return targets, nil
@@ -34,31 +34,31 @@ func ValidateStreams(c Curler, targets []Stream, timeout time.Duration, log bool
 
 // AttackCredentials attempts to guess the provided targets' credentials using the given
 // dictionary or the default dictionary if none was provided by the user.
-func AttackCredentials(c Curler, targets []Stream, credentials Credentials, timeout time.Duration, log bool) ([]Stream, error) {
-	attacks := make(chan Stream)
-	defer close(attacks)
+func (s *Scanner) AttackCredentials(targets []Stream, credentials Credentials) ([]Stream, error) {
+	resChan := make(chan Stream)
+	defer close(resChan)
 
 	validate := v.New()
-	for _, target := range targets {
-		err := validate.Struct(target)
+	for i := range targets {
+		err := validate.Struct(targets[i])
 		if err != nil {
 			return targets, errors.Wrap(err, "invalid targets")
 		}
 
 		// TODO: Perf Improvement: Skip cameras with no auth type detected, and set their
 		// CredentialsFound value to true.
-
-		go attackCameraCredentials(c, target, credentials, attacks, timeout, log)
+		go attackCameraCredentials(targets[i], credentials, resChan)
 	}
 
 	attackResults := []Stream{}
+	// TODO: Change this into a for+select and make a successful result close the chan.
 	for range targets {
-		attackResults = append(attackResults, <-attacks)
+		attackResults = append(attackResults, <-resChan)
 	}
 
-	for _, result := range attackResults {
-		if result.CredentialsFound {
-			targets = replace(targets, result)
+	for i := range attackResults {
+		if attackResults[i].CredentialsFound {
+			targets = replace(targets, attackResults[i])
 		}
 	}
 
@@ -67,28 +67,29 @@ func AttackCredentials(c Curler, targets []Stream, credentials Credentials, time
 
 // AttackRoute attempts to guess the provided targets' streaming routes using the given
 // dictionary or the default dictionary if none was provided by the user.
-func AttackRoute(c Curler, targets []Stream, routes Routes, timeout time.Duration, log bool) ([]Stream, error) {
-	attacks := make(chan Stream)
-	defer close(attacks)
+func (s *Scanner) AttackRoute(targets []Stream, routes Routes) ([]Stream, error) {
+	resChan := make(chan Stream)
+	defer close(resChan)
 
 	validate := v.New()
-	for _, target := range targets {
-		err := validate.Struct(target)
+	for i := range targets {
+		err := validate.Struct(targets[i])
 		if err != nil {
 			return targets, errors.Wrap(err, "invalid targets")
 		}
 
-		go attackCameraRoute(c, target, routes, attacks, timeout, log)
+		go attackCameraRoute(targets[i], routes, resChan)
 	}
 
 	attackResults := []Stream{}
+	// TODO: Change this into a for+select and make a successful result close the chan.
 	for range targets {
-		attackResults = append(attackResults, <-attacks)
+		attackResults = append(attackResults, <-resChan)
 	}
 
-	for _, result := range attackResults {
-		if result.RouteFound {
-			targets = replace(targets, result)
+	for i := range attackResults {
+		if attackResults[i].RouteFound {
+			targets = replace(targets, attackResults[i])
 		}
 	}
 
@@ -97,18 +98,15 @@ func AttackRoute(c Curler, targets []Stream, routes Routes, timeout time.Duratio
 
 // DetectAuthMethods attempts to guess the provided targets' authentication types, between
 // digest, basic auth or none at all.
-func DetectAuthMethods(c Curler, targets []Stream, timeout time.Duration, log bool) ([]Stream, error) {
-	attacks := make(chan Stream)
-	defer close(attacks)
-
+func (s *Scanner) DetectAuthMethods(targets []Stream) ([]Stream, error) {
 	for i := range targets {
-		targets[i].AuthenticationType = detectAuthMethod(c, targets[i], timeout, log)
+		targets[i].AuthenticationType = detectAuthMethod(targets[i])
 	}
 
 	return targets, nil
 }
 
-func attackCameraCredentials(c Curler, target Stream, credentials Credentials, resultsChan chan<- Stream, timeout time.Duration, log bool) {
+func (s *Scanner) attackCameraCredentials(target Stream, credentials Credentials, resChan chan<- Stream) {
 	for _, username := range credentials.Usernames {
 		for _, password := range credentials.Passwords {
 			ok := credAttack(c.Duphandle(), target, username, password, timeout, log)
@@ -116,35 +114,30 @@ func attackCameraCredentials(c Curler, target Stream, credentials Credentials, r
 				target.CredentialsFound = true
 				target.Username = username
 				target.Password = password
-				resultsChan <- target
+				resChan <- target
 				return
 			}
 		}
 	}
 	target.CredentialsFound = false
-	resultsChan <- target
+	resChan <- target
 }
 
-func attackCameraRoute(c Curler, target Stream, routes Routes, resultsChan chan<- Stream, timeout time.Duration, log bool) {
+func (s *Scanner) attackCameraRoute(target Stream, routes Routes, resChan chan<- Stream) {
 	for _, route := range routes {
 		ok := routeAttack(c.Duphandle(), target, route, timeout, log)
 		if ok {
 			target.RouteFound = true
 			target.Route = route
-			resultsChan <- target
+			resChan <- target
 			return
 		}
 	}
 	target.RouteFound = false
-	resultsChan <- target
+	resChan <- target
 }
 
-// HACK: See https://stackoverflow.com/questions/3572397/lib-curl-in-c-disable-printing
-func doNotWrite([]uint8, interface{}) bool {
-	return true
-}
-
-func detectAuthMethod(c Curler, stream Stream, timeout time.Duration, enableLogs bool) int {
+func (s *Scanner) detectAuthMethod(stream Stream, timeout time.Duration) int {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%d/%s",
 		stream.Address,
@@ -152,26 +145,16 @@ func detectAuthMethod(c Curler, stream Stream, timeout time.Duration, enableLogs
 		stream.Route,
 	)
 
-	if enableLogs {
-		// Debug logs when logs are enabled
-		c.Setopt(curl.OPT_VERBOSE, 1)
-	} else {
-		// Do not write sdp in stdout
-		c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
-	}
+	s.setCurlOptions()
 
-	// Do not use signals (would break multithreading)
-	c.Setopt(curl.OPT_NOSIGNAL, 1)
-	// Do not send a body in the describe request
-	c.Setopt(curl.OPT_NOBODY, 1)
 	// Send a request to the URL of the stream we want to attack
-	c.Setopt(curl.OPT_URL, attackURL)
+	s.curl.Setopt(curl.OPT_URL, attackURL)
 	// Set the RTSP STREAM URI as the stream URL
-	c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	s.curl.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
 	// 2 is CURL_RTSPREQ_DESCRIBE
-	c.Setopt(curl.OPT_RTSP_REQUEST, 2)
+	s.curl.Setopt(curl.OPT_RTSP_REQUEST, 2)
 	// Set custom timeout
-	c.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
+	s.curl.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
 
 	// Perform the request
 	err := c.Perform()
@@ -187,7 +170,7 @@ func detectAuthMethod(c Curler, stream Stream, timeout time.Duration, enableLogs
 	return authType.(int)
 }
 
-func routeAttack(c Curler, stream Stream, route string, timeout time.Duration, enableLogs bool) bool {
+func (s *Scanner) routeAttack(stream Stream, route string, timeout time.Duration) bool {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%s@%s:%d/%s",
 		stream.Username,
@@ -197,30 +180,20 @@ func routeAttack(c Curler, stream Stream, route string, timeout time.Duration, e
 		route,
 	)
 
-	if enableLogs {
-		// Debug logs when logs are enabled
-		c.Setopt(curl.OPT_VERBOSE, 1)
-	} else {
-		// Do not write sdp in stdout
-		c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
-	}
+	s.setCurlOptions()
 
 	// Set proper authentication type.
-	c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	s.curl.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
+	s.curl.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
 
-	// Do not use signals (would break multithreading)
-	c.Setopt(curl.OPT_NOSIGNAL, 1)
-	// Do not send a body in the describe request
-	c.Setopt(curl.OPT_NOBODY, 1)
 	// Send a request to the URL of the stream we want to attack
-	c.Setopt(curl.OPT_URL, attackURL)
+	s.curl.Setopt(curl.OPT_URL, attackURL)
 	// Set the RTSP STREAM URI as the stream URL
-	c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	s.curl.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
 	// 2 is CURL_RTSPREQ_DESCRIBE
-	c.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
+	s.curl.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
 	// Set custom timeout
-	c.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
+	s.curl.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
 
 	// Perform the request
 	err := c.Perform()
@@ -242,7 +215,7 @@ func routeAttack(c Curler, stream Stream, route string, timeout time.Duration, e
 	return false
 }
 
-func credAttack(c Curler, stream Stream, username string, password string, timeout time.Duration, enableLogs bool) bool {
+func (s *Scanner) credAttack(stream Stream, username string, password string, timeout time.Duration) bool {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%s@%s:%d/%s",
 		username,
@@ -252,30 +225,20 @@ func credAttack(c Curler, stream Stream, username string, password string, timeo
 		stream.Route,
 	)
 
-	if enableLogs {
-		// Debug logs when logs are enabled
-		c.Setopt(curl.OPT_VERBOSE, 1)
-	} else {
-		// Do not write sdp in stdout
-		c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
-	}
+	s.setCurlOptions()
 
 	// Set proper authentication type.
-	c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	c.Setopt(curl.OPT_USERPWD, fmt.Sprint(username, ":", password))
+	s.curl.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
+	s.curl.Setopt(curl.OPT_USERPWD, fmt.Sprint(username, ":", password))
 
-	// Do not use signals (would break multithreading)
-	c.Setopt(curl.OPT_NOSIGNAL, 1)
-	// Do not send a body in the describe request
-	c.Setopt(curl.OPT_NOBODY, 1)
 	// Send a request to the URL of the stream we want to attack
-	c.Setopt(curl.OPT_URL, attackURL)
+	s.curl.Setopt(curl.OPT_URL, attackURL)
 	// Set the RTSP STREAM URI as the stream URL
-	c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	s.curl.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
 	// 2 is CURL_RTSPREQ_DESCRIBE
-	c.Setopt(curl.OPT_RTSP_REQUEST, 2)
+	s.curl.Setopt(curl.OPT_RTSP_REQUEST, 2)
 	// Set custom timeout
-	c.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
+	s.curl.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
 
 	// Perform the request
 	err := c.Perform()
@@ -297,7 +260,7 @@ func credAttack(c Curler, stream Stream, username string, password string, timeo
 	return false
 }
 
-func validateStream(c Curler, stream Stream, timeout time.Duration, enableLogs bool) bool {
+func (s *Scanner) validateStream(stream Stream, timeout time.Duration) bool {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%s@%s:%d/%s",
 		stream.Username,
@@ -307,48 +270,58 @@ func validateStream(c Curler, stream Stream, timeout time.Duration, enableLogs b
 		stream.Route,
 	)
 
-	if enableLogs {
-		// Debug logs when logs are enabled
-		c.Setopt(curl.OPT_VERBOSE, 1)
-	} else {
-		// Do not write sdp in stdout
-		c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
-	}
+	s.setCurlOptions()
 
 	// Set proper authentication type.
-	c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	s.curl.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
+	s.curl.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
 
-	// Do not use signals (would break multithreading)
-	c.Setopt(curl.OPT_NOSIGNAL, 1)
-	// Do not send a body in the describe request
-	c.Setopt(curl.OPT_NOBODY, 1)
-	// Send a request to the URL of the stream we want to attack
-	c.Setopt(curl.OPT_URL, attackURL)
-	// Set the RTSP STREAM URI as the stream URL
-	c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
-	// 2 is CURL_RTSPREQ_SETUP
-	c.Setopt(curl.OPT_RTSP_REQUEST, rtspSetup)
-	// Set custom timeout
-	c.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
+	// Send a request to the URL of the stream we want to attack.
+	s.curl.Setopt(curl.OPT_URL, attackURL)
+	// Set the RTSP STREAM URI as the stream URL.
+	s.curl.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	// 2 is CURL_RTSPREQ_SETUP.
+	s.curl.Setopt(curl.OPT_RTSP_REQUEST, rtspSetup)
+	// Set custom timeout.
+	s.curl.Setopt(curl.OPT_TIMEOUT_MS, int(timeout/time.Millisecond))
 
-	c.Setopt(curl.OPT_RTSP_TRANSPORT, "RTP/AVP;unicast;client_port=33332-33333")
+	s.curl.Setopt(curl.OPT_RTSP_TRANSPORT, "RTP/AVP;unicast;client_port=33332-33333")
 
-	// Perform the request
+	// Perform the request.
 	err := c.Perform()
 	if err != nil {
 		return false
 	}
 
-	// Get return code for the request
+	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
 		return false
 	}
 
-	// If it's a 200, the stream is accessed successfully
+	// If it's a 200, the stream is accessed successfully.
 	if rc == httpOK {
 		return true
 	}
 	return false
+}
+
+func (s *Scanner) setCurlOptions() {
+	if s.debug {
+		// Debug logs when logs are enabled
+		_ = s.curl.Setopt(curl.OPT_VERBOSE, 1)
+	} else {
+		// Do not write sdp in stdout
+		_ = s.curl.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
+	}
+
+	// Do not use signals (would break multithreading).
+	_ = s.curl.Setopt(curl.OPT_NOSIGNAL, 1)
+	// Do not send a body in the describe request.
+	_ = s.curl.Setopt(curl.OPT_NOBODY, 1)
+}
+
+// HACK: See https://stackoverflow.com/questions/3572397/lib-curl-in-c-disable-printing
+func doNotWrite([]uint8, interface{}) bool {
+	return true
 }
