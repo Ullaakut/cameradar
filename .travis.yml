@@ -42,7 +42,7 @@ script:
 - docker stop fake_camera_digest
 # Print logs
 - cat camera_digest_logs.txt
-- cat camera_basics_logs.txt
+- cat camera_basic_logs.txt
 - cat logs.txt
 - grep "Successful attack" logs.txt ; or exit 1
 
