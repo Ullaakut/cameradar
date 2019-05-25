@@ -1,7 +1,7 @@
 # Cameradar
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Cameradar.gif" width="100%"/>
+    <img src="images/Cameradar.gif" width="100%"/>
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@
 * Launch automated dictionary attacks to get the **username and password** of the cameras
 * Retrieve a complete and user-friendly report of the results
 
-<p align="center"><img src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Cameradar.png" width="250"/></p>
+<p align="center"><img src="images/Cameradar.png" width="250"/></p>
 
 ## Table of content
 
@@ -56,8 +56,7 @@
 
 ## Docker Image for Cameradar
 
-<p align="center"><img src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/CameradarV4.png" width="70%"/></p>
-
+<p align="center"><img src="images/CameradarV4.png" width="70%"/></p>
 
 Install [docker](https://docs.docker.com/engine/installation/) on your machine, and run the following command:
 
