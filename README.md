@@ -49,7 +49,7 @@
 * [Configuration](#configuration)
 * [Output](#output)
 * [Check camera access](#check-camera-access)
-* [Command line options](#command-line-options)
+* [Command-line options](#command-line-options)
 * [Contribution](#contribution)
 * [Frequently Asked Questions](#frequently-asked-questions)
 * [License](#license)
@@ -89,56 +89,13 @@ Make sure you installed the dependencies mentionned above, and that you have Go 
 
 The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
-## Library
-
-### Dependencies of the library
-
-* `curl-dev` / `libcurl` (depending on your OS)
-* `github.com/ullaakut/nmap`
-* `github.com/pkg/errors`
-* `gopkg.in/go-playground/validator.v9`
-* `github.com/ullaakut/go-curl`
-
-#### Installing the library
-
-`go get github.com/ullaakut/cameradar`
-
-After this command, the _cameradar_ library is ready to use. Its source will be in:
-
-    $GOPATH/src/pkg/github.com/ullaakut/cameradar
-
-You can use `go get -u` to update the package.
-
-Here is an overview of the exposed functions of this library:
-
-#### Discovery
-
-You can use the cameradar library for simple discovery purposes if you don't need to access the cameras but just to be aware of their existence.
-
-<p align="center"><img  width="90%" src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/NmapPresets.png"/></p>
-This describes the nmap time presets. You can pass a value between 1 and 5 as described in this table, to the NmapRun function.
-
-#### Attack
-
-If you already know which hosts and ports you want to attack, you can also skip the discovery part and use directly the attack functions. The attack functions also take a timeout value as a parameter.
-
-#### Data models
-
-Here are the different data models useful to use the exposed functions of the cameradar library.
-
-<p align="center"><img width="60%" src="https://raw.githubusercontent.com/Ullaakut/cameradar/master/images/Models.png"/></p>
-
-#### Dictionary loaders
-
-The cameradar library also provides two functions that take file paths as inputs and return the appropriate data models filled.
-
 ## Configuration
 
 The **RTSP port used for most cameras is 554**, so you should probably specify 554 as one of the ports you scan. Not specifying any ports to the cameradar application will scan the 554, 5554 and 8554 ports.
 
-`docker run -t --net=host ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports 18554, and the range of ports between 19000 and 19010 on localhost.
+`docker run -t --net=host ullaakut/cameradar -p "18554,19000-19010" -t localhost` will scan the ports `18554`, and the range of ports between `19000` and `19010` on `localhost`.
 
-You **can use your own files for the ids and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
+You **can use your own files for the credentials and routes dictionaries** used to attack the cameras, but the Cameradar repository already gives you a good base that works with most cameras, in the `/dictionaries` folder.
 
 ```bash
 docker run -t -v /my/folder/with/dictionaries:/tmp/dictionaries \
@@ -154,7 +111,7 @@ This will put the contents of your folder containing dictionaries in the docker 
 
 If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI or the command-line to connect to the RTSP stream using this format: `rtsp://username:password@address:port/route`
 
-## Command line options
+## Command-line options
 
 * **"-t, --targets"**: Set target. Required. Target can be a file (see [instructions on how to format the file](#format-input-file)), an IP, an IP range, a subnetwork, or a combination of those. Example: `--targets="192.168.1.72,192.168.1.74"`
 * **"-p, --ports"**: (Default: `554,5554,8554`) Set custom ports.
@@ -262,7 +219,7 @@ See [the contribution document](/CONTRIBUTING.md) to get started.
 
 > Cameradar does not detect any camera!
 
-That means that either your cameras are not streaming in RTSP or that they are not on the target you are scanning. In most cases, CCTV cameras will be on a private subnetwork, isolated from the internet. Use the `-t` option to specify your target.
+That means that either your cameras are not streaming in RTSP or that they are not on the target you are scanning. In most cases, CCTV cameras will be on a private subnetwork, isolated from the internet. Use the `-t` option to specify your target. If you are sure you did everything right but it still does not work, please open an issue with details on the device you are trying to access 🙏
 
 > Cameradar detects my cameras, but does not manage to access them at all!
 
@@ -270,15 +227,15 @@ Maybe your cameras have been configured and the credentials / URL have been chan
 
 > What happened to the C++ version?
 
-You can still find it under the 1.1.4 tag on this repo, however it was less performant and stable than the current version written in Golang.
+You can still find it under the 1.1.4 tag on this repo, however it was less performant and stable than the current version written in Golang. It is not recommended to use it.
 
 > How to use the Cameradar library for my own project?
 
-See the example in `/cameradar`. You just need to run `go get github.com/ullaakut/cameradar` and to use the `cmrdr` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/ullaakut/cameradar).
+See the example in `/cmd/cameradar`. You just need to run `go get github.com/ullaakut/cameradar` and to use the `cameradar` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/ullaakut/cameradar).
 
 > I want to scan my own localhost for some reason and it does not work! What's going on?
 
-Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameradar/cameradar.go` or [installing it](#installing-the-binary)
+Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameradar/cameradar.go` or [installing it](#installing-the-binary).
 
 > I don't see a colored output:(
 
@@ -286,7 +243,7 @@ You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This 
 
 > I don't have a camera but I'd like to try Cameradar!
 
-Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt` and then run cameradar and it should guess that the username is admin and the password is 12345. You can try this with any default constructor credentials (they can be found [here](dictionaries/credentials.json))
+Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt` and then run cameradar and it should guess that the username is admin and the password is 12345. You can try this with any default constructor credentials (they can be found [here](dictionaries/credentials.json)).
 
 > What authentication types does Cameradar support?
 
@@ -301,6 +258,10 @@ Cameradar supports both basic and digest authentication.
 > Running cameradar with an input file, logs enabled on port 8554
 
 `docker run -v /tmp:/tmp --net=host -t ullaakut/cameradar -t /tmp/test.txt -p 8554`
+
+> Running cameradar on a subnetwork with custom dictionaries, on ports 554, 5554 and 8554
+
+`docker run -v /tmp:/tmp --net=host -t ullaakut/cameradar -t 192.168.0.0/24 --custom-credentials="/tmp/dictionaries/credentials.json" --custom-routes="/tmp/dictionaries/routes" -p 554,5554,8554`
 
 ## License
 
