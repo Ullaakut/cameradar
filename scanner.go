@@ -19,6 +19,7 @@ type Scanner struct {
 	targets                  []string
 	ports                    []string
 	debug                    bool
+	verbose                  bool
 	speed                    int
 	timeout                  time.Duration
 	credentialDictionaryPath string
@@ -29,7 +30,7 @@ type Scanner struct {
 }
 
 // New creates a new Cameradar Scanner and applies the given options.
-func New(options ...func(*Scanner) error) (*Scanner, error) {
+func New(options ...func(*Scanner)) (*Scanner, error) {
 	err := curl.GlobalInit(curl.GLOBAL_ALL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize curl library: %v", err)
@@ -47,10 +48,7 @@ func New(options ...func(*Scanner) error) (*Scanner, error) {
 	}
 
 	for _, option := range options {
-		err := option(scanner)
-		if err != nil {
-			return nil, fmt.Errorf("unable to apply option to scanner: %v", err)
-		}
+		option(scanner)
 	}
 
 	gopath := os.Getenv("GOPATH")
@@ -59,7 +57,6 @@ func New(options ...func(*Scanner) error) (*Scanner, error) {
 
 	scanner.term = disgo.NewTerminal(
 		disgo.WithDebug(scanner.debug),
-		disgo.WithColors(!scanner.debug),
 	)
 
 	err = scanner.LoadTargets()
@@ -82,4 +79,65 @@ func New(options ...func(*Scanner) error) (*Scanner, error) {
 	disgo.EndStep()
 
 	return scanner, nil
+}
+
+// WithTargets specifies the targets to scan and attack.
+func WithTargets(targets []string) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.targets = targets
+	}
+}
+
+// WithPorts specifies the ports to scan and attack.
+func WithPorts(ports []string) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.ports = ports
+	}
+}
+
+// WithDebug specifies whether or not to enable debug logs.
+func WithDebug(debug bool) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.debug = debug
+	}
+}
+
+// WithVerbose specifies whether or not to enable verbose logs.
+func WithVerbose(verbose bool) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.verbose = verbose
+	}
+}
+
+// WithCustomCredentials specifies a custom credential dictionary
+// to use for the attacks.
+func WithCustomCredentials(dictionaryPath string) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.credentialDictionaryPath = dictionaryPath
+	}
+}
+
+// WithCustomRoutes specifies a custom route dictionary
+// to use for the attacks.
+func WithCustomRoutes(dictionaryPath string) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.routeDictionaryPath = dictionaryPath
+	}
+}
+
+// WithSpeed specifies the speed at which the scan should be executed. Faster
+// means easier to detect, slower has bigger timeout values and is more silent.
+func WithSpeed(speed int) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.speed = speed
+	}
+}
+
+// WithTimeout specifies the amount of time after which attack requests should
+// timeout. This should be high if the network you are attacking has a poor
+// connectivity or that you are located far away from it.
+func WithTimeout(timeout time.Duration) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.timeout = timeout
+	}
 }

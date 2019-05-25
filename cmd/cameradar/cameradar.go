@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/ullaakut/cameradar"
-	log "github.com/ullaakut/disgo"
+	"github.com/ullaakut/disgo"
 	"github.com/ullaakut/disgo/style"
 )
 
@@ -23,8 +23,9 @@ func parseArguments() error {
 	pflag.StringP("custom-routes", "r", "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
 	pflag.StringP("custom-credentials", "c", "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
 	pflag.IntP("speed", "s", 4, "The nmap speed preset to use for discovery")
-	pflag.IntP("timeout", "T", 2000, "The timeout in miliseconds to use for attack attempts")
-	pflag.BoolP("log", "l", false, "Enable the logs for nmap's output to stdout")
+	pflag.DurationP("timeout", "T", 2*time.Second, "The timeout in miliseconds to use for attack attempts")
+	pflag.BoolP("debug", "d", true, "Enable the debug logs")
+	pflag.BoolP("verbose", "v", false, "Enable the verbose logs")
 	pflag.BoolP("help", "h", false, "displays this help message")
 
 	viper.AutomaticEnv()
@@ -55,18 +56,22 @@ func parseArguments() error {
 func main() {
 	err := parseArguments()
 	if err != nil {
-		printErr(term, err)
+		printErr(err)
 	}
 
-	c := cameradar.New(
+	c, err := cameradar.New(
 		cameradar.WithTargets(viper.GetStringSlice("targets")),
 		cameradar.WithPorts(viper.GetStringSlice("ports")),
-		cameradar.WithDebug(viper.GetBool("log") || viper.GetBool("logging")),
+		cameradar.WithDebug(viper.GetBool("debug")),
+		cameradar.WithVerbose(viper.GetBool("verbose")),
 		cameradar.WithCustomCredentials(viper.GetString("custom-credentials")),
 		cameradar.WithCustomRoutes(viper.GetString("custom-routes")),
 		cameradar.WithSpeed(viper.GetInt("speed")),
-		cameradar.WithTimeout(viper.GetInt("timeout")*time.Millisecond),
+		cameradar.WithTimeout(viper.GetDuration("timeout")),
 	)
+	if err != nil {
+		printErr(err)
+	}
 
 	scanResult, err := c.Scan()
 	if err != nil {
@@ -81,7 +86,7 @@ func main() {
 	c.PrintStreams(streams)
 }
 
-func printErr(term *log.Terminal, err error) {
-	term.Errorln(style.Failure(style.SymbolCross), err)
+func printErr(err error) {
+	disgo.Errorln(style.Failure(style.SymbolCross), err)
 	os.Exit(1)
 }

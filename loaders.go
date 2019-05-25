@@ -33,6 +33,8 @@ func (osFS) Stat(name string) (os.FileInfo, error) { return os.Stat(name) }
 
 // LoadCredentials opens a dictionary file and returns its contents as a Credentials structure.
 func (s *Scanner) LoadCredentials() error {
+	s.term.Debugf("Loading credentials dictionary from path %q\n", s.credentialDictionaryPath)
+
 	// Open & Read XML file.
 	content, err := ioutil.ReadFile(s.credentialDictionaryPath)
 	if err != nil {
@@ -45,11 +47,14 @@ func (s *Scanner) LoadCredentials() error {
 		return err
 	}
 
+	s.term.Debugf("Loaded %d usernames and %d passwords\n", len(s.credentials.Usernames), len(s.credentials.Passwords))
 	return nil
 }
 
 // LoadRoutes opens a dictionary file and returns its contents as a Routes structure.
 func (s *Scanner) LoadRoutes() error {
+	s.term.Debugf("Loading routes dictionary from path %q\n", s.routeDictionaryPath)
+
 	file, err := os.Open(s.routeDictionaryPath)
 	if err != nil {
 		return err
@@ -61,7 +66,13 @@ func (s *Scanner) LoadRoutes() error {
 		s.routes = append(s.routes, scanner.Text())
 	}
 
-	return scanner.Err()
+	err = scanner.Err()
+	if err != nil {
+		return err
+	}
+
+	s.term.Debugf("Loaded %d routes\n", len(s.routes))
+	return nil
 }
 
 // ParseCredentialsFromString parses a dictionary string and returns its contents as a Credentials structure.
