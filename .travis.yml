@@ -32,7 +32,7 @@ script:
 # Launch a fake camera to check if cameradar is able to access it
 - docker run -d --name=fake_camera -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -p 8554:8554 ullaakut/rtspatt
 # Launch cameradar on the local machine
-- docker run --net=host -t cameradar -t 0.0.0.0 -l > logs.txt
+- docker run --net=host -t cameradar -t 0.0.0.0 -v > logs.txt
 - docker logs fake_camera > camera_logs.txt
 # Stop the fake camera
 - docker stop fake_camera
