@@ -44,7 +44,7 @@ func New(options ...func(*Scanner)) (*Scanner, error) {
 	scanner := &Scanner{
 		curl:                     &Curl{CURL: handle},
 		credentialDictionaryPath: "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/credentials.json",
-		routeDictionaryPath:      "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/route",
+		routeDictionaryPath:      "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/routes",
 	}
 
 	for _, option := range options {

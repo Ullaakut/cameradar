@@ -597,7 +597,7 @@ func TestDetectAuthenticationType(t *testing.T) {
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
-w
+
 			status: 1,
 
 			expectedStreams: fakeTargets,
