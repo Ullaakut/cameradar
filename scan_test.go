@@ -1,303 +1,321 @@
 package cameradar
 
-// import (
-// 	"errors"
-// 	"os"
-// 	"testing"
+import (
+	"errors"
+	"io/ioutil"
+	"os"
+	"testing"
 
-// 	"github.com/ullaakut/nmap"
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/mock"
-// )
+	"github.com/ullaakut/disgo"
 
-// type nmapMock struct {
-// 	mock.Mock
-// }
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/ullaakut/nmap"
+)
 
-// func (m *nmapMock) Run() (*nmap.Run, error) {
-// 	args := m.Called()
+type nmapMock struct {
+	mock.Mock
+}
 
-// 	if args.Get(0) != nil {
-// 		return args.Get(0).(*nmap.Run), args.Error(1)
-// 	}
-// 	return nil, args.Error(1)
-// }
+func (m *nmapMock) Run() (*nmap.Run, error) {
+	args := m.Called()
 
-// func TestDiscover(t *testing.T) {
-// 	tests := []struct {
-// 		description string
+	if args.Get(0) != nil {
+		return args.Get(0).(*nmap.Run), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
 
-// 		targets    []string
-// 		ports      []string
-// 		speed      int
-// 		removePath bool
+var (
+	validStream1 = Stream{
+		Device:  "fakeDevice",
+		Address: "fakeAddress",
+		Port:    1337,
+	}
 
-// 		expectedErr    error
-// 		expectedResult []Stream
-// 	}{
-// 		{
-// 			description: "create new scanner and call scan, no error",
+	validStream2 = Stream{
+		Device:  "fakeDevice",
+		Address: "differentFakeAddress",
+		Port:    1337,
+	}
 
-// 			targets: []string{"localhost"},
-// 			ports:   []string{"80"},
-// 			speed:   5,
-// 		},
-// 		{
-// 			description: "create new scanner with missing nmap installation",
+	invalidStreamNoPort = Stream{
+		Device:  "invalidDevice",
+		Address: "fakeAddress",
+		Port:    0,
+	}
 
-// 			removePath: true,
-// 			ports:      []string{"80"},
+	invalidStreamNoAddress = Stream{
+		Device:  "invalidDevice",
+		Address: "",
+		Port:    1337,
+	}
+)
 
-// 			expectedErr: errors.New("'nmap' binary was not found"),
-// 		},
-// 	}
+func TestScan(t *testing.T) {
+	tests := []struct {
+		description string
 
-// 	for _, test := range tests {
-// 		t.Run(test.description, func(t *testing.T) {
-// 			if test.removePath {
-// 				os.Setenv("PATH", "")
-// 			}
+		targets    []string
+		ports      []string
+		speed      int
+		removePath bool
 
-// 			result, err := Discover(test.targets, test.ports, test.speed)
+		expectedErr     error
+		expectedStreams []Stream
+	}{
+		{
+			description: "create new scanner and call scan, no error",
 
-// 			assert.Equal(t, test.expectedErr, err)
-// 			assert.Equal(t, test.expectedResult, result)
-// 		})
-// 	}
-// }
+			targets: []string{"localhost"},
+			ports:   []string{"80"},
+			speed:   5,
+		},
+		{
+			description: "create new scanner with missing nmap installation",
 
-// func TestScan(t *testing.T) {
-// 	validStream1 := Stream{
-// 		Device:  "fakeDevice",
-// 		Address: "fakeAddress",
-// 		Port:    1337,
-// 	}
+			removePath: true,
+			ports:      []string{"80"},
 
-// 	validStream2 := Stream{
-// 		Device:  "fakeDevice",
-// 		Address: "differentFakeAddress",
-// 		Port:    1337,
-// 	}
+			expectedErr: errors.New("unable to create network scanner: 'nmap' binary was not found"),
+		},
+	}
 
-// 	invalidStreamNoPort := Stream{
-// 		Device:  "invalidDevice",
-// 		Address: "fakeAddress",
-// 		Port:    0,
-// 	}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			if test.removePath {
+				os.Setenv("PATH", "")
+			}
 
-// 	invalidStreamNoAddress := Stream{
-// 		Device:  "invalidDevice",
-// 		Address: "",
-// 		Port:    1337,
-// 	}
+			scanner := &Scanner{
+				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				targets: test.targets,
+				ports:   test.ports,
+				speed:   test.speed,
+			}
 
-// 	testCases := []struct {
-// 		description string
-// 		nmapResult  *nmap.Run
-// 		nmapError   error
+			result, err := scanner.Scan()
 
-// 		expectedStreams []Stream
-// 		expectedErr     error
-// 	}{
-// 		{
-// 			description: "valid streams",
+			assert.Equal(t, test.expectedErr, err)
+			assert.Equal(t, test.expectedStreams, result)
+		})
+	}
+}
 
-// 			nmapResult: &nmap.Run{
-// 				Hosts: []nmap.Host{
-// 					{
-// 						Addresses: []nmap.Address{
-// 							{
-// 								Addr: validStream1.Address,
-// 							},
-// 						},
-// 						Ports: []nmap.Port{
-// 							{
-// 								State: nmap.State{
-// 									State: "open",
-// 								},
-// 								ID: validStream1.Port,
-// 								Service: nmap.Service{
-// 									Name:    "rtsp",
-// 									Product: validStream1.Device,
-// 								},
-// 							},
-// 						},
-// 					},
-// 					{
-// 						Addresses: []nmap.Address{
-// 							{
-// 								Addr: validStream2.Address,
-// 							},
-// 						},
-// 						Ports: []nmap.Port{
-// 							{
-// 								State: nmap.State{
-// 									State: "open",
-// 								},
-// 								ID: validStream2.Port,
-// 								Service: nmap.Service{
-// 									Name:    "rtsp-alt",
-// 									Product: validStream2.Device,
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
+func TestInternalScan(t *testing.T) {
 
-// 			expectedStreams: []Stream{validStream1, validStream2},
-// 		},
-// 		{
-// 			description: "two invalid targets, no error",
+	tests := []struct {
+		description string
 
-// 			nmapResult: &nmap.Run{
-// 				Hosts: []nmap.Host{
-// 					{
-// 						Addresses: []nmap.Address{
-// 							{
-// 								Addr: invalidStreamNoPort.Address,
-// 							},
-// 						},
-// 					},
-// 					{
-// 						Addresses: []nmap.Address{},
-// 						Ports: []nmap.Port{
-// 							{
-// 								State: nmap.State{
-// 									State: "open",
-// 								},
-// 								ID: validStream2.Port,
-// 								Service: nmap.Service{
-// 									Name:    "rtsp-alt",
-// 									Product: invalidStreamNoAddress.Device,
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
+		nmapResult *nmap.Run
+		nmapError  error
 
-// 			expectedStreams: nil,
-// 		},
-// 		{
-// 			description: "different port states, no error",
+		expectedStreams []Stream
+		expectedErr     error
+	}{
+		{
+			description: "valid streams",
 
-// 			nmapResult: &nmap.Run{
-// 				Hosts: []nmap.Host{
-// 					{
-// 						Addresses: []nmap.Address{
-// 							{
-// 								Addr: invalidStreamNoPort.Address,
-// 							}},
-// 						Ports: []nmap.Port{
-// 							{
-// 								State: nmap.State{
-// 									State: "closed",
-// 								},
-// 								ID: validStream2.Port,
-// 								Service: nmap.Service{
-// 									Name:    "rtsp-alt",
-// 									Product: invalidStreamNoAddress.Device,
-// 								},
-// 							},
-// 						},
-// 					},
-// 					{
-// 						Addresses: []nmap.Address{
-// 							{
-// 								Addr: invalidStreamNoPort.Address,
-// 							}},
-// 						Ports: []nmap.Port{
-// 							{
-// 								State: nmap.State{
-// 									State: "unfiltered",
-// 								},
-// 								ID: validStream2.Port,
-// 								Service: nmap.Service{
-// 									Name:    "rtsp-alt",
-// 									Product: invalidStreamNoAddress.Device,
-// 								},
-// 							},
-// 						},
-// 					},
-// 					{
-// 						Addresses: []nmap.Address{
-// 							{
-// 								Addr: invalidStreamNoPort.Address,
-// 							}},
-// 						Ports: []nmap.Port{
-// 							{
-// 								State: nmap.State{
-// 									State: "filtered",
-// 								},
-// 								ID: validStream2.Port,
-// 								Service: nmap.Service{
-// 									Name:    "rtsp-alt",
-// 									Product: invalidStreamNoAddress.Device,
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: validStream1.Address,
+							},
+						},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
+								},
+								ID: validStream1.Port,
+								Service: nmap.Service{
+									Name:    "rtsp",
+									Product: validStream1.Device,
+								},
+							},
+						},
+					},
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: validStream2.Address,
+							},
+						},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: validStream2.Device,
+								},
+							},
+						},
+					},
+				},
+			},
 
-// 			expectedStreams: nil,
-// 		},
-// 		{
-// 			description: "not rtsp, no error",
+			expectedStreams: []Stream{validStream1, validStream2},
+		},
+		{
+			description: "two invalid targets, no error",
 
-// 			nmapResult: &nmap.Run{
-// 				Hosts: []nmap.Host{
-// 					{
-// 						Addresses: []nmap.Address{
-// 							{
-// 								Addr: invalidStreamNoPort.Address,
-// 							}},
-// 						Ports: []nmap.Port{
-// 							{
-// 								State: nmap.State{
-// 									State: "open",
-// 								},
-// 								ID: validStream2.Port,
-// 								Service: nmap.Service{
-// 									Name:    "tcp",
-// 									Product: invalidStreamNoAddress.Device,
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							},
+						},
+					},
+					{
+						Addresses: []nmap.Address{},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
+								},
+							},
+						},
+					},
+				},
+			},
 
-// 			expectedStreams: nil,
-// 		},
-// 		{
-// 			description: "no hosts found",
+			expectedStreams: nil,
+		},
+		{
+			description: "different port states, no error",
 
-// 			nmapResult:      &nmap.Run{},
-// 			expectedStreams: nil,
-// 		},
-// 		{
-// 			description: "scan failed",
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "closed",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
+								},
+							},
+						},
+					},
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "unfiltered",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
+								},
+							},
+						},
+					},
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "filtered",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "rtsp-alt",
+									Product: invalidStreamNoAddress.Device,
+								},
+							},
+						},
+					},
+				},
+			},
 
-// 			nmapError:   errors.New("scan failed"),
-// 			expectedErr: errors.New("scan failed"),
-// 		},
-// 	}
+			expectedStreams: nil,
+		},
+		{
+			description: "not rtsp, no error",
 
-// 	for _, test := range testCases {
-// 		t.Run(test.description, func(t *testing.T) {
-// 			nmapMock := &nmapMock{}
+			nmapResult: &nmap.Run{
+				Hosts: []nmap.Host{
+					{
+						Addresses: []nmap.Address{
+							{
+								Addr: invalidStreamNoPort.Address,
+							}},
+						Ports: []nmap.Port{
+							{
+								State: nmap.State{
+									State: "open",
+								},
+								ID: validStream2.Port,
+								Service: nmap.Service{
+									Name:    "tcp",
+									Product: invalidStreamNoAddress.Device,
+								},
+							},
+						},
+					},
+				},
+			},
 
-// 			nmapMock.On("Run").Return(test.nmapResult, test.nmapError)
+			expectedStreams: nil,
+		},
+		{
+			description: "no hosts found",
 
-// 			results, err := scan(nmapMock)
+			nmapResult:      &nmap.Run{},
+			expectedStreams: nil,
+		},
+		{
+			description: "scan failed",
 
-// 			assert.Equal(t, test.expectedErr, err)
-// 			assert.Equal(t, test.expectedStreams, results, "wrong streams parsed")
-// 			assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
+			nmapError:   errors.New("scan failed"),
+			expectedErr: errors.New("error while scanning network: scan failed"),
+		},
+	}
 
-// 			nmapMock.AssertExpectations(t)
-// 		})
-// 	}
-// }
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			nmapMock := &nmapMock{}
+
+			nmapMock.On("Run").Return(test.nmapResult, test.nmapError)
+
+			scanner := &Scanner{
+				term: disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+			}
+
+			results, err := scanner.scan(nmapMock)
+
+			assert.Equal(t, test.expectedErr, err)
+			assert.Equal(t, test.expectedStreams, results, "wrong streams parsed")
+			assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
+
+			nmapMock.AssertExpectations(t)
+		})
+	}
+}

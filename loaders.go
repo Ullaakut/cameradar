@@ -44,7 +44,7 @@ func (s *Scanner) LoadCredentials() error {
 	// Unmarshal content of JSON file into data structure.
 	err = json.Unmarshal(content, &s.credentials)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to unmarshal dictionary contents: %v", err)
 	}
 
 	s.term.Debugf("Loaded %d usernames and %d passwords\n", len(s.credentials.Usernames), len(s.credentials.Passwords))
@@ -57,7 +57,7 @@ func (s *Scanner) LoadRoutes() error {
 
 	file, err := os.Open(s.routeDictionaryPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to open dictionary: %v", err)
 	}
 	defer file.Close()
 
@@ -66,13 +66,9 @@ func (s *Scanner) LoadRoutes() error {
 		s.routes = append(s.routes, scanner.Text())
 	}
 
-	err = scanner.Err()
-	if err != nil {
-		return err
-	}
-
 	s.term.Debugf("Loaded %d routes\n", len(s.routes))
-	return nil
+
+	return scanner.Err()
 }
 
 // ParseCredentialsFromString parses a dictionary string and returns its contents as a Credentials structure.
@@ -119,5 +115,8 @@ func (s *Scanner) LoadTargets() error {
 	}
 
 	s.targets = strings.Split(string(bytes), "\n")
+
+	s.term.Debugf("Successfylly parsed targets file with %d entries", len(s.targets))
+
 	return nil
 }

@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	curl "github.com/ullaakut/go-curl"
-	v "gopkg.in/go-playground/validator.v9"
 )
 
 // HTTP responses.
@@ -26,47 +24,32 @@ const (
 // Attack attacks the given targets and returns the accessed streams.
 func (s *Scanner) Attack(targets []Stream) ([]Stream, error) {
 	if len(targets) == 0 {
-		return nil, errors.New("unable to attack empty list of targets")
+		return nil, fmt.Errorf("unable to attack empty list of targets")
 	}
 
 	// Most cameras will be accessed successfully with these two attacks.
 	s.term.StartStepf("Attacking routes of %d streams", len(targets))
-	streams, err := s.AttackRoute(targets)
-	if err != nil {
-		return nil, s.term.FailStepf("unable to attack stream routes: %v", err)
-	}
+	streams := s.AttackRoute(targets)
 
 	s.term.StartStepf("Attempting to detect authentication methods of %d streams", len(targets))
-	streams, err = s.DetectAuthMethods(streams)
-	if err != nil {
-		return nil, s.term.FailStepf("unable to detect auth method: %v", err)
-	}
+	streams = s.DetectAuthMethods(streams)
 
 	s.term.StartStepf("Attacking credentials of %d streams", len(targets))
-	streams, err = s.AttackCredentials(streams)
-	if err != nil {
-		return nil, s.term.FailStepf("unable to attack stream credentials: %v", err)
-	}
+	streams = s.AttackCredentials(streams)
 
 	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
 	// For these cameras, running another route attack will solve the problem.
 	for _, stream := range streams {
 		if !stream.RouteFound || !stream.CredentialsFound {
 			s.term.StartStepf("Second round of attacks")
-			streams, err = s.AttackRoute(streams)
-			if err != nil {
-				return nil, s.term.FailStepf("unable to attack stream route: %v", err)
-			}
+			streams = s.AttackRoute(streams)
 
 			break
 		}
 	}
 
 	s.term.StartStep("Validating that streams are accessible")
-	streams, err = s.ValidateStreams(streams)
-	if err != nil {
-		return nil, s.term.FailStepf("unable to validate streams: %v", err)
-	}
+	streams = s.ValidateStreams(streams)
 
 	s.term.EndStep()
 
@@ -74,27 +57,21 @@ func (s *Scanner) Attack(targets []Stream) ([]Stream, error) {
 }
 
 // ValidateStreams tries to setup the stream to validate whether or not it is available.
-func (s *Scanner) ValidateStreams(targets []Stream) ([]Stream, error) {
+func (s *Scanner) ValidateStreams(targets []Stream) []Stream {
 	for i := range targets {
 		targets[i].Available = s.validateStream(targets[i])
 	}
 
-	return targets, nil
+	return targets
 }
 
 // AttackCredentials attempts to guess the provided targets' credentials using the given
 // dictionary or the default dictionary if none was provided by the user.
-func (s *Scanner) AttackCredentials(targets []Stream) ([]Stream, error) {
+func (s *Scanner) AttackCredentials(targets []Stream) []Stream {
 	resChan := make(chan Stream)
 	defer close(resChan)
 
-	validate := v.New()
 	for i := range targets {
-		err := validate.Struct(targets[i])
-		if err != nil {
-			return targets, errors.Wrap(err, "invalid targets")
-		}
-
 		// TODO: Perf Improvement: Skip cameras with no auth type detected, and set their
 		// CredentialsFound value to true.
 		go s.attackCameraCredentials(targets[i], resChan)
@@ -112,22 +89,16 @@ func (s *Scanner) AttackCredentials(targets []Stream) ([]Stream, error) {
 		}
 	}
 
-	return targets, nil
+	return targets
 }
 
 // AttackRoute attempts to guess the provided targets' streaming routes using the given
 // dictionary or the default dictionary if none was provided by the user.
-func (s *Scanner) AttackRoute(targets []Stream) ([]Stream, error) {
+func (s *Scanner) AttackRoute(targets []Stream) []Stream {
 	resChan := make(chan Stream)
 	defer close(resChan)
 
-	validate := v.New()
 	for i := range targets {
-		err := validate.Struct(targets[i])
-		if err != nil {
-			return targets, errors.Wrap(err, "invalid targets")
-		}
-
 		go s.attackCameraRoute(targets[i], resChan)
 	}
 
@@ -143,12 +114,12 @@ func (s *Scanner) AttackRoute(targets []Stream) ([]Stream, error) {
 		}
 	}
 
-	return targets, nil
+	return targets
 }
 
 // DetectAuthMethods attempts to guess the provided targets' authentication types, between
 // digest, basic auth or none at all.
-func (s *Scanner) DetectAuthMethods(targets []Stream) ([]Stream, error) {
+func (s *Scanner) DetectAuthMethods(targets []Stream) []Stream {
 	for i := range targets {
 		targets[i].AuthenticationType = s.detectAuthMethod(targets[i])
 
@@ -165,7 +136,7 @@ func (s *Scanner) DetectAuthMethods(targets []Stream) ([]Stream, error) {
 		s.term.Debugf("Stream %s uses %s authentication method\n", GetCameraRTSPURL(targets[i]), authMethod)
 	}
 
-	return targets, nil
+	return targets
 }
 
 func (s *Scanner) attackCameraCredentials(target Stream, resChan chan<- Stream) {

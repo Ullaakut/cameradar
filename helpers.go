@@ -3,7 +3,7 @@ package cameradar
 import "fmt"
 
 func replace(streams []Stream, new Stream) []Stream {
-	updatedSlice := streams[:0]
+	var updatedSlice []Stream
 
 	for _, old := range streams {
 		if old.Address == new.Address && old.Port == new.Port {

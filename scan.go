@@ -31,6 +31,10 @@ func (s *Scanner) Scan() ([]Stream, error) {
 		return nil, s.term.FailStepf("unable to create network scanner: %v", err)
 	}
 
+	return s.scan(nmapScanner)
+}
+
+func (s *Scanner) scan(nmapScanner nmap.ScanRunner) ([]Stream, error) {
 	results, err := nmapScanner.Run()
 	if err != nil {
 		return nil, s.term.FailStepf("error while scanning network: %v", err)
