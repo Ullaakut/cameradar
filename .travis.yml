@@ -44,7 +44,7 @@ script:
 - cat camera_digest_logs.txt
 - cat camera_basic_logs.txt
 - cat logs.txt
-- grep "Successful attack" logs.txt ; or exit 1
+- grep "Successful attack" logs.txt || exit 1
 
 notifications:
   email:
