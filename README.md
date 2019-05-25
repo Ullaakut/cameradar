@@ -64,7 +64,7 @@ docker run -t ullaakut/cameradar -t <target> <other command-line options>
 
 [See command-line options](#command-line-options).
 
-e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24 -l` will scan the ports 554, 5554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output debug logs.
+e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24` will scan the ports 554, 5554 and 8554 of hosts on the 192.168.100.0/24 subnetwork and attack the discovered RTSP streams and will output debug logs.
 
 * `YOUR_TARGET` can be a subnet (e.g.: `172.16.100.0/24`), an IP (e.g.: `172.16.100.10`), or a range of IPs (e.g.: `172.16.100.10-20`).
 * If you want to get the precise results of the nmap scan in the form of an XML file, you can add `-v /your/path:/tmp/cameradar_scan.xml` to the docker run command, before `ullaakut/cameradar`.
@@ -152,9 +152,7 @@ This will put the contents of your folder containing dictionaries in the docker 
 
 ## Check camera access
 
-If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI or the command-line to connect to the RTSP stream using this format : `rtsp://username:password@address:port/route`
-
-With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:554/live.sdp`
+If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able to use the GUI or the command-line to connect to the RTSP stream using this format: `rtsp://username:password@address:port/route`
 
 ## Command line options
 
@@ -165,8 +163,9 @@ With the above result, the RTSP URL would be `rtsp://admin:12345@173.16.100.45:5
 * **"-r, --custom-routes"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/routes`) Set custom dictionary path for routes
 * **"-c, --custom-credentials"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/credentials.json`) Set custom dictionary path for credentials
 * **"-o, --nmap-output"**: (Default: `/tmp/cameradar_scan.xml`) Set custom nmap output path
-* **"-l, --log"**: Enable debug logs (nmap requests, curl describe requests, etc.)
-* **"-h"** : Display the usage information
+* **"-d, --debug"**: Enable debug logs
+* **"-v, --verbose"**: Enable verbose curl logs (not recommended for most use)
+* **"-h"**: Display the usage information
 
 ## Format input file
 
@@ -281,7 +280,7 @@ See the example in `/cameradar`. You just need to run `go get github.com/ullaaku
 
 Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameradar/cameradar.go` or [installing it](#installing-the-binary)
 
-> I don't see a colored output :(
+> I don't see a colored output:(
 
 You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This tells docker to allocate a pseudo-tty for cameradar, which makes it able to use colors.
 
@@ -301,7 +300,7 @@ Cameradar supports both basic and digest authentication.
 
 > Running cameradar with an input file, logs enabled on port 8554
 
-`docker run -v /tmp:/tmp --net=host -t ullaakut/cameradar -t /tmp/test.txt -p 8554 -l`
+`docker run -v /tmp:/tmp --net=host -t ullaakut/cameradar -t /tmp/test.txt -p 8554`
 
 ## License
 

@@ -24,6 +24,7 @@ Please select one:
 ## Environment
 
 My operating system:
+
 - [ ] Windows
 - [ ] OSX
 - [ ] Linux
@@ -34,17 +35,17 @@ OS architecture: <architecture>
 
 ## Issue
 
-### What was expected?
+### What was expected
 
 <expected behavior>
 
-### What happened?
+### What happened
 
 <observed behavior>
 
 ### Logs
 
-If your issue is with Cameradar's binary or docker image, please run it with `-l` to print logs, and paste them here:
+If your issue is with Cameradar's binary or docker image, please run it with `-v` to print verbose logs, and paste them here:
 
 ```
 <cameradar logs>
