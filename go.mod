@@ -13,7 +13,7 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.1
 	github.com/ullaakut/disgo v0.3.0
-	github.com/ullaakut/go-curl v0.0.0-20190310175419-50acab4cef70
+	github.com/ullaakut/go-curl v0.0.0-20190525093431-597e157bbffd
 	github.com/ullaakut/nmap v0.0.0-20190306183004-e38898a9bead
 	gopkg.in/go-playground/validator.v9 v9.27.0
 )

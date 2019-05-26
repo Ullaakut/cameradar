@@ -2,7 +2,7 @@
 FROM golang:alpine AS build-env
 
 COPY . /go/src/github.com/ullaakut/cameradar
-WORKDIR /go/src/github.com/ullaakut/cameradar/cameradar
+WORKDIR /go/src/github.com/ullaakut/cameradar/cmd/cameradar
 
 RUN apk update && \
     apk upgrade && \
@@ -26,7 +26,7 @@ RUN apk --update add --no-cache nmap \
 
 WORKDIR /app/cameradar
 COPY --from=build-env /go/src/github.com/ullaakut/cameradar/dictionaries/ /app/dictionaries/
-COPY --from=build-env /go/src/github.com/ullaakut/cameradar/cameradar/ /app/cameradar/
+COPY --from=build-env /go/src/github.com/ullaakut/cameradar/cmd/cameradar/ /app/cameradar/
 
 ENV CAMERADAR_CUSTOM_ROUTES="/app/dictionaries/routes"
 ENV CAMERADAR_CUSTOM_CREDENTIALS="/app/dictionaries/credentials.json"

@@ -1,4 +1,4 @@
-// Package cmrdr provides methods to be able to discover and
+// Package cameradar provides methods to be able to discover and
 // attack RTSP streams easily. RTSP streams are used by most
 // IP Cameras, often for surveillance.
 //
@@ -11,4 +11,4 @@
 // access cameras, or running their own network scan, this
 // library allows to use simple and performant methods to
 // attack streams.
-package cmrdr
+package cameradar

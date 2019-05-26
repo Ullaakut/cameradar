@@ -1,11 +1,14 @@
-package cmrdr
+package cameradar
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/ullaakut/disgo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -91,91 +94,79 @@ func TestLoadCredentials(t *testing.T) {
 		Passwords: []string{"12345", "root"},
 	}
 
-	testCases := []struct {
+	tests := []struct {
+		description string
+
 		input      []byte
 		fileExists bool
 
-		expectedOutput Credentials
-		expectedErrMsg string
+		expectedCredentials Credentials
+		expectedErr         error
 	}{
-		// Valid baseline
 		{
-			fileExists:     true,
-			input:          credentialsJSONString,
-			expectedOutput: validCredentials,
+			description: "Valid baseline",
+
+			fileExists:          true,
+			input:               credentialsJSONString,
+			expectedCredentials: validCredentials,
 		},
-		// File does not exist
 		{
-			fileExists:     false,
-			input:          credentialsJSONString,
-			expectedErrMsg: "could not read credentials dictionary file at",
+			description: "File does not exist",
+
+			fileExists:  false,
+			input:       credentialsJSONString,
+			expectedErr: errors.New("could not read credentials dictionary file at \"/tmp/cameradar_test_load_credentials_1.xml\": open /tmp/cameradar_test_load_credentials_1.xml: no such file or directory"),
 		},
-		// Invalid format
 		{
-			fileExists:     true,
-			input:          []byte("not json"),
-			expectedErrMsg: "invalid character",
+			description: "Invalid format",
+
+			fileExists:  true,
+			input:       []byte("not json"),
+			expectedErr: errors.New("unable to unmarshal dictionary contents: invalid character 'o' in literal null (expecting 'u')"),
 		},
-		// No streams in dictionary
 		{
+			description: "No streams in dictionary",
+
 			fileExists: true,
 			input:      []byte("{\"invalid\":\"json\"}"),
 		},
 	}
 
-	for i, test := range testCases {
-		filePath := "/tmp/cameradar_test_load_credentials_" + fmt.Sprint(i) + ".xml"
-		// create file
-		if test.fileExists {
-			_, err := os.Create(filePath)
-			if err != nil {
-				fmt.Printf("could not create xml file for LoadCredentials: %v. iteration: %d. file path: %s\n", err, i, filePath)
-				os.Exit(1)
-			}
-
-			err = ioutil.WriteFile(filePath, test.input, 0644)
-			if err != nil {
-				fmt.Printf("could not write xml file for LoadCredentials: %v. iteration: %d. file path: %s\n", err, i, filePath)
-				os.Exit(1)
-			}
-		}
-
-		result, err := LoadCredentials(filePath)
-		if len(test.expectedErrMsg) > 0 {
-			if err == nil {
-				fmt.Printf("unexpected success in LoadCredentials test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
-				os.Exit(1)
-			}
-
-			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
-		} else {
-			if err != nil {
-				fmt.Printf("unexpected error in LoadCredentials test, iteration %d: %v\n", i, err)
-				os.Exit(1)
-			}
-
-			for _, expectedUsername := range test.expectedOutput.Usernames {
-				foundUsername := false
-				for _, username := range result.Usernames {
-					if username == expectedUsername {
-						foundUsername = true
-					}
+	for i, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			filePath := "/tmp/cameradar_test_load_credentials_" + fmt.Sprint(i) + ".xml"
+			// create file.
+			if test.fileExists {
+				_, err := os.Create(filePath)
+				if err != nil {
+					t.Fatalf("could not create xml file for LoadCredentials: %v. iteration: %d. file path: %s\n", err, i, filePath)
 				}
 
-				assert.Equal(t, true, foundUsername, "wrong usernames parsed")
-			}
-
-			for _, expectedPassword := range test.expectedOutput.Passwords {
-				foundPassword := false
-				for _, password := range result.Passwords {
-					if password == expectedPassword {
-						foundPassword = true
-					}
+				err = ioutil.WriteFile(filePath, test.input, 0644)
+				if err != nil {
+					t.Fatalf("could not write xml file for LoadCredentials: %v. iteration: %d. file path: %s\n", err, i, filePath)
 				}
-
-				assert.Equal(t, true, foundPassword, "wrong passwords parsed")
 			}
-		}
+
+			scanner := &Scanner{
+				term:                     disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				credentialDictionaryPath: filePath,
+			}
+
+			err := scanner.LoadCredentials()
+
+			assert.Equal(t, test.expectedErr, err)
+
+			assert.Len(t, scanner.credentials.Usernames, len(test.expectedCredentials.Usernames))
+			for _, expectedUsername := range test.expectedCredentials.Usernames {
+				assert.Contains(t, scanner.credentials.Usernames, expectedUsername)
+			}
+
+			assert.Len(t, scanner.credentials.Passwords, len(test.expectedCredentials.Passwords))
+			for _, expectedPassword := range test.expectedCredentials.Passwords {
+				assert.Contains(t, scanner.credentials.Passwords, expectedPassword)
+			}
+		})
 	}
 }
 
@@ -183,74 +174,69 @@ func TestLoadRoutes(t *testing.T) {
 	routesJSONString := []byte("admin\nroot")
 	validRoutes := Routes{"admin", "root"}
 
-	testCases := []struct {
-		input      []byte
-		fileExists bool
+	tests := []struct {
+		description string
+		input       []byte
+		fileExists  bool
 
-		expectedOutput Routes
-		expectedErrMsg string
+		expectedRoutes Routes
+		expectedErr    error
 	}{
-		// Valid baseline
 		{
+			description: "Valid baseline",
+
 			fileExists:     true,
 			input:          routesJSONString,
-			expectedOutput: validRoutes,
+			expectedRoutes: validRoutes,
 		},
-		// File does not exist
 		{
-			fileExists:     false,
-			input:          routesJSONString,
-			expectedErrMsg: "no such file or directory",
+			description: "File does not exist",
+
+			fileExists:  false,
+			input:       routesJSONString,
+			expectedErr: errors.New("unable to open dictionary: open /tmp/cameradar_test_load_routes_1.xml: no such file or directory"),
 		},
-		// No streams in dictionary
 		{
+			description: "No streams in dictionary",
+
 			fileExists: true,
 			input:      []byte(""),
 		},
 	}
 
-	for i, test := range testCases {
-		filePath := "/tmp/cameradar_test_load_routes_" + fmt.Sprint(i) + ".xml"
+	for i, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			filePath := "/tmp/cameradar_test_load_routes_" + fmt.Sprint(i) + ".xml"
 
-		// create file
-		if test.fileExists {
-			_, err := os.Create(filePath)
-			if err != nil {
-				fmt.Printf("could not create xml file for LoadRoutes: %v. iteration: %d. file path: %s\n", err, i, filePath)
-				os.Exit(1)
-			}
-
-			err = ioutil.WriteFile(filePath, test.input, 0644)
-			if err != nil {
-				fmt.Printf("could not write xml file for LoadRoutes: %v. iteration: %d. file path: %s\n", err, i, filePath)
-				os.Exit(1)
-			}
-		}
-
-		result, err := LoadRoutes(filePath)
-		if len(test.expectedErrMsg) > 0 {
-			if err == nil {
-				fmt.Printf("unexpected success in LoadRoutes test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
-				os.Exit(1)
-			}
-			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
-		} else {
-			if err != nil {
-				fmt.Printf("unexpected error in LoadRoutes test, iteration %d: %v\n", i, err)
-				os.Exit(1)
-			}
-
-			for _, expectedRoute := range test.expectedOutput {
-				foundRoute := false
-				for _, route := range result {
-					if route == expectedRoute {
-						foundRoute = true
-					}
+			// Create file.
+			if test.fileExists {
+				_, err := os.Create(filePath)
+				if err != nil {
+					fmt.Printf("could not create xml file for LoadRoutes: %v. iteration: %d. file path: %s\n", err, i, filePath)
+					os.Exit(1)
 				}
 
-				assert.Equal(t, true, foundRoute, "wrong routes parsed")
+				err = ioutil.WriteFile(filePath, test.input, 0644)
+				if err != nil {
+					fmt.Printf("could not write xml file for LoadRoutes: %v. iteration: %d. file path: %s\n", err, i, filePath)
+					os.Exit(1)
+				}
 			}
-		}
+
+			scanner := &Scanner{
+				term:                disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				routeDictionaryPath: filePath,
+			}
+
+			err := scanner.LoadRoutes()
+
+			assert.Equal(t, test.expectedErr, err)
+
+			assert.Len(t, scanner.routes, len(test.expectedRoutes))
+			for _, expectedRoute := range test.expectedRoutes {
+				assert.Contains(t, scanner.routes, expectedRoute)
+			}
+		})
 	}
 }
 
@@ -295,58 +281,59 @@ func TestParseCredentialsFromString(t *testing.T) {
 		},
 	}
 
-	testCases := []struct {
-		str            string
-		expectedResult Credentials
+	tests := []struct {
+		str                 string
+		expectedCredentials Credentials
 	}{
 		{
-			str:            "{\"usernames\":[\"\",\"admin\",\"Admin\",\"Administrator\",\"root\",\"supervisor\",\"ubnt\",\"service\",\"Dinion\",\"administrator\",\"admin1\"],\"passwords\":[\"\",\"admin\",\"9999\",\"123456\",\"pass\",\"camera\",\"1234\",\"12345\",\"fliradmin\",\"system\",\"jvc\",\"meinsm\",\"root\",\"4321\",\"111111\",\"1111111\",\"password\",\"ikwd\",\"supervisor\",\"ubnt\",\"wbox123\",\"service\"]}",
-			expectedResult: defaultCredentials,
+			str:                 "{\"usernames\":[\"\",\"admin\",\"Admin\",\"Administrator\",\"root\",\"supervisor\",\"ubnt\",\"service\",\"Dinion\",\"administrator\",\"admin1\"],\"passwords\":[\"\",\"admin\",\"9999\",\"123456\",\"pass\",\"camera\",\"1234\",\"12345\",\"fliradmin\",\"system\",\"jvc\",\"meinsm\",\"root\",\"4321\",\"111111\",\"1111111\",\"password\",\"ikwd\",\"supervisor\",\"ubnt\",\"wbox123\",\"service\"]}",
+			expectedCredentials: defaultCredentials,
 		},
 		{
-			str:            "{}",
-			expectedResult: Credentials{},
+			str:                 "{}",
+			expectedCredentials: Credentials{},
 		},
 		{
-			str:            "{\"invalid_field\":42}",
-			expectedResult: Credentials{},
+			str:                 "{\"invalid_field\":42}",
+			expectedCredentials: Credentials{},
 		},
 		{
-			str:            "not json",
-			expectedResult: Credentials{},
+			str:                 "not json",
+			expectedCredentials: Credentials{},
 		},
 	}
-	for _, test := range testCases {
+
+	for _, test := range tests {
 		parsedCredentials, _ := ParseCredentialsFromString(test.str)
-		assert.Equal(t, test.expectedResult, parsedCredentials, "unexpected result, parse error")
+		assert.Equal(t, test.expectedCredentials, parsedCredentials)
 	}
 }
 
 func TestParseRoutesFromString(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		str            string
-		expectedResult Routes
+		expectedRoutes Routes
 	}{
 		{
 			str:            "a\nb\nc",
-			expectedResult: []string{"a", "b", "c"},
+			expectedRoutes: []string{"a", "b", "c"},
 		},
 		{
 			str:            "a",
-			expectedResult: []string{"a"},
+			expectedRoutes: []string{"a"},
 		},
 		{
 			str:            "",
-			expectedResult: []string{""},
+			expectedRoutes: []string{""},
 		},
 	}
-	for _, test := range testCases {
-		parsedRoutes := ParseRoutesFromString(test.str)
-		assert.Equal(t, test.expectedResult, parsedRoutes, "unexpected result, parse error")
+
+	for _, test := range tests {
+		assert.Equal(t, test.expectedRoutes, ParseRoutesFromString(test.str))
 	}
 }
 
-func TestParseTargetsFile(t *testing.T) {
+func TestLoadTargets(t *testing.T) {
 
 	oldFS := fs
 	mfs := &mockedFS{}
@@ -355,65 +342,90 @@ func TestParseTargetsFile(t *testing.T) {
 		fs = oldFS
 	}()
 
-	testCases := []struct {
-		input string
+	tests := []struct {
+		description string
+
+		targets []string
 
 		fileExists bool
 		openError  bool
 		readError  bool
 
-		expectedResult []string
-		expectedError  error
+		expectedTargets []string
+		expectedError   error
 	}{
 		{
-			input: "0.0.0.0",
+			description: "not a file",
+
+			targets: []string{"0.0.0.0"},
 
 			fileExists: false,
 
-			expectedResult: []string{"0.0.0.0"},
-			expectedError:  nil,
+			expectedTargets: []string{"0.0.0.0"},
+			expectedError:   nil,
 		},
 		{
-			input: "test_does_not_really_exist",
+			description: "not file targets",
+
+			targets: []string{"0.0.0.0", "1.2.3.4/24"},
+
+			expectedTargets: []string{"0.0.0.0", "1.2.3.4/24"},
+			expectedError:   nil,
+		},
+		{
+			description: "file contains targets",
+
+			targets: []string{"test_does_not_really_exist"},
 
 			fileExists: true,
 
-			expectedResult: []string{"0.0.0.0", "localhost", "192.17.0.0/16", "192.168.1.140-255", "192.168.2-3.0-255"},
-			expectedError:  nil,
+			expectedTargets: []string{"0.0.0.0", "localhost", "192.17.0.0/16", "192.168.1.140-255", "192.168.2-3.0-255"},
+			expectedError:   nil,
 		},
 		{
-			input: "test_does_not_really_exist",
+			description: "open error",
+
+			targets: []string{"test_does_not_really_exist"},
 
 			fileExists: true,
 			openError:  true,
 
-			expectedResult: []string{"test_does_not_really_exist"},
-			expectedError:  os.ErrNotExist,
+			expectedTargets: []string{"test_does_not_really_exist"},
+			expectedError:   errors.New("unable to open targets file \"test_does_not_really_exist\": file does not exist"),
 		},
 		{
-			input: "test_does_not_really_exist",
+			description: "read error",
+
+			targets: []string{"test_does_not_really_exist"},
 
 			fileExists: true,
 			readError:  true,
 
-			expectedResult: []string{"test_does_not_really_exist"},
-			expectedError:  os.ErrNotExist,
+			expectedTargets: []string{"test_does_not_really_exist"},
+			expectedError:   errors.New("unable to read targets file \"test_does_not_really_exist\": file does not exist"),
 		},
 	}
 
-	for _, test := range testCases {
-		mfs.fileExists = test.fileExists
-		mfs.openError = test.openError
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			mfs.fileExists = test.fileExists
+			mfs.openError = test.openError
 
-		mfs.fileMock = &fileMock{
-			readError: test.readError,
-		}
-		mfs.fileMock.On("Close").Return(nil)
-		mfs.fileMock.WriteString("0.0.0.0\nlocalhost\n192.17.0.0/16\n192.168.1.140-255\n192.168.2-3.0-255")
+			mfs.fileMock = &fileMock{
+				readError: test.readError,
+			}
+			mfs.fileMock.On("Close").Return(nil)
+			mfs.fileMock.WriteString("0.0.0.0\nlocalhost\n192.17.0.0/16\n192.168.1.140-255\n192.168.2-3.0-255")
 
-		result, err := ParseTargetsFile(test.input)
-		assert.Equal(t, test.expectedResult, result, "unexpected result, parse error")
-		assert.Equal(t, test.expectedError, err, "unexpected error")
+			scanner := &Scanner{
+				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				targets: test.targets,
+			}
+
+			err := scanner.LoadTargets()
+			assert.Equal(t, test.expectedTargets, scanner.targets)
+			assert.Equal(t, test.expectedError, err)
+		})
 	}
 }
 

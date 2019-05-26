@@ -1,13 +1,16 @@
-package cmrdr
+package cameradar
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/ullaakut/nmap"
+	"github.com/ullaakut/disgo"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ullaakut/nmap"
 )
 
 type nmapMock struct {
@@ -23,7 +26,33 @@ func (m *nmapMock) Run() (*nmap.Run, error) {
 	return nil, args.Error(1)
 }
 
-func TestDiscover(t *testing.T) {
+var (
+	validStream1 = Stream{
+		Device:  "fakeDevice",
+		Address: "fakeAddress",
+		Port:    1337,
+	}
+
+	validStream2 = Stream{
+		Device:  "fakeDevice",
+		Address: "differentFakeAddress",
+		Port:    1337,
+	}
+
+	invalidStreamNoPort = Stream{
+		Device:  "invalidDevice",
+		Address: "fakeAddress",
+		Port:    0,
+	}
+
+	invalidStreamNoAddress = Stream{
+		Device:  "invalidDevice",
+		Address: "",
+		Port:    1337,
+	}
+)
+
+func TestScan(t *testing.T) {
 	tests := []struct {
 		description string
 
@@ -32,8 +61,8 @@ func TestDiscover(t *testing.T) {
 		speed      int
 		removePath bool
 
-		expectedErr    error
-		expectedResult []Stream
+		expectedErr     error
+		expectedStreams []Stream
 	}{
 		{
 			description: "create new scanner and call scan, no error",
@@ -48,7 +77,7 @@ func TestDiscover(t *testing.T) {
 			removePath: true,
 			ports:      []string{"80"},
 
-			expectedErr: errors.New("'nmap' binary was not found"),
+			expectedErr: errors.New("unable to create network scanner: 'nmap' binary was not found"),
 		},
 	}
 
@@ -58,43 +87,28 @@ func TestDiscover(t *testing.T) {
 				os.Setenv("PATH", "")
 			}
 
-			result, err := Discover(test.targets, test.ports, test.speed)
+			scanner := &Scanner{
+				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				targets: test.targets,
+				ports:   test.ports,
+				speed:   test.speed,
+			}
+
+			result, err := scanner.Scan()
 
 			assert.Equal(t, test.expectedErr, err)
-			assert.Equal(t, test.expectedResult, result)
+			assert.Equal(t, test.expectedStreams, result)
 		})
 	}
 }
 
-func TestScan(t *testing.T) {
-	validStream1 := Stream{
-		Device:  "fakeDevice",
-		Address: "fakeAddress",
-		Port:    1337,
-	}
+func TestInternalScan(t *testing.T) {
 
-	validStream2 := Stream{
-		Device:  "fakeDevice",
-		Address: "differentFakeAddress",
-		Port:    1337,
-	}
-
-	invalidStreamNoPort := Stream{
-		Device:  "invalidDevice",
-		Address: "fakeAddress",
-		Port:    0,
-	}
-
-	invalidStreamNoAddress := Stream{
-		Device:  "invalidDevice",
-		Address: "",
-		Port:    1337,
-	}
-
-	testCases := []struct {
+	tests := []struct {
 		description string
-		nmapResult  *nmap.Run
-		nmapError   error
+
+		nmapResult *nmap.Run
+		nmapError  error
 
 		expectedStreams []Stream
 		expectedErr     error
@@ -281,17 +295,21 @@ func TestScan(t *testing.T) {
 			description: "scan failed",
 
 			nmapError:   errors.New("scan failed"),
-			expectedErr: errors.New("scan failed"),
+			expectedErr: errors.New("error while scanning network: scan failed"),
 		},
 	}
 
-	for _, test := range testCases {
+	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			nmapMock := &nmapMock{}
 
 			nmapMock.On("Run").Return(test.nmapResult, test.nmapError)
 
-			results, err := scan(nmapMock)
+			scanner := &Scanner{
+				term: disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+			}
+
+			results, err := scanner.scan(nmapMock)
 
 			assert.Equal(t, test.expectedErr, err)
 			assert.Equal(t, test.expectedStreams, results, "wrong streams parsed")

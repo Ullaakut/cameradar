@@ -29,20 +29,22 @@ script:
 # Run unit tests
 - go test -v -covermode=count -coverprofile=coverage.out
 - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken=$COVERALLS_TOKEN
-# Launch a fake camera to check if cameradar is able to access it
-- docker run -d --name=fake_camera -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -p 8554:8554 ullaakut/rtspatt
+# Launch fake cameras to check if cameradar is able to access them
+- docker run -d --name="fake_camera_digest" -e RTSP_ROUTE="/live.sdp" -e RTSP_USERNAME="admin" -e RTSP_PASSWORD="12345" -e RTSP_AUTHENTICATION_METHOD="digest" -p 8554:8554 ullaakut/rtspatt
+- docker run -d --name="fake_camera_basic" -e RTSP_ROUTE="/live.sdp" -e RTSP_USERNAME="root" -e RTSP_PASSWORD="root" -e RTSP_AUTHENTICATION_METHOD="digest" -p 5554:5554 ullaakut/rtspatt
 # Launch cameradar on the local machine
-- docker run --net=host -t cameradar -t 0.0.0.0 -l > logs.txt
-- docker logs fake_camera > camera_logs.txt
-# Stop the fake camera
-- docker stop fake_camera
+- docker run --net=host -t cameradar -t 0.0.0.0 -p 8554,5554 -v > logs.txt
+# Gather the logs from the cameras
+- docker logs fake_camera_digest > camera_digest_logs.txt
+- docker logs fake_camera_basic > camera_basic_logs.txt
+# Stop the fake cameras
+- docker stop fake_camera_basic
+- docker stop fake_camera_digest
 # Print logs
-- cat camera_logs.txt
+- cat camera_digest_logs.txt
+- cat camera_basic_logs.txt
 - cat logs.txt
-# check if file contains more than one line
-# 1 line: Error message because no streams were found
-# More lines: Logs for all found cameras
-- if [[ $(wc -l <logs.txt) -lt 2 ]]; then exit 1; fi
+- grep "Successful attack" logs.txt || exit 1
 
 notifications:
   email:

@@ -1,9 +1,9 @@
-package cmrdr
+package cameradar
 
 import "fmt"
 
 func replace(streams []Stream, new Stream) []Stream {
-	updatedSlice := streams[:0]
+	var updatedSlice []Stream
 
 	for _, old := range streams {
 		if old.Address == new.Address && old.Port == new.Port {
@@ -16,12 +16,12 @@ func replace(streams []Stream, new Stream) []Stream {
 	return updatedSlice
 }
 
-// GetCameraRTSPURL generates a stream's RTSP URL
+// GetCameraRTSPURL generates a stream's RTSP URL.
 func GetCameraRTSPURL(stream Stream) string {
 	return "rtsp://" + stream.Username + ":" + stream.Password + "@" + stream.Address + ":" + fmt.Sprint(stream.Port) + "/" + stream.Route
 }
 
-// GetCameraAdminPanelURL returns the URL to the camera's admin panel
+// GetCameraAdminPanelURL returns the URL to the camera's admin panel.
 func GetCameraAdminPanelURL(stream Stream) string {
 	return "http://" + stream.Address + "/"
 }

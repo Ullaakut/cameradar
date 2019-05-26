@@ -1,12 +1,14 @@
-package cmrdr
+package cameradar
 
 import (
 	"errors"
+	"io/ioutil"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ullaakut/disgo"
 	curl "github.com/ullaakut/go-curl"
 )
 
@@ -33,35 +35,126 @@ func (m *CurlerMock) Duphandle() Curler {
 	return m
 }
 
+func TestAttack(t *testing.T) {
+	var (
+		stream1 = Stream{
+			Device:  "fakeDevice",
+			Address: "fakeAddress",
+			Port:    1337,
+		}
+
+		stream2 = Stream{
+			Device:  "fakeDevice",
+			Address: "differentFakeAddress",
+			Port:    1337,
+		}
+
+		fakeTargets     = []Stream{stream1, stream2}
+		fakeRoutes      = Routes{"live.sdp", "media.amp"}
+		fakeCredentials = Credentials{
+			Usernames: []string{"admin", "root"},
+			Passwords: []string{"12345", "root"},
+		}
+	)
+
+	tests := []struct {
+		description string
+
+		targets []Stream
+
+		performErr error
+
+		expectedStreams []Stream
+		expectedErr     error
+	}{
+		{
+			description: "inverted RTSP RFC",
+
+			targets: fakeTargets,
+
+			performErr: errors.New("dummy error"),
+
+			expectedStreams: fakeTargets,
+		},
+		{
+			description: "attack works",
+
+			targets: fakeTargets,
+
+			expectedStreams: fakeTargets,
+		},
+		{
+			description: "no targets",
+
+			targets: nil,
+
+			expectedStreams: nil,
+			expectedErr:     errors.New("unable to attack empty list of targets"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			curlerMock := &CurlerMock{}
+
+			if len(test.targets) != 0 {
+				curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
+				curlerMock.On("Perform").Return(test.performErr)
+				if test.performErr == nil {
+					curlerMock.On("Getinfo", mock.Anything).Return(200, nil)
+				}
+			}
+
+			scanner := &Scanner{
+				term:        disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				curl:        curlerMock,
+				timeout:     time.Millisecond,
+				verbose:     false,
+				credentials: fakeCredentials,
+				routes:      fakeRoutes,
+			}
+
+			results, err := scanner.Attack(test.targets)
+
+			assert.Equal(t, test.expectedErr, err)
+
+			assert.Len(t, results, len(test.expectedStreams))
+
+			curlerMock.AssertExpectations(t)
+		})
+	}
+}
+
 func TestAttackCredentials(t *testing.T) {
-	validStream1 := Stream{
-		Device:  "fakeDevice",
-		Address: "fakeAddress",
-		Port:    1337,
-	}
+	var (
+		stream1 = Stream{
+			Device:    "fakeDevice",
+			Address:   "fakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	validStream2 := Stream{
-		Device:  "fakeDevice",
-		Address: "differentFakeAddress",
-		Port:    1337,
-	}
+		stream2 = Stream{
+			Device:    "fakeDevice",
+			Address:   "differentFakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	invalidStream := Stream{
-		Device: "InvalidDevice",
-	}
+		fakeTargets     = []Stream{stream1, stream2}
+		fakeCredentials = Credentials{
+			Usernames: []string{"admin", "root"},
+			Passwords: []string{"12345", "root"},
+		}
+	)
 
-	fakeTargets := []Stream{validStream1, validStream2}
-	invalidTargets := []Stream{invalidStream}
-	fakeCredentials := Credentials{
-		Usernames: []string{"admin", "root"},
-		Passwords: []string{"12345", "root"},
-	}
+	tests := []struct {
+		description string
 
-	testCases := []struct {
 		targets     []Stream
 		credentials Credentials
 		timeout     time.Duration
-		log         bool
+		verbose     bool
 
 		status int
 
@@ -70,10 +163,10 @@ func TestAttackCredentials(t *testing.T) {
 		invalidTargets bool
 
 		expectedStreams []Stream
-		expectedErrMsg  string
 	}{
-		// Credentials found
 		{
+			description: "Credentials found",
+
 			targets:     fakeTargets,
 			credentials: fakeCredentials,
 			timeout:     1 * time.Millisecond,
@@ -82,8 +175,9 @@ func TestAttackCredentials(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Camera accessed
 		{
+			description: "Camera accessed",
+
 			targets:     fakeTargets,
 			credentials: fakeCredentials,
 			timeout:     1 * time.Millisecond,
@@ -92,19 +186,9 @@ func TestAttackCredentials(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Invalid targets
 		{
-			targets:     invalidTargets,
-			credentials: fakeCredentials,
-			timeout:     1 * time.Millisecond,
+			description: "curl perform fails",
 
-			invalidTargets: true,
-
-			expectedErrMsg:  "invalid targets",
-			expectedStreams: invalidTargets,
-		},
-		// curl perform fails
-		{
 			targets:     fakeTargets,
 			credentials: fakeCredentials,
 			timeout:     1 * time.Millisecond,
@@ -113,8 +197,9 @@ func TestAttackCredentials(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// curl getinfo fails
 		{
+			description: "curl getinfo fails",
+
 			targets:     fakeTargets,
 			credentials: fakeCredentials,
 			timeout:     1 * time.Millisecond,
@@ -123,92 +208,88 @@ func TestAttackCredentials(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Logging disabled
 		{
+			description: "Verbose mode disabled",
+
 			targets:     fakeTargets,
 			credentials: fakeCredentials,
 			timeout:     1 * time.Millisecond,
-			log:         false,
+			verbose:     false,
 
 			status: 403,
 
 			expectedStreams: fakeTargets,
 		},
-		// Logging enabled
 		{
+			description: "Verbose mode enabled",
+
 			targets:     fakeTargets,
 			credentials: fakeCredentials,
 			timeout:     1 * time.Millisecond,
-			log:         true,
+			verbose:     true,
 
 			status: 403,
 
 			expectedStreams: fakeTargets,
 		},
 	}
-	for i, test := range testCases {
-		curlerMock := &CurlerMock{}
 
-		if !test.invalidTargets {
-			curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
-			curlerMock.On("Perform").Return(test.performErr)
-			if test.performErr == nil {
-				curlerMock.On("Getinfo", mock.Anything).Return(test.status, test.getInfoErr)
-			}
-		}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			curlerMock := &CurlerMock{}
 
-		results, err := AttackCredentials(curlerMock, test.targets, test.credentials, test.timeout, test.log)
-
-		if len(test.expectedErrMsg) > 0 {
-			if err == nil {
-				t.Errorf("unexpected success in AttackCredentials test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
-			}
-			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
-		} else {
-			if err != nil {
-				t.Errorf("unexpected error in AttackCredentials test, iteration %d: %v\n", i, err)
-			}
-			for _, stream := range test.expectedStreams {
-				foundStream := false
-				for _, result := range results {
-					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
-						foundStream = true
-					}
+			if !test.invalidTargets {
+				curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
+				curlerMock.On("Perform").Return(test.performErr)
+				if test.performErr == nil {
+					curlerMock.On("Getinfo", mock.Anything).Return(test.status, test.getInfoErr)
 				}
-				assert.Equal(t, true, foundStream, "wrong streams parsed")
 			}
-		}
-		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
-		curlerMock.AssertExpectations(t)
+
+			scanner := &Scanner{
+				term:        disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				curl:        curlerMock,
+				timeout:     test.timeout,
+				verbose:     test.verbose,
+				credentials: test.credentials,
+			}
+
+			results := scanner.AttackCredentials(test.targets)
+
+			assert.Len(t, results, len(test.expectedStreams))
+
+			curlerMock.AssertExpectations(t)
+		})
 	}
 }
 
 func TestAttackRoute(t *testing.T) {
-	validStream1 := Stream{
-		Device:  "fakeDevice",
-		Address: "fakeAddress",
-		Port:    1337,
-	}
+	var (
+		stream1 = Stream{
+			Device:    "fakeDevice",
+			Address:   "fakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	validStream2 := Stream{
-		Device:  "fakeDevice",
-		Address: "differentFakeAddress",
-		Port:    1337,
-	}
+		stream2 = Stream{
+			Device:    "fakeDevice",
+			Address:   "differentFakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	invalidStream := Stream{
-		Device: "InvalidDevice",
-	}
+		fakeTargets = []Stream{stream1, stream2}
+		fakeRoutes  = Routes{"live.sdp", "media.amp"}
+	)
 
-	fakeTargets := []Stream{validStream1, validStream2}
-	fakeRoutes := Routes{"live.sdp", "media.amp"}
-	invalidTargets := []Stream{invalidStream}
+	tests := []struct {
+		description string
 
-	testCases := []struct {
 		targets []Stream
 		routes  Routes
 		timeout time.Duration
-		log     bool
+		verbose bool
 
 		status int
 
@@ -217,10 +298,11 @@ func TestAttackRoute(t *testing.T) {
 		invalidTargets bool
 
 		expectedStreams []Stream
-		expectedErrMsg  string
+		expectedErr     error
 	}{
-		// Route found
 		{
+			description: "Route found",
+
 			targets: fakeTargets,
 			routes:  fakeRoutes,
 			timeout: 1 * time.Millisecond,
@@ -229,8 +311,9 @@ func TestAttackRoute(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Route found
 		{
+			description: "Route found",
+
 			targets: fakeTargets,
 			routes:  fakeRoutes,
 			timeout: 1 * time.Millisecond,
@@ -239,8 +322,9 @@ func TestAttackRoute(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Camera accessed
 		{
+			description: "Camera accessed",
+
 			targets: fakeTargets,
 			routes:  fakeRoutes,
 			timeout: 1 * time.Millisecond,
@@ -249,18 +333,9 @@ func TestAttackRoute(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Invalid targets
 		{
-			targets:        invalidTargets,
-			routes:         fakeRoutes,
-			timeout:        1 * time.Millisecond,
-			invalidTargets: true,
+			description: "curl perform fails",
 
-			expectedErrMsg:  "invalid targets",
-			expectedStreams: invalidTargets,
-		},
-		// curl perform fails
-		{
 			targets: fakeTargets,
 			routes:  fakeRoutes,
 			timeout: 1 * time.Millisecond,
@@ -269,8 +344,9 @@ func TestAttackRoute(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// curl getinfo fails
 		{
+			description: "curl getinfo fails",
+
 			targets: fakeTargets,
 			routes:  fakeRoutes,
 			timeout: 1 * time.Millisecond,
@@ -279,97 +355,82 @@ func TestAttackRoute(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Logs disabled
 		{
+			description: "verbose mode disabled",
+
 			targets: fakeTargets,
 			routes:  fakeRoutes,
 			timeout: 1 * time.Millisecond,
-			log:     false,
+			verbose: false,
 
 			expectedStreams: fakeTargets,
 		},
-		// Logs enabled
 		{
+			description: "verbose mode enabled",
+
 			targets: fakeTargets,
 			routes:  fakeRoutes,
 			timeout: 1 * time.Millisecond,
-			log:     true,
+			verbose: true,
 
 			expectedStreams: fakeTargets,
 		},
 	}
 
-	for i, test := range testCases {
-		curlerMock := &CurlerMock{}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			curlerMock := &CurlerMock{}
 
-		if !test.invalidTargets {
-			curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
-			curlerMock.On("Perform").Return(test.performErr)
-			if test.performErr == nil {
-				curlerMock.On("Getinfo", mock.Anything).Return(test.status, test.getInfoErr)
-			}
-		}
-
-		results, err := AttackRoute(curlerMock, test.targets, test.routes, test.timeout, test.log)
-
-		if len(test.expectedErrMsg) > 0 {
-			if err == nil {
-				t.Errorf("unexpected success in AttackRoute test, iteration %d. expected error: %s\n", i, test.expectedErrMsg)
-			}
-
-			assert.Contains(t, err.Error(), test.expectedErrMsg, "wrong error message")
-		} else {
-			if err != nil {
-				t.Errorf("unexpected error in AttackRoute test, iteration %d: %v\n", i, err)
-			}
-
-			for _, stream := range test.expectedStreams {
-				foundStream := false
-				for _, result := range results {
-					if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
-						foundStream = true
-					}
+			if !test.invalidTargets {
+				curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
+				curlerMock.On("Perform").Return(test.performErr)
+				if test.performErr == nil {
+					curlerMock.On("Getinfo", mock.Anything).Return(test.status, test.getInfoErr)
 				}
-
-				assert.Equal(t, true, foundStream, "wrong streams parsed")
 			}
-		}
 
-		assert.Equal(t, len(test.expectedStreams), len(results), "wrong streams parsed")
+			scanner := &Scanner{
+				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				curl:    curlerMock,
+				timeout: test.timeout,
+				verbose: test.verbose,
+				routes:  test.routes,
+			}
 
-		curlerMock.AssertExpectations(t)
+			results := scanner.AttackRoute(test.targets)
+
+			assert.Len(t, results, len(test.expectedStreams))
+
+			curlerMock.AssertExpectations(t)
+		})
 	}
 }
 
 func TestValidateStreams(t *testing.T) {
-	validStream1 := Stream{
-		Device:    "fakeDevice",
-		Address:   "fakeAddress",
-		Port:      1337,
-		Available: true,
-	}
+	var (
+		stream1 = Stream{
+			Device:    "fakeDevice",
+			Address:   "fakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	validStream2 := Stream{
-		Device:    "fakeDevice",
-		Address:   "differentFakeAddress",
-		Port:      1337,
-		Available: true,
-	}
+		stream2 = Stream{
+			Device:    "fakeDevice",
+			Address:   "differentFakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	unavailableStream := Stream{
-		Device:    "fakeDevice",
-		Available: false,
-	}
+		fakeTargets = []Stream{stream1, stream2}
+	)
 
-	fakeTargets := []Stream{validStream1, validStream2}
-	unavailableTargets := []Stream{unavailableStream}
-
-	testCases := []struct {
-		desc string
+	tests := []struct {
+		description string
 
 		targets []Stream
 		timeout time.Duration
-		log     bool
+		verbose bool
 
 		status int
 
@@ -377,11 +438,9 @@ func TestValidateStreams(t *testing.T) {
 		getInfoErr error
 
 		expectedStreams []Stream
-		expectedErrMsg  string
 	}{
-		// Route found
 		{
-			desc: "route found",
+			description: "route found",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
@@ -390,9 +449,8 @@ func TestValidateStreams(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Route found
 		{
-			desc: "route found",
+			description: "route found",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
@@ -401,9 +459,8 @@ func TestValidateStreams(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Camera accessed
 		{
-			desc: "camera accessed",
+			description: "camera accessed",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
@@ -412,20 +469,18 @@ func TestValidateStreams(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Unavailable stream
 		{
-			desc: "unavailable stream",
+			description: "unavailable stream",
 
-			targets: unavailableTargets,
+			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
 
 			status: 400,
 
-			expectedStreams: unavailableTargets,
+			expectedStreams: fakeTargets,
 		},
-		// curl perform fails
 		{
-			desc: "curl perform fails",
+			description: "curl perform fails",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
@@ -434,9 +489,8 @@ func TestValidateStreams(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// curl getinfo fails
 		{
-			desc: "curl getinfo fails",
+			description: "curl getinfo fails",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
@@ -445,63 +499,50 @@ func TestValidateStreams(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Logs disabled
 		{
-			desc: "logs disabled",
+			description: "verbose disabled",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
-			log:     false,
+			verbose: false,
 
 			expectedStreams: fakeTargets,
 		},
-		// Logs enabled
 		{
-			desc: "logs enabled",
+			description: "verbose enabled",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
-			log:     true,
+			verbose: true,
 
 			expectedStreams: fakeTargets,
 		},
 	}
-	for i, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
 			curlerMock := &CurlerMock{}
 
 			curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
-			curlerMock.On("Perform").Return(tC.performErr)
-			if tC.performErr == nil {
-				curlerMock.On("Getinfo", mock.Anything).Return(tC.status, tC.getInfoErr)
+			curlerMock.On("Perform").Return(test.performErr)
+			if test.performErr == nil {
+				curlerMock.On("Getinfo", mock.Anything).Return(test.status, test.getInfoErr)
 			}
 
-			results, err := ValidateStreams(curlerMock, tC.targets, tC.timeout, tC.log)
-
-			if len(tC.expectedErrMsg) > 0 {
-				if err == nil {
-					t.Errorf("unexpected success in ValidateStream test, iteration %d. expected error: %s\n", i, tC.expectedErrMsg)
-				}
-
-				assert.Contains(t, err.Error(), tC.expectedErrMsg, "wrong error message")
-			} else {
-				if err != nil {
-					t.Errorf("unexpected error in ValidateStream test, iteration %d: %v\n", i, err)
-				}
-
-				for _, stream := range tC.expectedStreams {
-					foundStream := false
-					for _, result := range results {
-						if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
-							foundStream = true
-						}
-					}
-
-					assert.Equal(t, true, foundStream, "wrong streams parsed")
-				}
+			scanner := &Scanner{
+				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				curl:    curlerMock,
+				timeout: test.timeout,
+				verbose: test.verbose,
 			}
 
-			assert.Equal(t, len(tC.expectedStreams), len(results), "wrong streams parsed")
+			results := scanner.ValidateStreams(test.targets)
+
+			assert.Equal(t, len(test.expectedStreams), len(results))
+
+			for _, expectedStream := range test.expectedStreams {
+				assert.Contains(t, results, expectedStream)
+			}
 
 			curlerMock.AssertExpectations(t)
 		})
@@ -509,28 +550,30 @@ func TestValidateStreams(t *testing.T) {
 }
 
 func TestDetectAuthenticationType(t *testing.T) {
-	validStream1 := Stream{
-		Device:    "fakeDevice",
-		Address:   "fakeAddress",
-		Port:      1337,
-		Available: true,
-	}
+	var (
+		stream1 = Stream{
+			Device:    "fakeDevice",
+			Address:   "fakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	validStream2 := Stream{
-		Device:    "fakeDevice",
-		Address:   "differentFakeAddress",
-		Port:      1337,
-		Available: true,
-	}
+		stream2 = Stream{
+			Device:    "fakeDevice",
+			Address:   "differentFakeAddress",
+			Port:      1337,
+			Available: true,
+		}
 
-	fakeTargets := []Stream{validStream1, validStream2}
+		fakeTargets = []Stream{stream1, stream2}
+	)
 
-	testCases := []struct {
-		desc string
+	tests := []struct {
+		description string
 
 		targets []Stream
 		timeout time.Duration
-		log     bool
+		verbose bool
 
 		status int
 
@@ -538,11 +581,39 @@ func TestDetectAuthenticationType(t *testing.T) {
 		getInfoErr error
 
 		expectedStreams []Stream
-		expectedErrMsg  string
 	}{
-		// curl getinfo fails
 		{
-			desc: "curl getinfo fails",
+			description: "no auth enabled",
+
+			targets: fakeTargets,
+			timeout: 1 * time.Millisecond,
+
+			status: 0,
+
+			expectedStreams: fakeTargets,
+		},
+		{
+			description: "basic auth enabled",
+
+			targets: fakeTargets,
+			timeout: 1 * time.Millisecond,
+
+			status: 1,
+
+			expectedStreams: fakeTargets,
+		},
+		{
+			description: "digest auth enabled",
+
+			targets: fakeTargets,
+			timeout: 1 * time.Millisecond,
+
+			status: 2,
+
+			expectedStreams: fakeTargets,
+		},
+		{
+			description: "curl getinfo fails",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
@@ -551,9 +622,8 @@ func TestDetectAuthenticationType(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// curl perform fails
 		{
-			desc: "curl perform fails",
+			description: "curl perform fails",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
@@ -562,63 +632,50 @@ func TestDetectAuthenticationType(t *testing.T) {
 
 			expectedStreams: fakeTargets,
 		},
-		// Logs disabled
 		{
-			desc: "logs disabled",
+			description: "verbose disabled",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
-			log:     false,
+			verbose: false,
 
 			expectedStreams: fakeTargets,
 		},
-		// Logs enabled
 		{
-			desc: "logs enabled",
+			description: "verbose enabled",
 
 			targets: fakeTargets,
 			timeout: 1 * time.Millisecond,
-			log:     true,
+			verbose: true,
 
 			expectedStreams: fakeTargets,
 		},
 	}
-	for i, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
 			curlerMock := &CurlerMock{}
 
 			curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
-			curlerMock.On("Perform").Return(tC.performErr)
-			if tC.performErr == nil {
-				curlerMock.On("Getinfo", mock.Anything).Return(tC.status, tC.getInfoErr)
+			curlerMock.On("Perform").Return(test.performErr)
+			if test.performErr == nil {
+				curlerMock.On("Getinfo", mock.Anything).Return(test.status, test.getInfoErr)
 			}
 
-			results, err := DetectAuthMethods(curlerMock, tC.targets, tC.timeout, tC.log)
-
-			if len(tC.expectedErrMsg) > 0 {
-				if err == nil {
-					t.Errorf("unexpected success in DetectAuthMethods test, iteration %d. expected error: %s\n", i, tC.expectedErrMsg)
-				}
-
-				assert.Contains(t, err.Error(), tC.expectedErrMsg, "wrong error message")
-			} else {
-				if err != nil {
-					t.Errorf("unexpected error in DetectAuthMethods test, iteration %d: %v\n", i, err)
-				}
-
-				for _, stream := range tC.expectedStreams {
-					foundStream := false
-					for _, result := range results {
-						if result.Address == stream.Address && result.Device == stream.Device && result.Port == stream.Port {
-							foundStream = true
-						}
-					}
-
-					assert.Equal(t, true, foundStream, "wrong streams parsed")
-				}
+			scanner := &Scanner{
+				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				curl:    curlerMock,
+				timeout: test.timeout,
+				verbose: test.verbose,
 			}
 
-			assert.Equal(t, len(tC.expectedStreams), len(results), "wrong streams parsed")
+			results := scanner.DetectAuthMethods(test.targets)
+
+			assert.Equal(t, len(test.expectedStreams), len(results))
+
+			for _, expectedStream := range test.expectedStreams {
+				assert.Contains(t, results, expectedStream)
+			}
 
 			curlerMock.AssertExpectations(t)
 		})
