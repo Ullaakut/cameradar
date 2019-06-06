@@ -55,6 +55,8 @@ h264_vga.sdp
 h264.sdp
 h264/ch1/sub/av_stream
 h264/media.amp
+h264Preview_01_main
+h264Preview_01_sub
 HighResolutionVideo
 image.mpg
 img/media.sav
