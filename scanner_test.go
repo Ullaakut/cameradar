@@ -3,6 +3,7 @@ package cameradar
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -77,21 +78,34 @@ func TestNew(t *testing.T) {
 
 			expectedErr: true,
 		},
+		{
+			description: "gopath not set and default dicts",
+
+			customCredentials: defaultCredentialDictionaryPath,
+			customRoutes:      defaultRouteDictionaryPath,
+
+			expectedErr: true,
+		},
 	}
+
+	// Temporarily empty the gopath for testing purposes.
+	defer os.Setenv("GOPATH", os.Getenv("GOPATH"))
 
 	for i, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			os.Setenv("GOPATH", "")
+
 			if test.loadTargetsFail {
 				test.targets = []string{generateTmpFileName(i, "targets")}
 				ioutil.WriteFile(test.targets[0], []byte(`0.0.0.0`), 0000)
 			}
 
-			if !test.loadCredsFail {
+			if !test.loadCredsFail && test.customCredentials == "" {
 				test.customCredentials = generateTmpFileName(i, "creds")
 				ioutil.WriteFile(test.customCredentials, []byte(`{"usernames":["admin"],"passwords":["admin"]}`), 0644)
 			}
 
-			if !test.loadRoutesFail {
+			if !test.loadRoutesFail && test.customRoutes == "" {
 				test.customRoutes = generateTmpFileName(i, "routes")
 				ioutil.WriteFile(test.customRoutes, []byte(`live.sdp`), 0644)
 			}
