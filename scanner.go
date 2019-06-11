@@ -7,7 +7,13 @@ import (
 	"time"
 
 	"github.com/ullaakut/disgo"
+	"github.com/ullaakut/disgo/style"
 	curl "github.com/ullaakut/go-curl"
+)
+
+const (
+	defaultCredentialDictionaryPath = "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/credentials.json"
+	defaultRouteDictionaryPath      = "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/routes"
 )
 
 // Scanner represents a cameradar scanner. It scans a network and
@@ -43,8 +49,8 @@ func New(options ...func(*Scanner)) (*Scanner, error) {
 
 	scanner := &Scanner{
 		curl:                     &Curl{CURL: handle},
-		credentialDictionaryPath: "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/credentials.json",
-		routeDictionaryPath:      "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/routes",
+		credentialDictionaryPath: defaultCredentialDictionaryPath,
+		routeDictionaryPath:      defaultRouteDictionaryPath,
 	}
 
 	for _, option := range options {
@@ -52,6 +58,10 @@ func New(options ...func(*Scanner)) (*Scanner, error) {
 	}
 
 	gopath := os.Getenv("GOPATH")
+	if gopath == "" && scanner.credentialDictionaryPath == defaultCredentialDictionaryPath && scanner.routeDictionaryPath == defaultRouteDictionaryPath {
+		disgo.Errorln(style.Failure("No $GOPATH was found.\nDictionaries may not be loaded properly, please set your $GOPATH to use the default dictionaries."))
+	}
+
 	scanner.credentialDictionaryPath = strings.Replace(scanner.credentialDictionaryPath, "<GOPATH>", gopath, 1)
 	scanner.routeDictionaryPath = strings.Replace(scanner.routeDictionaryPath, "<GOPATH>", gopath, 1)
 

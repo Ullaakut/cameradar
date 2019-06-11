@@ -206,12 +206,13 @@ Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
 
 #### Go build
 
-Make sure you installed the [dependencies](#dependencies), and that you have Go modules enabled (`GO111MODULE=on`)
+Make sure you installed the [dependencies](#dependencies), **and that you have Go modules enabled (`GO111MODULE=on`)**.
 
-1. `go get github.com/ullaakut/cameradar`
-2. `cd $GOPATH/src/github.com/ullaakut/cameradar`
-3. `cd cameradar`
-4. `go build`
+1. `export GO111MODULE=on` (unless it's already on)
+2. `go get github.com/ullaakut/cameradar`
+3. `cd $GOPATH/src/github.com/ullaakut/cameradar`
+4. `cd cmd/cameradar`
+5. `go build`
 
 The cameradar binary is now in the root of the directory.
 
