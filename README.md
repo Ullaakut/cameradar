@@ -82,12 +82,13 @@ Only use this solution if for some reason using docker is not an option for you 
 
 ### Steps to install
 
-Make sure you installed the dependencies mentionned above, and that you have Go modules enabled (`GO111MODULE=on`)
+Make sure you installed the [dependencies](#dependencies), **and that you have Go modules enabled (`GO111MODULE=on`)**.
 
-1. `go get github.com/ullaakut/cameradar`
-2. `cd $GOPATH/src/github.com/ullaakut/cameradar`
-3. `cd cameradar`
-4. `go install`
+1. `export GO111MODULE=on` (unless it's already on)
+2. `go get github.com/ullaakut/cameradar`
+3. `cd $GOPATH/src/github.com/ullaakut/cameradar`
+4. `cd cmd/cameradar`
+5. `go build`
 
 The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
