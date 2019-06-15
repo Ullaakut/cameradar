@@ -28,7 +28,7 @@ before_install:
 - sudo apt-get remove docker docker-engine docker.io
 - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 - sudo apt-get update
-- sudo apt-get install -y docker-ce nmap
+- sudo apt-get install -y docker-ce nmap libcurl-openssl1.0-dev
 - go get github.com/mattn/goveralls
 - docker version
 
@@ -57,6 +57,7 @@ script:
 - cat camera_basic_logs.txt
 - cat logs.txt
 - grep "Successful attack" logs.txt || exit 1
+- git clean -fd
 
 after_success:
 # You'll need to run `snapcraft export-login snap.login` and
