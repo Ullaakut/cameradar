@@ -197,13 +197,13 @@ func (s *Scanner) detectAuthMethod(stream Stream) int {
 	// Perform the request.
 	err := c.Perform()
 	if err != nil {
-		s.term.Debugf("Perform failed: %v", err)
+		s.term.Errorf("Perform failed: %v", err)
 		return -1
 	}
 
 	authType, err := c.Getinfo(curl.INFO_HTTPAUTH_AVAIL)
 	if err != nil {
-		s.term.Debugf("Getinfo failed: %v", err)
+		s.term.Errorf("Getinfo failed: %v", err)
 		return -1
 	}
 
@@ -242,14 +242,14 @@ func (s *Scanner) routeAttack(stream Stream, route string) bool {
 	// Perform the request.
 	err := c.Perform()
 	if err != nil {
-		s.term.Debugf("Perform failed: %v", err)
+		s.term.Errorf("Perform failed: %v", err)
 		return false
 	}
 
 	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
-		s.term.Debugf("Getinfo failed: %v", err)
+		s.term.Errorf("Getinfo failed: %v", err)
 		return false
 	}
 
@@ -292,14 +292,14 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) bo
 	// Perform the request.
 	err := c.Perform()
 	if err != nil {
-		s.term.Debugf("Perform failed: %v", err)
+		s.term.Errorf("Perform failed: %v", err)
 		return false
 	}
 
 	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
-		s.term.Debugf("Getinfo failed: %v", err)
+		s.term.Errorf("Getinfo failed: %v", err)
 		return false
 	}
 
@@ -345,14 +345,14 @@ func (s *Scanner) validateStream(stream Stream) bool {
 	// Perform the request.
 	err := c.Perform()
 	if err != nil {
-		s.term.Debugf("Perform failed: %v", err)
+		s.term.Errorf("Perform failed: %v", err)
 		return false
 	}
 
 	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
-		s.term.Debugf("Getinfo failed: %v", err)
+		s.term.Errorf("Getinfo failed: %v", err)
 		return false
 	}
 
