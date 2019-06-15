@@ -5,3 +5,6 @@
 # Golang
 /bin/*
 /pkg/*
+
+# Builds
+dist/

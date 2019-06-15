@@ -2,8 +2,18 @@ dist: trusty
 sudo: required
 language: go
 
+addons:
+  apt:
+    packages:
+    # needed for the nfpm pipe:
+    - rpm
+    # needed for the snap pipe:
+    - snapd
+
 env:
   - GO111MODULE=on
+  # needed for the snap pipe:
+  - PATH=/snap/bin:$PATH
 
 services:
   - docker
@@ -23,12 +33,14 @@ before_install:
 - docker version
 
 install:
+# needed for the snap pipe:
+- sudo snap install snapcraft --classic
 - docker build -t cameradar .
 
 script:
 # Run unit tests
-- go test -v -covermode=count -coverprofile=coverage.out
-- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken=$COVERALLS_TOKEN
+- GO111MODULE=on go test -v -covermode=count -coverprofile=coverage.out
+- GO111MODULE=on $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken=$COVERALLS_TOKEN
 # Launch fake cameras to check if cameradar is able to access them
 - docker run -d --name="fake_camera_digest" -e RTSP_ROUTE="/live.sdp" -e RTSP_USERNAME="admin" -e RTSP_PASSWORD="12345" -e RTSP_AUTHENTICATION_METHOD="digest" -p 8554:8554 ullaakut/rtspatt
 - docker run -d --name="fake_camera_basic" -e RTSP_ROUTE="/live.sdp" -e RTSP_USERNAME="root" -e RTSP_PASSWORD="root" -e RTSP_AUTHENTICATION_METHOD="digest" -p 5554:5554 ullaakut/rtspatt
@@ -45,6 +57,21 @@ script:
 - cat camera_basic_logs.txt
 - cat logs.txt
 - grep "Successful attack" logs.txt || exit 1
+
+after_success:
+# You'll need to run `snapcraft export-login snap.login` and
+# `travis encrypt-file snap.login --add` to add the key to the travis
+# environment.
+- test -n "$TRAVIS_TAG" && snapcraft login --with snap.login
+
+# calls goreleaser
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: curl -sL https://git.io/goreleaser | bash
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = linux
 
 notifications:
   email:
