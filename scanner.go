@@ -3,7 +3,6 @@ package cameradar
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/ullaakut/disgo"
@@ -12,8 +11,8 @@ import (
 )
 
 const (
-	defaultCredentialDictionaryPath = "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/credentials.json"
-	defaultRouteDictionaryPath      = "<GOPATH>/src/github.com/ullaakut/cameradar/dictionaries/routes"
+	defaultCredentialDictionaryPath = "${GOPATH}/src/github.com/ullaakut/cameradar/dictionaries/credentials.json"
+	defaultRouteDictionaryPath      = "${GOPATH}/src/github.com/ullaakut/cameradar/dictionaries/routes"
 )
 
 // Scanner represents a cameradar scanner. It scans a network and
@@ -62,8 +61,8 @@ func New(options ...func(*Scanner)) (*Scanner, error) {
 		disgo.Errorln(style.Failure("No $GOPATH was found.\nDictionaries may not be loaded properly, please set your $GOPATH to use the default dictionaries."))
 	}
 
-	scanner.credentialDictionaryPath = strings.Replace(scanner.credentialDictionaryPath, "<GOPATH>", gopath, 1)
-	scanner.routeDictionaryPath = strings.Replace(scanner.routeDictionaryPath, "<GOPATH>", gopath, 1)
+	scanner.credentialDictionaryPath = os.ExpandEnv(scanner.credentialDictionaryPath)
+	scanner.routeDictionaryPath = os.ExpandEnv(scanner.routeDictionaryPath)
 
 	scanner.term = disgo.NewTerminal(
 		disgo.WithDebug(scanner.debug),
