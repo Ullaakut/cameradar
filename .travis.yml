@@ -57,6 +57,7 @@ script:
 - cat camera_basic_logs.txt
 - cat logs.txt
 - grep "Successful attack" logs.txt || exit 1
+- git clean -fd
 
 after_success:
 # You'll need to run `snapcraft export-login snap.login` and
