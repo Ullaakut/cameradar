@@ -88,7 +88,7 @@ Make sure you installed the [dependencies](#dependencies), **and that you have G
 2. `go get github.com/ullaakut/cameradar`
 3. `cd $GOPATH/src/github.com/ullaakut/cameradar`
 4. `cd cmd/cameradar`
-5. `go build`
+5. `go install`
 
 The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
@@ -213,9 +213,9 @@ Make sure you installed the [dependencies](#dependencies), **and that you have G
 2. `go get github.com/ullaakut/cameradar`
 3. `cd $GOPATH/src/github.com/ullaakut/cameradar`
 4. `cd cmd/cameradar`
-5. `go build`
+5. `go install`
 
-The cameradar binary is now in the root of the directory.
+The cameradar binary is now in `$GOPATH/bin/cameradar`.
 
 See [the contribution document](/CONTRIBUTING.md) to get started.
 
