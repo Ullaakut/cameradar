@@ -33,8 +33,6 @@ before_install:
 - docker version
 
 install:
-# needed for the snap pipe:
-- sudo snap install snapcraft --classic
 - docker build -t cameradar .
 
 script:
@@ -58,22 +56,6 @@ script:
 - cat logs.txt
 - grep "Successful attack" logs.txt || exit 1
 - git clean -fd
-
-after_success:
-# You'll need to run `snapcraft export-login snap.login` and
-# `travis encrypt-file snap.login --add` to add the key to the travis
-# environment.
-- test -n "$TRAVIS_TAG" && snapcraft login --with snap.login
-- git diff
-
-# calls goreleaser
-deploy:
-- provider: script
-  skip_cleanup: true
-  script: curl -sL https://git.io/goreleaser | bash ; or git diff
-  on:
-    tags: true
-    condition: $TRAVIS_OS_NAME = linux
 
 notifications:
   email:
