@@ -64,12 +64,13 @@ after_success:
 # `travis encrypt-file snap.login --add` to add the key to the travis
 # environment.
 - test -n "$TRAVIS_TAG" && snapcraft login --with snap.login
+- git diff
 
 # calls goreleaser
 deploy:
 - provider: script
   skip_cleanup: true
-  script: curl -sL https://git.io/goreleaser | bash
+  script: curl -sL https://git.io/goreleaser | bash ; or git diff
   on:
     tags: true
     condition: $TRAVIS_OS_NAME = linux
