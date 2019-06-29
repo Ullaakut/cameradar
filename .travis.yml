@@ -28,7 +28,7 @@ before_install:
 - sudo apt-get remove docker docker-engine docker.io
 - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 - sudo apt-get update
-- sudo apt-get install -y docker-ce nmap libcurl-openssl1.0-dev
+- sudo apt-get install -y docker-ce nmap libcurl4-openssl-dev
 - go get github.com/mattn/goveralls
 - docker version
 
