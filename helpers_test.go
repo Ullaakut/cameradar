@@ -59,7 +59,7 @@ func TestReplace(t *testing.T) {
 func TestGetCameraRTSPURL(t *testing.T) {
 	validStream := Stream{
 		Address:  "1.2.3.4",
-		Username: "ullaakut",
+		Username: "Ullaakut",
 		Password: "ba69897483886f0d2b0afb6345b76c0c",
 		Route:    "cameradar.sdp",
 		Port:     1337,
@@ -73,7 +73,7 @@ func TestGetCameraRTSPURL(t *testing.T) {
 		{
 			stream: validStream,
 
-			expectedRTSPURL: "rtsp://ullaakut:ba69897483886f0d2b0afb6345b76c0c@1.2.3.4:1337/cameradar.sdp",
+			expectedRTSPURL: "rtsp://Ullaakut:ba69897483886f0d2b0afb6345b76c0c@1.2.3.4:1337/cameradar.sdp",
 		},
 	}
 

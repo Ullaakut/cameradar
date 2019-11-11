@@ -63,6 +63,7 @@ func (s *Scanner) Attack(targets []Stream) ([]Stream, error) {
 func (s *Scanner) ValidateStreams(targets []Stream) []Stream {
 	for i := range targets {
 		targets[i].Available = s.validateStream(targets[i])
+		time.Sleep(s.attackInterval)
 	}
 
 	return targets
@@ -78,6 +79,7 @@ func (s *Scanner) AttackCredentials(targets []Stream) []Stream {
 		// TODO: Perf Improvement: Skip cameras with no auth type detected, and set their
 		// CredentialsFound value to true.
 		go s.attackCameraCredentials(targets[i], resChan)
+		time.Sleep(s.attackInterval)
 	}
 
 	attackResults := []Stream{}
@@ -103,6 +105,7 @@ func (s *Scanner) AttackRoute(targets []Stream) []Stream {
 
 	for i := range targets {
 		go s.attackCameraRoute(targets[i], resChan)
+		time.Sleep(s.attackInterval)
 	}
 
 	attackResults := []Stream{}
@@ -125,6 +128,7 @@ func (s *Scanner) AttackRoute(targets []Stream) []Stream {
 func (s *Scanner) DetectAuthMethods(targets []Stream) []Stream {
 	for i := range targets {
 		targets[i].AuthenticationType = s.detectAuthMethod(targets[i])
+		time.Sleep(s.attackInterval)
 
 		var authMethod string
 		switch targets[i].AuthenticationType {

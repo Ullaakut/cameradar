@@ -25,7 +25,8 @@ type Scanner struct {
 	ports                    []string
 	debug                    bool
 	verbose                  bool
-	speed                    int
+	scanSpeed                int
+	attackInterval           time.Duration
 	timeout                  time.Duration
 	credentialDictionaryPath string
 	routeDictionaryPath      string
@@ -134,11 +135,20 @@ func WithCustomRoutes(dictionaryPath string) func(s *Scanner) {
 	}
 }
 
-// WithSpeed specifies the speed at which the scan should be executed. Faster
+// WithScanSpeed specifies the speed at which the scan should be executed. Faster
 // means easier to detect, slower has bigger timeout values and is more silent.
-func WithSpeed(speed int) func(s *Scanner) {
+func WithScanSpeed(speed int) func(s *Scanner) {
 	return func(s *Scanner) {
-		s.speed = speed
+		s.scanSpeed = speed
+	}
+}
+
+// WithAttackInterval specifies the interval of time during which Cameradar
+// should wait between each attack attempt during bruteforcing.
+// Setting a high value for this obviously makes attacks much slower.
+func WithAttackInterval(interval time.Duration) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.attackInterval = interval
 	}
 }
 
