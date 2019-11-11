@@ -119,8 +119,8 @@ If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able
 * **"-t, --targets"**: Set target. Required. Target can be a file (see [instructions on how to format the file](#format-input-file)), an IP, an IP range, a subnetwork, or a combination of those. Example: `--targets="192.168.1.72,192.168.1.74"`
 * **"-p, --ports"**: (Default: `554,5554,8554`) Set custom ports.
 * **"-s, --scan-speed"**: (Default: `4`) Set custom nmap discovery presets to improve speed or accuracy. It's recommended to lower it if you are attempting to scan an unstable and slow network, or to increase it if on a very performant and reliable network. You might also want to keep it low to keep your discovery stealthy. See [this for more info on the nmap timing templates](https://nmap.org/book/man-performance.html).
-* **"-I, --attack-interval"**: (Default: `0`) Set custom interval in milliseconds after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on fast and reliable networks.
-* **"-T, --timeout"**: (Default: `2000`) Set custom timeout value in milliseconds after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on fast and reliable networks.
+* **"-I, --attack-interval"**: (Default: `0ms`) Set custom interval after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on fast and reliable networks.
+* **"-T, --timeout"**: (Default: `2000ms`) Set custom timeout value after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on fast and reliable networks.
 * **"-r, --custom-routes"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/routes`) Set custom dictionary path for routes
 * **"-c, --custom-credentials"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/credentials.json`) Set custom dictionary path for credentials
 * **"-o, --nmap-output"**: (Default: `/tmp/cameradar_scan.xml`) Set custom nmap output path
@@ -184,15 +184,15 @@ Default value: `4`
 
 ### `CAMERADAR_ATTACK_INTERVAL`
 
-This optional variable allows you to set custom interval in milliseconds to wait between each attack in order to stay stealthy. It's recommended to increase it when attempting to scan a network that might be protected against bruteforce attacks. By default, there is no interval, in order to make attacks as fast as possible
+This optional variable allows you to set custom interval to wait between each attack in order to stay stealthy. It's recommended to increase it when attempting to scan a network that might be protected against bruteforce attacks. By default, there is no interval, in order to make attacks as fast as possible
 
-Default value: `0`
+Default value: `0ms`
 
 ### `CAMERADAR_TIMEOUT`
 
-This optional variable allows you to set custom timeout value in milliseconds after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on fast and reliable networks.
+This optional variable allows you to set custom timeout value after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on fast and reliable networks.
 
-Default value: `2000`
+Default value: `2000ms`
 
 ### `CAMERADAR_LOGGING`
 
