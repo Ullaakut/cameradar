@@ -48,7 +48,8 @@ func parseArguments() error {
 		os.Exit(0)
 	}
 
-	if viper.GetStringSlice("targets") == nil {
+	if len(viper.GetStringSlice("targets")) == 0 {
+		pflag.Usage()
 		return errors.New("targets (-t, --targets) argument required\n    examples:\n      - 172.16.100.0/24\n      - localhost\n      - 8.8.8.8")
 	}
 
