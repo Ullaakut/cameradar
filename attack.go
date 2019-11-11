@@ -79,7 +79,6 @@ func (s *Scanner) AttackCredentials(targets []Stream) []Stream {
 		// TODO: Perf Improvement: Skip cameras with no auth type detected, and set their
 		// CredentialsFound value to true.
 		go s.attackCameraCredentials(targets[i], resChan)
-		time.Sleep(s.attackInterval)
 	}
 
 	attackResults := []Stream{}
@@ -105,7 +104,6 @@ func (s *Scanner) AttackRoute(targets []Stream) []Stream {
 
 	for i := range targets {
 		go s.attackCameraRoute(targets[i], resChan)
-		time.Sleep(s.attackInterval)
 	}
 
 	attackResults := []Stream{}
@@ -157,6 +155,7 @@ func (s *Scanner) attackCameraCredentials(target Stream, resChan chan<- Stream) 
 				resChan <- target
 				return
 			}
+			time.Sleep(s.attackInterval)
 		}
 	}
 
@@ -173,6 +172,7 @@ func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) {
 			resChan <- target
 			return
 		}
+		time.Sleep(s.attackInterval)
 	}
 
 	target.RouteFound = false
