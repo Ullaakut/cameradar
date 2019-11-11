@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Ullaakut/disgo"
+	curl "github.com/Ullaakut/go-curl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ullaakut/disgo"
-	curl "github.com/ullaakut/go-curl"
 )
 
 type CurlerMock struct {

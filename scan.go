@@ -3,7 +3,7 @@ package cameradar
 import (
 	"strings"
 
-	"github.com/ullaakut/nmap"
+	"github.com/Ullaakut/nmap"
 )
 
 // Scan scans the target networks and tries to find RTSP streams within them.

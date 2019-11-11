@@ -6,11 +6,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ullaakut/disgo"
+	"github.com/Ullaakut/disgo"
 
+	"github.com/Ullaakut/nmap"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ullaakut/nmap"
 )
 
 type nmapMock struct {

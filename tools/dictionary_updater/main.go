@@ -10,10 +10,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ullaakut/disgo/style"
+	"github.com/Ullaakut/disgo/style"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/ullaakut/disgo"
+	"github.com/Ullaakut/disgo"
 	"github.com/vbauerster/mpb"
 	"github.com/vbauerster/mpb/decor"
 )

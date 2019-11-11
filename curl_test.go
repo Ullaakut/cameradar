@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	curl "github.com/ullaakut/go-curl"
+	curl "github.com/Ullaakut/go-curl"
 )
 
 func TestCurl(t *testing.T) {

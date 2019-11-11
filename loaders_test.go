@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ullaakut/disgo"
+	"github.com/Ullaakut/disgo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

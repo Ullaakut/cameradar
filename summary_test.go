@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/Ullaakut/disgo"
 	"github.com/stretchr/testify/assert"
-	"github.com/ullaakut/disgo"
 )
 
 var (

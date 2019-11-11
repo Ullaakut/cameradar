@@ -1,7 +1,7 @@
 package cameradar
 
 import (
-	curl "github.com/ullaakut/go-curl"
+	curl "github.com/Ullaakut/go-curl"
 )
 
 // Curler is an interface that implements the CURL interface of the go-curl library

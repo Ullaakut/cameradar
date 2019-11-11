@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	curl "github.com/Ullaakut/go-curl"
 	"github.com/stretchr/testify/assert"
-	curl "github.com/ullaakut/go-curl"
 )
 
 func TestNew(t *testing.T) {
