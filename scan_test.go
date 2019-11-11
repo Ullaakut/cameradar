@@ -88,10 +88,10 @@ func TestScan(t *testing.T) {
 			}
 
 			scanner := &Scanner{
-				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
-				targets: test.targets,
-				ports:   test.ports,
-				speed:   test.speed,
+				term:      disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				targets:   test.targets,
+				ports:     test.ports,
+				scanSpeed: test.speed,
 			}
 
 			result, err := scanner.Scan()

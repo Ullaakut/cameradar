@@ -22,6 +22,7 @@ func TestNew(t *testing.T) {
 		customCredentials string
 		customRoutes      string
 		speed             int
+		attackInterval    time.Duration
 		timeout           time.Duration
 
 		loadTargetsFail bool
@@ -118,7 +119,8 @@ func TestNew(t *testing.T) {
 				WithPorts(test.ports),
 				WithDebug(test.debug),
 				WithVerbose(test.verbose),
-				WithSpeed(test.speed),
+				WithScanSpeed(test.speed),
+				WithAttackInterval(test.attackInterval),
 				WithTimeout(test.timeout),
 				WithCustomCredentials(test.customCredentials),
 				WithCustomRoutes(test.customRoutes),
@@ -135,7 +137,8 @@ func TestNew(t *testing.T) {
 				assert.Equal(t, test.ports, scanner.ports)
 				assert.Equal(t, test.debug, scanner.debug)
 				assert.Equal(t, test.verbose, scanner.verbose)
-				assert.Equal(t, test.speed, scanner.speed)
+				assert.Equal(t, test.speed, scanner.scanSpeed)
+				assert.Equal(t, test.attackInterval, scanner.attackInterval)
 				assert.Equal(t, test.timeout, scanner.timeout)
 			}
 		})
