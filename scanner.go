@@ -5,14 +5,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/ullaakut/disgo"
-	"github.com/ullaakut/disgo/style"
-	curl "github.com/ullaakut/go-curl"
+	"github.com/Ullaakut/disgo"
+	"github.com/Ullaakut/disgo/style"
+	curl "github.com/Ullaakut/go-curl"
 )
 
 const (
-	defaultCredentialDictionaryPath = "${GOPATH}/src/github.com/ullaakut/cameradar/dictionaries/credentials.json"
-	defaultRouteDictionaryPath      = "${GOPATH}/src/github.com/ullaakut/cameradar/dictionaries/routes"
+	defaultCredentialDictionaryPath = "${GOPATH}/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json"
+	defaultRouteDictionaryPath      = "${GOPATH}/src/github.com/Ullaakut/cameradar/dictionaries/routes"
 )
 
 // Scanner represents a cameradar scanner. It scans a network and

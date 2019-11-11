@@ -4,6 +4,12 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/goquery v1.5.0 h1:uGvmFXOA73IKluu/F84Xd1tt/z07GYm8X49XKHP7EJk=
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
+github.com/Ullaakut/disgo v0.3.1 h1:BGGVHynji41KGuGI02ztTCnILRvyzlvmiCRl5bBpjKk=
+github.com/Ullaakut/disgo v0.3.1/go.mod h1:/CSvpnYVSKOeh2dvUvx9cXshzz2t7T1/lRO/MrFj3fI=
+github.com/Ullaakut/go-curl v0.0.0-20190525093431-597e157bbffd h1:CMe+dX1CL4pCXNytxIB2U1qp0xZObGMZosJhaQdUlUo=
+github.com/Ullaakut/go-curl v0.0.0-20190525093431-597e157bbffd/go.mod h1:u8mVgpDT88IPIt1B+Tu8vkrcFfBKGcfGwS9I7wmvMh0=
+github.com/Ullaakut/nmap v0.0.0-20191020025340-830f10551944 h1:DNJrYrcmJHFhjxXuxDqYIlnH3jK1ohjSzEHlI/mk+tc=
+github.com/Ullaakut/nmap v0.0.0-20191020025340-830f10551944/go.mod h1:fkC066hwfcoKwlI7DS2ARTggSVtBTZYCjVH1TzuTMaQ=
 github.com/VividCortex/ewma v1.1.1 h1:MnEK4VOv6n0RSY4vtRe3h11qjxL3+t0B8yOL8iMXdcM=
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -72,6 +78,7 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
+github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
@@ -104,12 +111,6 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
-github.com/ullaakut/disgo v0.3.0 h1:2zrEyNBfPRgDVDgzM/qLXZ4Yqt3Lxz7ERvZUSmqSY2M=
-github.com/ullaakut/disgo v0.3.0/go.mod h1:UOgLVyqihzJ7yihrHjYZikivT+AHb9NhT3r1OyPCJqg=
-github.com/ullaakut/go-curl v0.0.0-20190525093431-597e157bbffd h1:IzJ7V8S7/NXc4aLOj0QavbQZ5Z/Q2RpCifshHoJ5ytA=
-github.com/ullaakut/go-curl v0.0.0-20190525093431-597e157bbffd/go.mod h1:FTfXm4jC9Ff1yqc3/HMXCyr+SGO03vJyijJCQlNyF10=
-github.com/ullaakut/nmap v0.0.0-20190623040344-bb4f2791e14a h1:Q49G/c/ubeAPvrGGMPM0vt13gFDT5RwC6D0yOYsSjBs=
-github.com/ullaakut/nmap v0.0.0-20190623040344-bb4f2791e14a/go.mod h1:4CQy4PqZA4Snk3+MS26+1oAkJ8dCY8kGH6+kF42yajw=
 github.com/vbauerster/mpb v3.4.0+incompatible h1:mfiiYw87ARaeRW6x5gWwYRUawxaW1tLAD8IceomUCNw=
 github.com/vbauerster/mpb v3.4.0+incompatible/go.mod h1:zAHG26FUhVKETRu+MWqYXcI70POlC6N8up9p1dID7SU=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=

@@ -1,8 +1,8 @@
 package cameradar
 
 import (
-	"github.com/ullaakut/disgo/style"
-	curl "github.com/ullaakut/go-curl"
+	"github.com/Ullaakut/disgo/style"
+	curl "github.com/Ullaakut/go-curl"
 )
 
 // PrintStreams prints information on each stream.
