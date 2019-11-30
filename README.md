@@ -79,6 +79,8 @@ Only use this solution if for some reason using docker is not an option for you 
 ### Dependencies
 
 * `go` (> `1.10`)
+* `libcurl` development library
+    * For apt users: `apt install libcurl4-openssl-dev`
 
 ### Steps to install
 
