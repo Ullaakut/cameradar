@@ -35,9 +35,13 @@ func (s *Scanner) Scan() ([]Stream, error) {
 }
 
 func (s *Scanner) scan(nmapScanner nmap.ScanRunner) ([]Stream, error) {
-	results, err := nmapScanner.Run()
+	results, warnings, err := nmapScanner.Run()
 	if err != nil {
 		return nil, s.term.FailStepf("error while scanning network: %v", err)
+	}
+
+	for _, warning := range warnings {
+		s.term.Infoln("[Nmap Warning]", warning)
 	}
 
 	// Get streams from nmap results.
