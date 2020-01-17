@@ -19,10 +19,14 @@ RUN go build -o cameradar
 # Final stage
 FROM alpine
 
+# Necessary to install curl v7.64.0-r3.
+# Fix for https://github.com/Ullaakut/cameradar/issues/247
+RUN echo 'http://dl-cdn.alpinelinux.org/alpine/v3.9/main' >> /etc/apk/repositories
+
 RUN apk --update add --no-cache nmap \
     nmap-nselibs \
     nmap-scripts \
-    curl-dev
+    curl-dev==7.64.0-r3
 
 WORKDIR /app/cameradar
 COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/dictionaries/ /app/dictionaries/
