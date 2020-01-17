@@ -17,13 +17,13 @@ type nmapMock struct {
 	mock.Mock
 }
 
-func (m *nmapMock) Run() (*nmap.Run, error) {
+func (m *nmapMock) Run() (*nmap.Run, []string, error) {
 	args := m.Called()
 
-	if args.Get(0) != nil {
-		return args.Get(0).(*nmap.Run), args.Error(1)
+	if args.Get(0) != nil && args.Get(1) != nil {
+		return args.Get(0).(*nmap.Run), args.Get(1).([]string), args.Error(2)
 	}
-	return nil, args.Error(1)
+	return nil, nil, args.Error(2)
 }
 
 var (
@@ -77,7 +77,7 @@ func TestScan(t *testing.T) {
 			removePath: true,
 			ports:      []string{"80"},
 
-			expectedErr: errors.New("unable to create network scanner: 'nmap' binary was not found"),
+			expectedErr: errors.New("unable to create network scanner: nmap binary was not found"),
 		},
 	}
 
@@ -107,8 +107,9 @@ func TestInternalScan(t *testing.T) {
 	tests := []struct {
 		description string
 
-		nmapResult *nmap.Run
-		nmapError  error
+		nmapResult   *nmap.Run
+		nmapWarnings []string
+		nmapError    error
 
 		expectedStreams []Stream
 		expectedErr     error
@@ -294,8 +295,9 @@ func TestInternalScan(t *testing.T) {
 		{
 			description: "scan failed",
 
-			nmapError:   errors.New("scan failed"),
-			expectedErr: errors.New("error while scanning network: scan failed"),
+			nmapError:    errors.New("scan failed"),
+			nmapWarnings: []string{"invalid host"},
+			expectedErr:  errors.New("error while scanning network: scan failed"),
 		},
 	}
 
@@ -303,7 +305,7 @@ func TestInternalScan(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			nmapMock := &nmapMock{}
 
-			nmapMock.On("Run").Return(test.nmapResult, test.nmapError)
+			nmapMock.On("Run").Return(test.nmapResult, test.nmapWarnings, test.nmapError)
 
 			scanner := &Scanner{
 				term: disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
