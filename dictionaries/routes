@@ -79,6 +79,7 @@ h264/media.amp
 h264Preview_01_main
 h264Preview_01_sub
 h264_vga.sdp
+h264_stream
 image.mpg
 img/media.sav
 img/media.sav?channel=1
@@ -140,6 +141,7 @@ rtsp_live2
 rtsp_tunnel
 rtsph264
 rtsph2641080p
+snap.jpg
 stream
 stream/0
 stream/1
@@ -151,6 +153,7 @@ streaming/channels/1
 streaming/channels/101
 tcp/av0_0
 test
+tmpfs/auto.jpg
 trackID=1
 ucast/11
 udp/av0_0
@@ -178,5 +181,6 @@ video1.sdp
 video1+audio1
 videoMain
 videoinput_1/h264_1/media.stm
+videostream.asf
 vis
 wfov
