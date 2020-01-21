@@ -191,8 +191,6 @@ func (s *Scanner) detectAuthMethod(stream Stream) int {
 
 	s.setCurlOptions(c)
 
-	_ = c.Setopt(curl.OPT_VERBOSE, 1)
-
 	// Send a request to the URL of the stream we want to attack.
 	_ = c.Setopt(curl.OPT_URL, attackURL)
 	// Set the RTSP STREAM URI as the stream URL.
@@ -233,8 +231,6 @@ func (s *Scanner) routeAttack(stream Stream, route string) bool {
 
 	s.setCurlOptions(c)
 
-	_ = c.Setopt(curl.OPT_VERBOSE, 1)
-
 	// Set proper authentication type.
 	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
 	_ = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
@@ -271,10 +267,6 @@ func (s *Scanner) routeAttack(stream Stream, route string) bool {
 }
 
 func (s *Scanner) credAttack(stream Stream, username string, password string) bool {
-	fmt.Println()
-	fmt.Println()
-	fmt.Println()
-
 	c := s.curl.Duphandle()
 
 	attackURL := fmt.Sprintf(
@@ -287,8 +279,6 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) bo
 	)
 
 	s.setCurlOptions(c)
-
-	_ = c.Setopt(curl.OPT_VERBOSE, 1)
 
 	// Set proper authentication type.
 	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
