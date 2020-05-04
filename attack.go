@@ -24,7 +24,7 @@ const (
 // Attack attacks the given targets and returns the accessed streams.
 func (s *Scanner) Attack(targets []Stream) ([]Stream, error) {
 	if len(targets) == 0 {
-		return nil, fmt.Errorf("unable to attack empty list of targets")
+		return nil, fmt.Errorf("no stream found")
 	}
 
 	// Most cameras will be accessed successfully with these two attacks.
