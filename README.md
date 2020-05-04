@@ -84,13 +84,10 @@ Only use this solution if for some reason using docker is not an option for you 
 
 ### Steps to install
 
-Make sure you installed the [dependencies](#dependencies), **and that you have Go modules enabled (`GO111MODULE=on`)**.
-
-1. `export GO111MODULE=on` (unless it's already on)
-2. `go get github.com/Ullaakut/cameradar`
-3. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
-4. `cd cmd/cameradar`
-5. `go install`
+1. `go get github.com/Ullaakut/cameradar/v5`
+2. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
+3. `cd cmd/cameradar`
+4. `go install`
 
 The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
@@ -134,7 +131,7 @@ If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able
 
 The file can contain IPs, hostnames, IP ranges and subnetwork, separated by newlines. Example:
 
-```go
+```text
 0.0.0.0
 localhost
 192.17.0.0/16
@@ -186,7 +183,7 @@ Default value: `4`
 
 ### `CAMERADAR_ATTACK_INTERVAL`
 
-This optional variable allows you to set custom interval to wait between each attack in order to stay stealthy. It's recommended to increase it when attempting to scan a network that might be protected against bruteforce attacks. By default, there is no interval, in order to make attacks as fast as possible
+This optional variable allows you to set `custom interval` to wait between each attack in order to stay stealthy. It's recommended to increase it when attempting to scan a network that might be protected against bruteforce attacks. By default, there is no interval, in order to make attacks as fast as possible
 
 Default value: `0ms`
 
@@ -216,17 +213,12 @@ Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
 
 #### Go build
 
-Make sure you installed the [dependencies](#dependencies), **and that you have Go modules enabled (`GO111MODULE=on`)**.
-
-1. `export GO111MODULE=on` (unless it's already on)
-2. `go get github.com/Ullaakut/cameradar`
-3. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
-4. `cd cmd/cameradar`
-5. `go install`
+1. `go get github.com/Ullaakut/cameradar/v5`
+2. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
+3. `cd cmd/cameradar`
+4. `go install`
 
 The cameradar binary is now in `$GOPATH/bin/cameradar`.
-
-See [the contribution document](/CONTRIBUTING.md) to get started.
 
 ## Frequently Asked Questions
 
@@ -236,27 +228,27 @@ That means that either your cameras are not streaming in RTSP or that they are n
 
 > Cameradar detects my cameras, but does not manage to access them at all!
 
-Maybe your cameras have been configured and the credentials / URL have been changed. Cameradar only guesses using default constructor values if a custom dictionary is not provided. You can use your own dictionaries in which you just have to add your credentials and RTSP routes. To do that, see how the [configuration](#configuration) works. Also, maybe your camera's credentials are not yet known, in which case if you find them it would be very nice to add them to the Cameradar dictionaries to help other people in the future.
+Maybe your cameras have been configured, and the credentials / URL have been changed. Cameradar only guesses using default constructor values if a custom dictionary is not provided. You can use your own dictionaries in which you just have to add your credentials and RTSP routes. To do that, see how the [configuration](#configuration) works. Also, maybe your camera's credentials are not yet known, in which case if you find them it would be very nice to add them to the Cameradar dictionaries to help other people in the future.
 
 > What happened to the C++ version?
 
-You can still find it under the 1.1.4 tag on this repo, however it was slower and less stable than the current version written in Golang. It is not recommended to use it.
+You can still find it under the 1.1.4 tag on this repo, however it was slower and less stable than the current version written in Golang. It is not recommended using it.
 
 > How to use the Cameradar library for my own project?
 
-See the example in `/cmd/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cameradar` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/ullaakut/cameradar).
+See the example in `/cmd/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar/v5` and to use the `cameradar` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/ullaakut/cameradar).
 
-> I want to scan my own localhost for some reason and it does not work! What's going on?
+> I want to scan my own localhost for some reason, and it does not work! What's going on?
 
-Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameradar/cameradar.go` or [installing it](#installing-the-binary).
+Use the `--net=host` flag when launching the cameradar image, or use the binary by running `go run cameradar/cameradar.go` or [installing it](#go-build).
 
 > I don't see a colored output:(
 
 You forgot the `-t` flag before `ullaakut/cameradar` in your command-line. This tells docker to allocate a pseudo-tty for cameradar, which makes it able to use colors.
 
-> I don't have a camera but I'd like to try Cameradar!
+> I don't have a camera, but I'd like to try Cameradar!
 
-Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt` and then run cameradar and it should guess that the username is admin and the password is 12345. You can try this with any default constructor credentials (they can be found [here](dictionaries/credentials.json)).
+Simply run `docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt` and then run cameradar, and it should guess that the username is admin and that the password is 12345. You can try this with any default constructor credentials (they can be found [here](dictionaries/credentials.json)).
 
 > What authentication types does Cameradar support?
 
