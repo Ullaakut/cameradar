@@ -1,6 +1,6 @@
-module github.com/Ullaakut/cameradar
+module github.com/Ullaakut/cameradar/v5
 
-go 1.12
+go 1.14
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.0
