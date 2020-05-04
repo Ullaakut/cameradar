@@ -366,6 +366,7 @@ func (s *Scanner) validateStream(stream Stream) bool {
 	if s.debug {
 		s.term.Debugln("SETUP", attackURL, "RTSP/1.0 >", rc)
 	}
+
 	// If it's a 200, the stream is accessed successfully.
 	if rc == httpOK {
 		return true

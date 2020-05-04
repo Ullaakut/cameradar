@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Ullaakut/disgo"
-	curl "github.com/Ullaakut/go-curl"
+	"github.com/Ullaakut/go-curl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -109,7 +109,8 @@ func TestAttack(t *testing.T) {
 				term:        disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
 				curl:        curlerMock,
 				timeout:     time.Millisecond,
-				verbose:     false,
+				verbose:     true,
+				debug:       true,
 				credentials: fakeCredentials,
 				routes:      fakeRoutes,
 			}
@@ -251,6 +252,7 @@ func TestAttackCredentials(t *testing.T) {
 				curl:        curlerMock,
 				timeout:     test.timeout,
 				verbose:     test.verbose,
+				debug:       test.verbose,
 				credentials: test.credentials,
 			}
 
@@ -388,6 +390,102 @@ func TestAttackRoute(t *testing.T) {
 					curlerMock.On("Getinfo", mock.Anything).Return(test.status, test.getInfoErr)
 				}
 			}
+
+			scanner := &Scanner{
+				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
+				curl:    curlerMock,
+				timeout: test.timeout,
+				verbose: test.verbose,
+				debug:   test.verbose,
+				routes:  test.routes,
+			}
+
+			results := scanner.AttackRoute(test.targets)
+
+			assert.Len(t, results, len(test.expectedStreams))
+
+			curlerMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAttackRoute_NoDummyRoute(t *testing.T) {
+	var (
+		stream1 = Stream{
+			Device:    "fakeDevice",
+			Address:   "fakeAddress",
+			Port:      1337,
+			Available: true,
+		}
+
+		stream2 = Stream{
+			Device:    "fakeDevice",
+			Address:   "differentFakeAddress",
+			Port:      1337,
+			Available: true,
+		}
+
+		fakeTargets = []Stream{stream1, stream2}
+		fakeRoutes  = Routes{"live.sdp", "media.amp"}
+	)
+
+	tests := []struct {
+		description string
+
+		targets []Stream
+		routes  Routes
+		timeout time.Duration
+		verbose bool
+
+		status int
+
+		expectedStreams []Stream
+		expectedErr     error
+	}{
+		{
+			description: "Route found",
+
+			targets: fakeTargets,
+			routes:  fakeRoutes,
+			timeout: 1 * time.Millisecond,
+
+			status: 403,
+
+			expectedStreams: fakeTargets,
+		},
+		{
+			description: "Route found",
+
+			targets: fakeTargets,
+			routes:  fakeRoutes,
+			timeout: 1 * time.Millisecond,
+
+			status: 401,
+
+			expectedStreams: fakeTargets,
+		},
+		{
+			description: "Camera accessed",
+
+			targets: fakeTargets,
+			routes:  fakeRoutes,
+			timeout: 1 * time.Millisecond,
+
+			status: 200,
+
+			expectedStreams: fakeTargets,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			curlerMock := &CurlerMock{}
+			curlerMock.On("Setopt", mock.Anything, mock.Anything).Return(nil)
+			curlerMock.On("Perform").Return(nil)
+
+			// 404 on first call to the dummy route.
+			curlerMock.On("Getinfo", mock.Anything).Return(404, nil).Once()
+			curlerMock.On("Getinfo", mock.Anything).Return(test.status, nil)
 
 			scanner := &Scanner{
 				term:    disgo.NewTerminal(disgo.WithDefaultOutput(ioutil.Discard)),
@@ -534,6 +632,7 @@ func TestValidateStreams(t *testing.T) {
 				curl:    curlerMock,
 				timeout: test.timeout,
 				verbose: test.verbose,
+				debug:   test.verbose,
 			}
 
 			results := scanner.ValidateStreams(test.targets)
