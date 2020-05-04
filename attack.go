@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	curl "github.com/Ullaakut/go-curl"
+	"github.com/Ullaakut/go-curl"
 )
 
 // HTTP responses.
