@@ -4,18 +4,26 @@ import "time"
 
 // Stream represents a camera's RTSP stream
 type Stream struct {
-	Device   string `json:"device"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Route    string `json:"route"`
-	Address  string `json:"address" validate:"required"`
-	Port     uint16 `json:"port" validate:"required"`
+	Device   string   `json:"device"`
+	Username string   `json:"username"`
+	Password string   `json:"password"`
+	Routes   []string `json:"route"`
+	Address  string   `json:"address" validate:"required"`
+	Port     uint16   `json:"port" validate:"required"`
 
 	CredentialsFound bool `json:"credentials_found"`
 	RouteFound       bool `json:"route_found"`
 	Available        bool `json:"available"`
 
 	AuthenticationType int `json:"authentication_type"`
+}
+
+// Route returns this stream's route if there is one.
+func (s Stream) Route() string {
+	if len(s.Routes) > 0 {
+		return s.Routes[0]
+	}
+	return ""
 }
 
 // Credentials is a map of credentials

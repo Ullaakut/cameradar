@@ -39,7 +39,7 @@ var (
 
 	routeFound = Stream{
 		RouteFound: true,
-		Route:      "r0ute",
+		Routes:     []string{"r0ute"},
 	}
 )
 

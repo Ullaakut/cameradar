@@ -61,7 +61,7 @@ func TestGetCameraRTSPURL(t *testing.T) {
 		Address:  "1.2.3.4",
 		Username: "ullaakut",
 		Password: "ba69897483886f0d2b0afb6345b76c0c",
-		Route:    "cameradar.sdp",
+		Routes:   []string{"cameradar.sdp"},
 		Port:     1337,
 	}
 

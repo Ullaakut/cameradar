@@ -46,11 +46,16 @@ func (s *Scanner) PrintStreams(streams []Stream) {
 			s.term.Infof("\tPassword:\t\t%s\n", style.Failure("not found"))
 		}
 
+		s.term.Infoln("\tRTSP routes:")
 		if stream.RouteFound {
-			s.term.Infof("\tRTSP route:\t\t%s\n\n\n", style.Success("/"+stream.Route))
+			for _, route := range stream.Routes {
+				s.term.Infoln(style.Success("\t\t\t\t/" + route))
+			}
 		} else {
-			s.term.Infof("\tRTSP route:\t\t%s\n\n\n", style.Failure("not found"))
+			s.term.Infoln(style.Failure("not found"))
 		}
+
+		s.term.Info("\n\n")
 	}
 
 	if success > 1 {
