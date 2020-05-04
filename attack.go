@@ -21,6 +21,16 @@ const (
 	rtspSetup    = 4
 )
 
+// Authentication types.
+const (
+	authNone   = 0
+	authBasic  = 1
+	authDigest = 2
+)
+
+// Route that should never be a constructor default.
+const dummyRoute = "/0x8b6c42"
+
 // Attack attacks the given targets and returns the accessed streams.
 func (s *Scanner) Attack(targets []Stream) ([]Stream, error) {
 	if len(targets) == 0 {
@@ -76,20 +86,13 @@ func (s *Scanner) AttackCredentials(targets []Stream) []Stream {
 	defer close(resChan)
 
 	for i := range targets {
-		// TODO: Perf Improvement: Skip cameras with no auth type detected, and set their
-		// CredentialsFound value to true.
 		go s.attackCameraCredentials(targets[i], resChan)
 	}
 
-	attackResults := []Stream{}
-	// TODO: Change this into a for+select and make a successful result close the chan.
 	for range targets {
-		attackResults = append(attackResults, <-resChan)
-	}
-
-	for i := range attackResults {
-		if attackResults[i].CredentialsFound {
-			targets = replace(targets, attackResults[i])
+		attackResult := <-resChan
+		if attackResult.CredentialsFound {
+			targets = replace(targets, attackResult)
 		}
 	}
 
@@ -106,15 +109,10 @@ func (s *Scanner) AttackRoute(targets []Stream) []Stream {
 		go s.attackCameraRoute(targets[i], resChan)
 	}
 
-	attackResults := []Stream{}
-	// TODO: Change this into a for+select and make a successful result close the chan.
 	for range targets {
-		attackResults = append(attackResults, <-resChan)
-	}
-
-	for i := range attackResults {
-		if attackResults[i].RouteFound {
-			targets = replace(targets, attackResults[i])
+		attackResult := <-resChan
+		if attackResult.RouteFound {
+			targets = replace(targets, attackResult)
 		}
 	}
 
@@ -130,11 +128,11 @@ func (s *Scanner) DetectAuthMethods(targets []Stream) []Stream {
 
 		var authMethod string
 		switch targets[i].AuthenticationType {
-		case 0:
+		case authNone:
 			authMethod = "no"
-		case 1:
+		case authBasic:
 			authMethod = "basic"
-		case 2:
+		case authDigest:
 			authMethod = "digest"
 		}
 
@@ -164,18 +162,27 @@ func (s *Scanner) attackCameraCredentials(target Stream, resChan chan<- Stream) 
 }
 
 func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) {
+	// If the stream responds positively to the dummy route, it means
+	// it doesn't require (or respect the RFC) a route and the attack
+	// can be skipped.
+	ok := s.routeAttack(target, dummyRoute)
+	if ok {
+		target.RouteFound = true
+		target.Routes = append(target.Routes, "/")
+		resChan <- target
+		return
+	}
+
+	// Otherwise, bruteforce the routes.
 	for _, route := range s.routes {
 		ok := s.routeAttack(target, route)
 		if ok {
 			target.RouteFound = true
-			target.Route = route
-			resChan <- target
-			return
+			target.Routes = append(target.Routes, route)
 		}
 		time.Sleep(s.attackInterval)
 	}
 
-	target.RouteFound = false
 	resChan <- target
 }
 
@@ -186,7 +193,7 @@ func (s *Scanner) detectAuthMethod(stream Stream) int {
 		"rtsp://%s:%d/%s",
 		stream.Address,
 		stream.Port,
-		stream.Route,
+		stream.Route(),
 	)
 
 	s.setCurlOptions(c)
@@ -210,7 +217,7 @@ func (s *Scanner) detectAuthMethod(stream Stream) int {
 		return -1
 	}
 
-	if s.verbose {
+	if s.debug {
 		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", authType)
 	}
 
@@ -255,7 +262,7 @@ func (s *Scanner) routeAttack(stream Stream, route string) bool {
 		return false
 	}
 
-	if s.verbose {
+	if s.debug {
 		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
 	}
 	// If it's a 401 or 403, it means that the credentials are wrong but the route might be okay.
@@ -275,7 +282,7 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) bo
 		password,
 		stream.Address,
 		stream.Port,
-		stream.Route,
+		stream.Route(),
 	)
 
 	s.setCurlOptions(c)
@@ -304,7 +311,7 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) bo
 		return false
 	}
 
-	if s.verbose {
+	if s.debug {
 		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
 	}
 
@@ -325,7 +332,7 @@ func (s *Scanner) validateStream(stream Stream) bool {
 		stream.Password,
 		stream.Address,
 		stream.Port,
-		stream.Route,
+		stream.Route(),
 	)
 
 	s.setCurlOptions(c)
@@ -356,7 +363,7 @@ func (s *Scanner) validateStream(stream Stream) bool {
 		return false
 	}
 
-	if s.verbose {
+	if s.debug {
 		s.term.Debugln("SETUP", attackURL, "RTSP/1.0 >", rc)
 	}
 	// If it's a 200, the stream is accessed successfully.
@@ -375,6 +382,13 @@ func (s *Scanner) setCurlOptions(c Curler) {
 	_ = c.Setopt(curl.OPT_NOBODY, 1)
 	// Set custom timeout.
 	_ = c.Setopt(curl.OPT_TIMEOUT_MS, int(s.timeout/time.Millisecond))
+
+	// Enable verbose logs if verbose mode is on.
+	if s.verbose {
+		_ = c.Setopt(curl.OPT_VERBOSE, 1)
+	} else {
+		_ = c.Setopt(curl.OPT_VERBOSE, 0)
+	}
 }
 
 // HACK: See https://stackoverflow.com/questions/3572397/lib-curl-in-c-disable-printing
