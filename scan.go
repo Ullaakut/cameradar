@@ -25,6 +25,7 @@ func (s *Scanner) Scan() ([]Stream, error) {
 	nmapScanner, err := nmap.NewScanner(
 		nmap.WithTargets(s.targets...),
 		nmap.WithPorts(s.ports...),
+		nmap.WithServiceInfo(),
 		nmap.WithTimingTemplate(nmap.Timing(s.scanSpeed)),
 	)
 	if err != nil {
