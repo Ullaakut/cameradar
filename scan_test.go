@@ -103,7 +103,6 @@ func TestScan(t *testing.T) {
 }
 
 func TestInternalScan(t *testing.T) {
-
 	tests := []struct {
 		description string
 
