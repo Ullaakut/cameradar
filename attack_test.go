@@ -89,7 +89,7 @@ func TestAttack(t *testing.T) {
 			targets: nil,
 
 			expectedStreams: nil,
-			expectedErr:     errors.New("unable to attack empty list of targets"),
+			expectedErr:     errors.New("no stream found"),
 		},
 	}
 
