@@ -84,7 +84,7 @@ Only use this solution if for some reason using docker is not an option for you 
 
 ### Steps to install
 
-1. `go get github.com/Ullaakut/cameradar/v5`
+1. `go get github.com/Ullaakut/cameradar`
 2. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
 3. `cd cmd/cameradar`
 4. `go install`
@@ -213,7 +213,7 @@ Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
 
 #### Go build
 
-1. `go get github.com/Ullaakut/cameradar/v5`
+1. `go get github.com/Ullaakut/cameradar`
 2. `cd $GOPATH/src/github.com/Ullaakut/cameradar`
 3. `cd cmd/cameradar`
 4. `go install`
@@ -236,7 +236,7 @@ You can still find it under the 1.1.4 tag on this repo, however it was slower an
 
 > How to use the Cameradar library for my own project?
 
-See the example in `/cmd/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar/v5` and to use the `cameradar` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/ullaakut/cameradar).
+See the example in `/cmd/cameradar`. You just need to run `go get github.com/Ullaakut/cameradar` and to use the `cameradar` package in your code. You can find the documentation on [godoc](https://godoc.org/github.com/ullaakut/cameradar).
 
 > I want to scan my own localhost for some reason, and it does not work! What's going on?
 
