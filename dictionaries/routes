@@ -66,6 +66,14 @@ ch001.sdp
 ch01.264
 ch01.264?
 ch01.264?ptype=tcp
+ch1_0
+ch2_0
+ch3_0
+ch4_0
+ch1/0
+ch2/0
+ch3/0
+ch4/0
 ch0_0.h264
 ch0_unicast_firststream
 ch0_unicast_secondstream
