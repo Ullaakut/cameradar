@@ -27,6 +27,7 @@ func (s *Scanner) Scan() ([]Stream, error) {
 		nmap.WithPorts(s.ports...),
 		nmap.WithServiceInfo(),
 		nmap.WithTimingTemplate(nmap.Timing(s.scanSpeed)),
+        nmap.WithIPv6Scanning(),
 	)
 	if err != nil {
 		return nil, s.term.FailStepf("unable to create network scanner: %v", err)

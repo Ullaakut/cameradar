@@ -40,6 +40,8 @@ av0_0
 av2
 avc
 avn=2
+av_stream
+av_stream/ch0
 axis-media/media.amp
 axis-media/media.amp?camera=1
 axis-media/media.amp?videocodec=h264
