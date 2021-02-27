@@ -46,4 +46,5 @@ type Options struct {
 	Credentials Credentials   `json:"credentials"`
 	Speed       int           `json:"speed"`
 	Timeout     time.Duration `json:"timeout"`
+	Ipv6		bool          `json:"IPv6"`
 }

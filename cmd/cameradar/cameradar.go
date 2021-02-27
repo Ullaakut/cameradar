@@ -25,6 +25,7 @@ func parseArguments() error {
 	pflag.IntP("scan-speed", "s", 4, "The nmap speed preset to use for scanning (lower is stealthier)")
 	pflag.DurationP("attack-interval", "I", 0, "The interval between each attack  (i.e: 2000ms, higher is stealthier)")
 	pflag.DurationP("timeout", "T", 2000*time.Millisecond, "The timeout to use for attack attempts (i.e: 2000ms)")
+	pflag.BoolP("ipv6", "6", false, "Enable ipv6")
 	pflag.BoolP("debug", "d", false, "Enable the debug logs")
 	pflag.BoolP("verbose", "v", false, "Enable the verbose logs")
 	pflag.BoolP("help", "h", false, "displays this help message")
@@ -65,6 +66,7 @@ func main() {
 	c, err := cameradar.New(
 		cameradar.WithTargets(viper.GetStringSlice("targets")),
 		cameradar.WithPorts(viper.GetStringSlice("ports")),
+		cameradar.WithIPv6(viper.GetBool("ipv6")),
 		cameradar.WithDebug(viper.GetBool("debug")),
 		cameradar.WithVerbose(viper.GetBool("verbose")),
 		cameradar.WithCustomCredentials(viper.GetString("custom-credentials")),

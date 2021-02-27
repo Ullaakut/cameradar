@@ -23,6 +23,7 @@ type Scanner struct {
 
 	targets                  []string
 	ports                    []string
+	ipv6					 bool
 	debug                    bool
 	verbose                  bool
 	scanSpeed                int
@@ -109,6 +110,13 @@ func WithPorts(ports []string) func(s *Scanner) {
 func WithDebug(debug bool) func(s *Scanner) {
 	return func(s *Scanner) {
 		s.debug = debug
+	}
+}
+
+// WithDebug specifies whether or not to enable ipv6.
+func WithIPv6(ipv6 bool) func(s *Scanner) {
+	return func(s *Scanner) {
+		s.ipv6 = ipv6
 	}
 }
 

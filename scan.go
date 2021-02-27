@@ -22,18 +22,36 @@ func (s *Scanner) Scan() ([]Stream, error) {
 	s.term.StartStep("Scanning the network")
 
 	// Run nmap command to discover open ports on the specified targets & ports.
+	s.term.Debugf("Found %d ..\n", s.ipv6)
+	
 	nmapScanner, err := nmap.NewScanner(
 		nmap.WithTargets(s.targets...),
 		nmap.WithPorts(s.ports...),
 		nmap.WithServiceInfo(),
 		nmap.WithTimingTemplate(nmap.Timing(s.scanSpeed)),
-        nmap.WithIPv6Scanning(),
+		nmap.WithIPv6Scanning(),
 	)
+	
 	if err != nil {
 		return nil, s.term.FailStepf("unable to create network scanner: %v", err)
 	}
 
-	return s.scan(nmapScanner)
+    nmapScanner2, err := nmap.NewScanner(
+		nmap.WithTargets(s.targets...),
+		nmap.WithPorts(s.ports...),
+		nmap.WithServiceInfo(),
+		nmap.WithTimingTemplate(nmap.Timing(s.scanSpeed)),
+	)
+	
+	if err != nil {
+		return nil, s.term.FailStepf("unable to create network scanner: %v", err)
+	}
+
+    if s.ipv6{
+	  return s.scan(nmapScanner)
+    }else{
+      return s.scan(nmapScanner2)	
+    }
 }
 
 func (s *Scanner) scan(nmapScanner nmap.ScanRunner) ([]Stream, error) {
