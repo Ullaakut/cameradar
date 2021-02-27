@@ -22,7 +22,6 @@ func (s *Scanner) Scan() ([]Stream, error) {
 	s.term.StartStep("Scanning the network")
 
 	// Run nmap command to discover open ports on the specified targets & ports.
-	s.term.Debugf("Found %d ..\n", s.ipv6)
 	
 	nmapScanner, err := nmap.NewScanner(
 		nmap.WithTargets(s.targets...),
