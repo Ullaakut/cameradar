@@ -76,6 +76,8 @@ e.g.: `docker run -t ullaakut/cameradar -t 192.168.100.0/24` will scan the ports
 
 Only use this solution if for some reason using docker is not an option for you or if you want to locally build Cameradar on your machine.
 
+**WARNING**: Manually building the binary will **NOT WORK** for any camera that uses **DIGEST AUTHENTICATION** [if your version of `curl` is over `7.64.0`](https://github.com/Ullaakut/cameradar/pull/252), which is most likely the case. For more information, see [this response on the subject from the author of curl](https://stackoverflow.com/a/59778142/4145098).
+
 ### Dependencies
 
 * `go` (> `1.10`)
