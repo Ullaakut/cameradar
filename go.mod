@@ -9,6 +9,7 @@ require (
 	github.com/Ullaakut/nmap v2.0.0+incompatible
 	github.com/VividCortex/ewma v1.1.1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
+	github.com/magefile/mage v1.11.0 // indirect
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.4.0
