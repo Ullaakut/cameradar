@@ -14,10 +14,10 @@ var supportedPlatforms = map[string]string{
 	"linux/amd64": "ullaakut/cameradar:amd64",
 	"linux/386": "ullaakut/cameradar:386",
 	"linux/arm64": "ullaakut/cameradar:arm64",
+	"linux/arm/v7": "ullaakut/cameradar:armv7",
 	//"linux/riscv64": "ullaakut/cameradar:riscv64", // UNSUPPORTED.
 	//"linux/ppc64le": "ullaakut/cameradar:ppc64le", // UNSUPPORTED.
 	//"linux/s390x": "ullaakut/cameradar:s390x", // UNSUPPORTED.
-	"linux/arm/v7": "ullaakut/cameradar:armv7",
 	//"linux/arm/v6": "ullaakut/cameradar:armv6", // UNSUPPORTED.
 }
 
