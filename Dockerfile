@@ -26,7 +26,7 @@ RUN echo 'http://dl-cdn.alpinelinux.org/alpine/v3.9/main' >> /etc/apk/repositori
 RUN apk --update add --no-cache nmap \
     nmap-nselibs \
     nmap-scripts \
-    curl-dev==7.64.0-r3
+    curl-dev==7.64.0-r5
 
 WORKDIR /app/cameradar
 COPY --from=build-env /go/src/github.com/Ullaakut/cameradar/dictionaries/ /app/dictionaries/
