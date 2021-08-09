@@ -209,7 +209,7 @@ Default: `false`
 
 #### Docker build
 
-To build the docker image, simply run `docker build -t . cameradar` in the root of the project.
+To build the docker image, simply run `docker build . -t cameradar` in the root of the project.
 
 Your image will be called `cameradar` and NOT `ullaakut/cameradar`.
 
