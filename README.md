@@ -86,9 +86,8 @@ Only use this solution if for some reason using docker is not an option for you 
 
 ### Steps to install
 
-1. `go get github.com/Ullaakut/cameradar/v5`
-2. `cd $GOPATH/src/github.com/Ullaakut/cameradar/cmd/cameradar`
-3. `go install`
+1. `go install github.com/Ullaakut/cameradar/cameradar@latest`
+
 
 The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
