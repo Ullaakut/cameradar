@@ -116,7 +116,7 @@ func (s *Scanner) LoadTargets() error {
 
 	s.targets = strings.Split(string(bytes), "\n")
 
-	s.term.Debugf("Successfylly parsed targets file with %d entries", len(s.targets))
+	s.term.Debugf("Successfully parsed targets file with %d entries", len(s.targets))
 
 	return nil
 }
