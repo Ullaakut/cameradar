@@ -88,7 +88,6 @@ Only use this solution if for some reason using docker is not an option for you 
 
 1. `go install github.com/Ullaakut/cameradar/v5/cmd/cameradar@latest`
 
-
 The `cameradar` binary is now in your `$GOPATH/bin` ready to be used. See command line options [here](#command-line-options).
 
 ## Configuration
@@ -270,7 +269,7 @@ Cameradar supports both basic and digest authentication.
 
 ## License
 
-Copyright 2019 Ullaakut
+Copyright 2023 Ullaakut
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
