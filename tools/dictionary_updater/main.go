@@ -186,6 +186,6 @@ func saveRoutes(rtspURLs []string) {
 	disgo.StartStep("Writing new dictionary file")
 	err := ioutil.WriteFile("dictionaries/routes", []byte(contents), 0644)
 	if err != nil {
-		disgo.FailStepf("unable to write dictionnary: %v", err)
+		disgo.FailStepf("unable to write dictionary: %v", err)
 	}
 }
