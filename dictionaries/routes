@@ -140,6 +140,9 @@ onvif1
 pass@10.0.0.5:6667/blinkhd
 play1.sdp
 play2.sdp
+profile0
+profile1
+profile2
 profile2/media.smp
 profile5/media.smp
 rtpvideo1.sdp
