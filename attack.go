@@ -134,6 +134,8 @@ func (s *Scanner) DetectAuthMethods(targets []Stream) []Stream {
 			authMethod = "basic"
 		case authDigest:
 			authMethod = "digest"
+		default:
+			authMethod = "unknown:" + string(targets[i].AuthenticationType)
 		}
 
 		s.term.Debugf("Stream %s uses %s authentication method\n", GetCameraRTSPURL(targets[i]), authMethod)
