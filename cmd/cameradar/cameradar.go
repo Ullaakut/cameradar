@@ -1,96 +1,160 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/Ullaakut/cameradar/v5"
-	"github.com/Ullaakut/disgo"
-	"github.com/Ullaakut/disgo/style"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/internal/attack"
+	"github.com/Ullaakut/cameradar/v6/internal/dict"
+	"github.com/Ullaakut/cameradar/v6/internal/output"
+	"github.com/Ullaakut/cameradar/v6/internal/scan"
+	"github.com/Ullaakut/cameradar/v6/internal/ui"
+	"github.com/urfave/cli/v3"
+	"golang.org/x/term"
 )
 
-func parseArguments() error {
-	viper.SetEnvPrefix("cameradar")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+func runCameradar(ctx context.Context, cmd *cli.Command) error {
+	targetInputs := cmd.StringSlice(flagTargets)
+	if len(targetInputs) == 0 {
+		return errors.New("at least one target must be specified")
+	}
 
-	pflag.StringSliceP("targets", "t", []string{}, "The targets on which to scan for open RTSP streams - required (ex: 172.16.100.0/24)")
-	pflag.StringSliceP("ports", "p", []string{"554", "5554", "8554"}, "The ports on which to search for RTSP streams")
-	pflag.StringP("custom-routes", "r", "${GOPATH}/src/github.com/Ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
-	pflag.StringP("custom-credentials", "c", "${GOPATH}/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
-	pflag.IntP("scan-speed", "s", 4, "The nmap speed preset to use for scanning (lower is stealthier)")
-	pflag.DurationP("attack-interval", "I", 0, "The interval between each attack  (i.e: 2000ms, higher is stealthier)")
-	pflag.DurationP("timeout", "T", 2000*time.Millisecond, "The timeout to use for attack attempts (i.e: 2000ms)")
-	pflag.BoolP("debug", "d", false, "Enable the debug logs")
-	pflag.BoolP("verbose", "v", false, "Enable the verbose logs")
-	pflag.BoolP("help", "h", false, "displays this help message")
+	targets, err := loadTargets(targetInputs)
+	if err != nil {
+		return fmt.Errorf("loading targets: %w", err)
+	}
+	if len(targets) == 0 {
+		return errors.New("no valid targets provided")
+	}
 
-	viper.AutomaticEnv()
+	ports := cmd.StringSlice(flagPorts)
+	if len(ports) == 0 {
+		return errors.New("at least one port must be specified")
+	}
 
-	pflag.Parse()
+	var credsPath, routesPath string
+	if cmd.IsSet(flagCustomCredentials) {
+		credsPath = os.ExpandEnv(cmd.String(flagCustomCredentials))
+	}
+	if cmd.IsSet(flagCustomRoutes) {
+		routesPath = os.ExpandEnv(cmd.String(flagCustomRoutes))
+	}
 
-	err := viper.BindPFlags(pflag.CommandLine)
+	dictionary, err := dict.New(credsPath, routesPath)
+	if err != nil {
+		return fmt.Errorf("loading dictionaries: %w", err)
+	}
+
+	mode, err := cameradar.ParseMode(cmd.String(flagUI))
 	if err != nil {
 		return err
 	}
 
-	if viper.GetBool("help") {
-		pflag.Usage()
-		fmt.Println("\nExamples of usage:")
-		fmt.Println("\tScanning your home network for RTSP streams:\tcameradar -t 192.168.0.0/24")
-		fmt.Println("\tScanning a remote camera on a specific port:\tcameradar -t 172.178.10.14 -p 18554 -s 2")
-		fmt.Println("\tScanning an unstable remote network: \t\tcameradar -t 172.178.10.14/24 -s 1 --timeout 10000 -l")
-		fmt.Println("\tStealthily scanning a remote network: \t\tcameradar -t 172.178.10.14/24 -s 1 -I 5000")
-		os.Exit(0)
+	var outputPath string
+	if cmd.IsSet(flagOutput) {
+		outputPath = os.ExpandEnv(cmd.String(flagOutput))
 	}
 
-	if len(viper.GetStringSlice("targets")) == 0 {
-		pflag.Usage()
-		return errors.New("targets (-t, --targets) argument required\n    examples:\n      - 172.16.100.0/24\n      - localhost\n      - 8.8.8.8")
-	}
-
-	return nil
-}
-
-func main() {
-	err := parseArguments()
+	interactive := isInteractiveTerminal()
+	reporter, err := ui.NewReporter(mode, cmd.Bool(flagDebug), os.Stdout, interactive)
 	if err != nil {
-		printErr(err)
+		return err
+	}
+	if outputPath != "" {
+		reporter = output.NewM3UReporter(reporter, outputPath)
+	}
+	defer reporter.Close()
+
+	config := scan.Config{
+		SkipScan:  cmd.Bool(flagSkipScan),
+		Targets:   targets,
+		Ports:     ports,
+		ScanSpeed: cmd.Int16(flagScanSpeed),
+	}
+	var scanner cameradar.StreamScanner
+	scanner, err = scan.New(config, reporter)
+	if err != nil {
+		return fmt.Errorf("creating stream scanner: %w", err)
+	}
+
+	interval := cmd.Duration(flagAttackInterval)
+	timeout := cmd.Duration(flagTimeout)
+	attacker, err := attack.New(dictionary, interval, timeout, reporter)
+	if err != nil {
+		return fmt.Errorf("creating attacker: %w", err)
 	}
 
 	c, err := cameradar.New(
-		cameradar.WithTargets(viper.GetStringSlice("targets")),
-		cameradar.WithPorts(viper.GetStringSlice("ports")),
-		cameradar.WithDebug(viper.GetBool("debug")),
-		cameradar.WithVerbose(viper.GetBool("verbose")),
-		cameradar.WithCustomCredentials(viper.GetString("custom-credentials")),
-		cameradar.WithCustomRoutes(viper.GetString("custom-routes")),
-		cameradar.WithScanSpeed(viper.GetInt("scan-speed")),
-		cameradar.WithAttackInterval(viper.GetDuration("attack-interval")),
-		cameradar.WithTimeout(viper.GetDuration("timeout")),
+		scanner,
+		attacker,
+		targets,
+		ports,
+		reporter,
 	)
 	if err != nil {
-		printErr(err)
+		return fmt.Errorf("creating scanner: %w", err)
 	}
 
-	scanResult, err := c.Scan()
-	if err != nil {
-		printErr(err)
-	}
-
-	streams, err := c.Attack(scanResult)
-	if err != nil {
-		printErr(err)
-	}
-
-	c.PrintStreams(streams)
+	return c.Run(ctx)
 }
 
-func printErr(err error) {
-	disgo.Errorln(style.Failure(style.SymbolCross), err)
-	os.Exit(1)
+func isInteractiveTerminal() bool {
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
+		return false
+	}
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		return false
+	}
+
+	termEnv := strings.TrimSpace(os.Getenv("TERM"))
+	if termEnv == "" || termEnv == "dumb" {
+		return false
+	}
+
+	return true
+}
+
+// loadTargets merges targets from command line and file paths.
+// Valid targets are:
+//   - Single IP addresses (e.g., 192.168.1.10)
+//   - CIDR notations      (e.g., 192.168.1.0/24)
+//   - Hostnames           (e.g., localhost)
+//   - IP Ranges           (e.g., 192.168.1.10-20)
+func loadTargets(targets []string) ([]string, error) {
+	if len(targets) == 0 {
+		return nil, nil
+	}
+
+	var merged []string
+	for _, target := range targets {
+		trimmed := strings.TrimSpace(target)
+		if trimmed == "" {
+			continue
+		}
+
+		_, err := os.Stat(trimmed)
+		if err != nil {
+			merged = append(merged, trimmed)
+			continue
+		}
+
+		bytes, err := os.ReadFile(trimmed)
+		if err != nil {
+			return nil, fmt.Errorf("reading targets file %q: %w", trimmed, err)
+		}
+
+		for line := range strings.SplitSeq(string(bytes), "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+			merged = append(merged, line)
+		}
+	}
+
+	return merged, nil
 }

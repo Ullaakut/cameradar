@@ -1,3 +1,4 @@
+version: 2
 project_name: cameradar
 dist: dist/cameradar
 
@@ -10,6 +11,8 @@ before:
 builds:
   - binary: cameradar
     main: ./cmd/cameradar
+    env:
+      - CGO_ENABLED=0
     goos:
       - windows
       - darwin
@@ -28,16 +31,70 @@ builds:
         goarch: 386
 
 changelog:
-  skip: true
+  disable: true
 
 checksum:
   name_template: "{{ .ProjectName }}_checksums.txt"
 
 archives:
   - name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}{{ if .Arm}}v{{ .Arm }}{{ end }}"
-    format: tar.gz
+    formats:
+      - tar.gz
     format_overrides:
       - goos: windows
         format: zip
-    files:
-      - CHANGELOG.md
+
+dockers:
+  - image_templates:
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-amd64"
+      - "ullaakut/{{ .ProjectName }}:latest-amd64"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: amd64
+  - image_templates:
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-386"
+      - "ullaakut/{{ .ProjectName }}:latest-386"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: 386
+  - image_templates:
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv6"
+      - "ullaakut/{{ .ProjectName }}:latest-armv6"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: arm
+    goarm: 6
+  - image_templates:
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv7"
+      - "ullaakut/{{ .ProjectName }}:latest-armv7"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: arm
+    goarm: 7
+  - image_templates:
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-arm64"
+      - "ullaakut/{{ .ProjectName }}:latest-arm64"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: arm64
+
+docker_manifests:
+  - name_template: "ullaakut/{{ .ProjectName }}:{{ .Version }}"
+    image_templates:
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-amd64"
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-386"
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv6"
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv7"
+      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-arm64"
+  - name_template: "ullaakut/{{ .ProjectName }}:latest"
+    image_templates:
+      - "ullaakut/{{ .ProjectName }}:latest-amd64"
+      - "ullaakut/{{ .ProjectName }}:latest-386"
+      - "ullaakut/{{ .ProjectName }}:latest-armv6"
+      - "ullaakut/{{ .ProjectName }}:latest-armv7"
+      - "ullaakut/{{ .ProjectName }}:latest-arm64"

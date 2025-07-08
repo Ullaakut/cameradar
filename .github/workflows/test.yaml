@@ -1,0 +1,62 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Go Test looks at `mtime` for caching. `git clone` messes with this. Set it consistently to last commit time.
+      - name: Restore file modification time
+        run: git ls-files -z | while read -d '' path; do touch -d "$(git log -1 --format="@%ct" "$path")" "$path"; done
+
+      # We need to set a cache marker to ensure that the cache is individual for each job.
+      - name: Add Cache Marker
+        run: echo "go-test" > env.txt
+
+      - name: Install Go
+        id: install-go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: |
+            go.sum
+            env.txt
+
+      # We trigger mod download separately as otherwise it will count towards
+      # the 1 minute default timeout of golangci-lint. Only needed if there is no cache.
+      - name: Download dependencies
+        run: go mod download
+        if: steps.install-go.outputs.cache-hit != 'true'
+
+      - name: Run Linter
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.10.2
+
+      - name: Run Tests
+        env:
+          TEST_DIR: ${{ inputs.TEST_DIR }}
+        run: |
+          GOTESTSUM_FLAGS="--junitfile tests.xml --format pkgname -- -cover -race"
+          if [ -z "$TEST_DIR" ]; then
+            gotestsum $GOTESTSUM_FLAGS ./...
+          else
+            gotestsum $GOTESTSUM_FLAGS ./$TEST_DIR/...
+          fi
+
+      - name: Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: "tests.xml"
+        if: always()
