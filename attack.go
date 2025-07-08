@@ -2,17 +2,10 @@ package cameradar
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/Ullaakut/go-curl"
-)
-
-// HTTP responses.
-const (
-	httpOK           = 200
-	httpUnauthorized = 401
-	httpForbidden    = 403
-	httpNotFound     = 404
 )
 
 // CURL RTSP request types.
@@ -48,7 +41,7 @@ func (s *Scanner) Attack(targets []Stream) ([]Stream, error) {
 	streams = s.AttackCredentials(streams)
 
 	s.term.StartStep("Validating that streams are accessible")
-	streams = s.ValidateStreams(streams)
+	streams, err = s.ValidateStreams(streams)
 
 	// But some cameras run GST RTSP Server which prioritizes 401 over 404 contrary to most cameras.
 	// For these cameras, running another route attack will solve the problem.
@@ -69,14 +62,19 @@ func (s *Scanner) Attack(targets []Stream) ([]Stream, error) {
 	return streams, nil
 }
 
-// ValidateStreams tries to setup the stream to validate whether or not it is available.
-func (s *Scanner) ValidateStreams(targets []Stream) []Stream {
+// ValidateStreams tries to setup the stream to validate whether it is available.
+func (s *Scanner) ValidateStreams(targets []Stream) ([]Stream, error) {
 	for i := range targets {
-		targets[i].Available = s.validateStream(targets[i])
+		available, err := s.validateStream(targets[i])
+		if err != nil {
+			return nil, fmt.Errorf("validating stream %s: %w", targets[i].Address, err)
+		}
+
+		targets[i].Available = available
 		time.Sleep(s.attackInterval)
 	}
 
-	return targets
+	return targets, nil
 }
 
 // AttackCredentials attempts to guess the provided targets' credentials using the given
@@ -163,11 +161,14 @@ func (s *Scanner) attackCameraCredentials(target Stream, resChan chan<- Stream) 
 	resChan <- target
 }
 
-func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) {
+func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) error {
 	// If the stream responds positively to the dummy route, it means
 	// it doesn't require (or respect the RFC) a route and the attack
 	// can be skipped.
-	ok := s.routeAttack(target, dummyRoute)
+	ok, err := s.routeAttack(target, dummyRoute)
+	if err != nil {
+		return err
+	}
 	if ok {
 		target.RouteFound = true
 		target.Routes = append(target.Routes, "/")
@@ -188,9 +189,7 @@ func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) {
 	resChan <- target
 }
 
-func (s *Scanner) detectAuthMethod(stream Stream) int {
-	c := s.curl.Duphandle()
-
+func (s *Scanner) detectAuthMethod(stream Stream) (int, error) {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%d/%s",
 		stream.Address,
@@ -198,37 +197,43 @@ func (s *Scanner) detectAuthMethod(stream Stream) int {
 		stream.Route(),
 	)
 
-	s.setCurlOptions(c)
+	c := s.curl.Duphandle()
+	err := s.defaultCurlOptions(c)
 
 	// Send a request to the URL of the stream we want to attack.
-	_ = c.Setopt(curl.OPT_URL, attackURL)
+	err = c.Setopt(curl.OPT_URL, attackURL)
+	if err != nil {
+		return -1, fmt.Errorf("setting attack URL: %w", err)
+	}
+
 	// Set the RTSP STREAM URI as the stream URL.
-	_ = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
-	_ = c.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
+	err = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	if err != nil {
+		return -1, fmt.Errorf("setting RTSP stream URI: %w", err)
+	}
+
+	err = c.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
+	if err != nil {
+		return -1, fmt.Errorf("setting curl RTSP request method: %w", err)
+	}
 
 	// Perform the request.
-	err := c.Perform()
+	err = c.Perform()
 	if err != nil {
-		s.term.Errorf("Perform failed for %q (auth %d): %v", attackURL, stream.AuthenticationType, err)
-		return -1
+		return -1, fmt.Errorf("performing curl request at %q with auth type %d: %w", attackURL, stream.AuthenticationType, err)
 	}
 
 	authType, err := c.Getinfo(curl.INFO_HTTPAUTH_AVAIL)
 	if err != nil {
-		s.term.Errorf("Getinfo failed: %v", err)
-		return -1
+		return -1, fmt.Errorf("getting auth info: %w", err)
 	}
 
-	if s.debug {
-		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", authType)
-	}
+	s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", authType)
 
-	return authType.(int)
+	return authType.(int), nil
 }
 
-func (s *Scanner) routeAttack(stream Stream, route string) bool {
-	c := s.curl.Duphandle()
-
+func (s *Scanner) routeAttack(stream Stream, route string) (bool, error) {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%s@%s:%d/%s",
 		stream.Username,
@@ -238,46 +243,62 @@ func (s *Scanner) routeAttack(stream Stream, route string) bool {
 		route,
 	)
 
-	s.setCurlOptions(c)
+	c := s.curl.Duphandle()
+	err := s.defaultCurlOptions(c)
+	if err != nil {
+		return false, fmt.Errorf("setting curl options: %w", err)
+	}
 
 	// Set proper authentication type.
-	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	_ = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	err = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
+	if err != nil {
+		return false, fmt.Errorf("setting curl authentication type: %w", err)
+	}
+
+	// Set the username and password to use for the attack.
+	err = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	if err != nil {
+		return false, fmt.Errorf("setting curl user password: %w", err)
+	}
 
 	// Send a request to the URL of the stream we want to attack.
-	_ = c.Setopt(curl.OPT_URL, attackURL)
+	err = c.Setopt(curl.OPT_URL, attackURL)
+	if err != nil {
+		return false, fmt.Errorf("setting curl attack URL: %w", err)
+	}
+
 	// Set the RTSP STREAM URI as the stream URL.
-	_ = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
-	_ = c.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
+	err = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	if err != nil {
+		return false, fmt.Errorf("setting curl RTSP stream URI: %w", err)
+	}
+
+	// Set the RTSP request type to DESCRIBE.
+	err = c.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
+	if err != nil {
+		return false, fmt.Errorf("setting curl RTSP request method: %w", err)
+	}
 
 	// Perform the request.
-	err := c.Perform()
+	err = c.Perform()
 	if err != nil {
-		s.term.Errorf("Perform failed for %q (auth %d): %v", attackURL, stream.AuthenticationType, err)
-		return false
+		return false, fmt.Errorf("performing curl request at %q with auth type %d: %w", attackURL, stream.AuthenticationType, err)
 	}
 
 	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
-		s.term.Errorf("Getinfo failed: %v", err)
-		return false
+		return false, fmt.Errorf("getting curl response code: %w", err)
 	}
 
-	if s.debug {
-		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
-	}
+	s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
 	// If it's a 401 or 403, it means that the credentials are wrong but the route might be okay.
 	// If it's a 200, the stream is accessed successfully.
-	if rc == httpOK || rc == httpUnauthorized || rc == httpForbidden {
-		return true
-	}
-	return false
+	access := rc == http.StatusOK || rc == http.StatusUnauthorized || rc == http.StatusForbidden
+	return access, nil
 }
 
-func (s *Scanner) credAttack(stream Stream, username string, password string) bool {
-	c := s.curl.Duphandle()
-
+func (s *Scanner) credAttack(stream Stream, username string, password string) (bool, error) {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%s@%s:%d/%s",
 		username,
@@ -287,47 +308,62 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) bo
 		stream.Route(),
 	)
 
-	s.setCurlOptions(c)
+	c := s.curl.Duphandle()
+	err := s.defaultCurlOptions(c)
+	if err != nil {
+		return false, fmt.Errorf("setting curl options: %w", err)
+	}
 
 	// Set proper authentication type.
-	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	_ = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(username, ":", password))
+	err = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
+	if err != nil {
+		return false, fmt.Errorf("setting curl authentication type: %w", err)
+	}
+
+	// Set the username and password to use for the attack.
+	err = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(username, ":", password))
+	if err != nil {
+		return false, fmt.Errorf("setting curl user password: %w", err)
+	}
 
 	// Send a request to the URL of the stream we want to attack.
-	_ = c.Setopt(curl.OPT_URL, attackURL)
+	err = c.Setopt(curl.OPT_URL, attackURL)
+	if err != nil {
+		return false, fmt.Errorf("setting curl attack URL: %w", err)
+	}
+
 	// Set the RTSP STREAM URI as the stream URL.
-	_ = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
-	_ = c.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
+	err = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	if err != nil {
+		return false, fmt.Errorf("setting curl RTSP stream URI: %w", err)
+	}
+
+	// Set the RTSP request type to DESCRIBE.
+	err = c.Setopt(curl.OPT_RTSP_REQUEST, rtspDescribe)
+	if err != nil {
+		return false, fmt.Errorf("setting curl RTSP request method: %w", err)
+	}
 
 	// Perform the request.
-	err := c.Perform()
+	err = c.Perform()
 	if err != nil {
-		s.term.Errorf("Perform failed for %q (auth %d): %v", attackURL, stream.AuthenticationType, err)
-		return false
+		return false, fmt.Errorf("performing curl request at %q with auth type %d: %w", attackURL, stream.AuthenticationType, err)
 	}
 
 	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
-		s.term.Errorf("Getinfo failed: %v", err)
-		return false
+		return false, fmt.Errorf("getting curl response code: %w", err)
 	}
 
-	if s.debug {
-		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
-	}
+	s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
 
 	// If it's a 404, it means that the route is incorrect but the credentials might be okay.
 	// If it's a 200, the stream is accessed successfully.
-	if rc == httpOK || rc == httpNotFound {
-		return true
-	}
-	return false
+	return rc == http.StatusOK || rc == http.StatusNotFound, nil
 }
 
-func (s *Scanner) validateStream(stream Stream) bool {
-	c := s.curl.Duphandle()
-
+func (s *Scanner) validateStream(stream Stream) (bool, error) {
 	attackURL := fmt.Sprintf(
 		"rtsp://%s:%s@%s:%d/%s",
 		stream.Username,
@@ -337,61 +373,95 @@ func (s *Scanner) validateStream(stream Stream) bool {
 		stream.Route(),
 	)
 
-	s.setCurlOptions(c)
+	c := s.curl.Duphandle()
+	err := s.defaultCurlOptions(c)
+	if err != nil {
+		return false, fmt.Errorf("setting curl options: %w", err)
+	}
 
 	// Set proper authentication type.
-	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	_ = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	err = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
+	if err != nil {
+		return false, fmt.Errorf("setting curl authentication type: %w", err)
+	}
+
+	err = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	if err != nil {
+		return false, fmt.Errorf("setting curl user password: %w", err)
+	}
 
 	// Send a request to the URL of the stream we want to attack.
-	_ = c.Setopt(curl.OPT_URL, attackURL)
-	// Set the RTSP STREAM URI as the stream URL.
-	_ = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
-	_ = c.Setopt(curl.OPT_RTSP_REQUEST, rtspSetup)
+	err = c.Setopt(curl.OPT_URL, attackURL)
+	if err != nil {
+		return false, fmt.Errorf("setting curl attack URL: %w", err)
+	}
 
-	_ = c.Setopt(curl.OPT_RTSP_TRANSPORT, "RTP/AVP;unicast;client_port=33332-33333")
+	// Set the RTSP STREAM URI as the stream URL.
+	err = c.Setopt(curl.OPT_RTSP_STREAM_URI, attackURL)
+	if err != nil {
+		return false, fmt.Errorf("setting curl RTSP stream URI: %w", err)
+	}
+
+	err = c.Setopt(curl.OPT_RTSP_REQUEST, rtspSetup)
+	if err != nil {
+		return false, fmt.Errorf("setting curl RTSP request method: %w", err)
+	}
+
+	err = c.Setopt(curl.OPT_RTSP_TRANSPORT, "RTP/AVP;unicast;client_port=33332-33333")
+	if err != nil {
+		return false, fmt.Errorf("setting curl RTSP transport: %w", err)
+	}
 
 	// Perform the request.
-	err := c.Perform()
+	err = c.Perform()
 	if err != nil {
-		s.term.Errorf("Perform failed for %q (auth %d): %v", attackURL, stream.AuthenticationType, err)
-		return false
+		return false, fmt.Errorf("performing curl request at %q with auth type %d: %w", attackURL, stream.AuthenticationType, err)
 	}
 
 	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
-		s.term.Errorf("Getinfo failed: %v", err)
-		return false
+		return false, fmt.Errorf("getting curl response code: %w", err)
 	}
 
-	if s.debug {
-		s.term.Debugln("SETUP", attackURL, "RTSP/1.0 >", rc)
-	}
+	s.term.Debugln("SETUP", attackURL, "RTSP/1.0 >", rc)
 
 	// If it's a 200, the stream is accessed successfully.
-	if rc == httpOK {
-		return true
-	}
-	return false
+	return rc == http.StatusOK, nil
 }
 
-func (s *Scanner) setCurlOptions(c Curler) {
+func (s *Scanner) defaultCurlOptions(c *curl.CURL) error {
 	// Do not write sdp in stdout
-	_ = c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
+	err := c.Setopt(curl.OPT_WRITEFUNCTION, doNotWrite)
+	if err != nil {
+		return fmt.Errorf("disabling curl write function: %v", err)
+	}
+
 	// Do not use signals (would break multithreading).
-	_ = c.Setopt(curl.OPT_NOSIGNAL, 1)
+	err = c.Setopt(curl.OPT_NOSIGNAL, 1)
+	if err != nil {
+		return fmt.Errorf("disabling curl signals: %v", err)
+	}
+
 	// Do not send a body in the describe request.
-	_ = c.Setopt(curl.OPT_NOBODY, 1)
+	err = c.Setopt(curl.OPT_NOBODY, 1)
+	if err != nil {
+		return fmt.Errorf("disabling curl body: %v", err)
+	}
+
 	// Set custom timeout.
-	_ = c.Setopt(curl.OPT_TIMEOUT_MS, int(s.timeout/time.Millisecond))
+	err = c.Setopt(curl.OPT_TIMEOUT_MS, int(s.timeout/time.Millisecond))
+	if err != nil {
+		return fmt.Errorf("setting curl timeout: %v", err)
+	}
 
 	// Enable verbose logs if verbose mode is on.
-	if s.verbose {
-		_ = c.Setopt(curl.OPT_VERBOSE, 1)
-	} else {
-		_ = c.Setopt(curl.OPT_VERBOSE, 0)
+	err = c.Setopt(curl.OPT_VERBOSE, s.verbose)
+	if err != nil {
+		return fmt.Errorf("setting curl verbose mode: %v", err)
 	}
+
+	return nil
 }
 
 // HACK: See https://stackoverflow.com/questions/3572397/lib-curl-in-c-disable-printing

@@ -2,7 +2,7 @@ package cameradar
 
 import "time"
 
-// Stream represents a camera's RTSP stream
+// Stream represents a camera's RTSP stream.
 type Stream struct {
 	Device   string   `json:"device"`
 	Username string   `json:"username"`
@@ -34,14 +34,14 @@ type Credentials struct {
 	Passwords []string `json:"passwords"`
 }
 
-// Routes is a slice of Routes
+// Routes is a slice of Routes.
 // ['/live.sdp', '/media.amp', ...]
 type Routes []string
 
 // Options contains all options needed to launch a complete cameradar scan
 type Options struct {
 	Targets     []string      `json:"target" validate:"required"`
-	Ports       []string      `json:"ports"`
+	Ports       []string      `json:"ports" validate:"required"`
 	Routes      Routes        `json:"routes"`
 	Credentials Credentials   `json:"credentials"`
 	Speed       int           `json:"speed"`

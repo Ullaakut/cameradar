@@ -80,7 +80,7 @@ Only use this solution if for some reason using docker is not an option for you 
 
 ### Dependencies
 
-* `go` (> `1.10`)
+* `go` (> `1.23`)
 * `libcurl` development library (**[version has to be <7.66.0](https://github.com/Ullaakut/cameradar/issues/247)**)
     * For apt users: `apt install libcurl4-openssl-dev`
 
