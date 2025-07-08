@@ -1,7 +1,70 @@
-# https://github.com/golangci/golangci/wiki/Configuration
-
-service:
-  project-path: github.com/Ullaakut/cameradar
-  prepare:
-    - apt-get update && apt-get install -y libcurl4-gnutls-dev
-    - dep ensure
+version: "2"
+run:
+  tests: false
+linters:
+  default: all
+  disable:
+    - depguard
+    - dupl
+    - err113
+    - exhaustive
+    - exhaustruct
+    - forcetypeassert
+    - funcorder
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - gocyclo
+    - godox
+    - gomoddirectives
+    - inamedparam
+    - ireturn
+    - mnd
+    - nilnil
+    - nlreturn
+    - nonamedreturns
+    - tagliatelle
+    - varnamelen
+    - wrapcheck
+    - wsl
+    - wsl_v5
+  settings:
+    cyclop:
+      max-complexity: 15
+    gosec:
+      excludes:
+        - G101
+        - G304
+        - G402
+    lll:
+      line-length: 160
+    tagliatelle:
+      case:
+        rules:
+          json: pascal
+        use-field-name: true
+  exclusions:
+    generated: lax
+    rules:
+      - path: (.+)\.go$
+        text: 'ST1000: at least one file in a package should have a package comment'
+      - path: (.+)\.go$
+        text: 'package-comments: should have a package comment'
+      - path: (.+)\.go$
+        text: 'Error return value of `.+\.Close` is not checked'
+      - linters:
+          - cyclop
+        path: (.+)_test\.go
+    paths: []
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      extra-rules: true
+  exclusions:
+    generated: lax
+    paths: []

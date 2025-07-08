@@ -2,9 +2,5 @@
 .idea/
 .vscode/
 
-# Golang
-/bin/*
-/pkg/*
-
 # Builds
 dist/

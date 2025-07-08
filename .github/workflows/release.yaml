@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        id: install-go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Download dependencies
+        run: go mod download
+        if: steps.install-go.outputs.cache-hit != 'true'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        env:
+          GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
+          DOCKER_REPOSITORY: ullaakut/cameradar
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        with:
+          distribution: goreleaser-pro
+          version: ${{ inputs.GORELEASER_VERSION }}
+          args: release --clean
