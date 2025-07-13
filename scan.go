@@ -10,14 +10,14 @@ import (
 //
 // targets can be:
 //
-//    - a subnet (e.g.: 172.16.100.0/24)
-//    - an IP (e.g.: 172.16.100.10)
-//    - a hostname (e.g.: localhost)
-//    - a range of IPs (e.g.: 172.16.100.10-20)
+//   - a subnet (e.g.: 172.16.100.0/24)
+//   - an IP (e.g.: 172.16.100.10)
+//   - a hostname (e.g.: localhost)
+//   - a range of IPs (e.g.: 172.16.100.10-20)
 //
 // ports can be:
 //
-//    - one or multiple ports and port ranges separated by commas (e.g.: 554,8554-8560,18554-28554)
+//   - one or multiple ports and port ranges separated by commas (e.g.: 554,8554-8560,18554-28554)
 func (s *Scanner) Scan() ([]Stream, error) {
 	s.term.StartStep("Scanning the network")
 

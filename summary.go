@@ -1,6 +1,10 @@
 package cameradar
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+
 	"github.com/Ullaakut/disgo/style"
 	curl "github.com/Ullaakut/go-curl"
 )
@@ -65,4 +69,23 @@ func (s *Scanner) PrintStreams(streams []Stream) {
 	} else {
 		s.term.Infof("%s Streams were found but none were accessed. They are most likely configured with secure credentials and routes. You can try adding entries to the dictionary or generating your own in order to attempt a bruteforce attack on the cameras.\n", style.Failure("\xE2\x9C\x96"))
 	}
+}
+
+func (s *Scanner) Write(wc io.WriteCloser, streams []Stream) error {
+	if wc == nil {
+		return nil
+	}
+	defer wc.Close()
+
+	fileB, err := json.Marshal(streams)
+	if err != nil {
+		return fmt.Errorf("marshalling results: %w", err)
+	}
+
+	_, err = wc.Write(fileB)
+	if err != nil {
+		return fmt.Errorf("writing results to file: %w", err)
+	}
+	return nil
+
 }
