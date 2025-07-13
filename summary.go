@@ -77,12 +77,12 @@ func (s *Scanner) Write(wc io.WriteCloser, streams []Stream) error {
 	}
 	defer wc.Close()
 
-	fileB, err := json.Marshal(streams)
+	jsonData, err := json.MarshalIndent(streams, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshalling results: %w", err)
 	}
 
-	_, err = wc.Write(fileB)
+	_, err = wc.Write(jsonData)
 	if err != nil {
 		return fmt.Errorf("writing results to file: %w", err)
 	}

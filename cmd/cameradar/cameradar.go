@@ -22,7 +22,7 @@ func parseArguments() error {
 	pflag.StringSliceP("ports", "p", []string{"554", "5554", "8554"}, "The ports on which to search for RTSP streams")
 	pflag.StringP("custom-routes", "r", "${GOPATH}/src/github.com/Ullaakut/cameradar/dictionaries/routes", "The path on which to load a custom routes dictionary")
 	pflag.StringP("custom-credentials", "c", "${GOPATH}/src/github.com/Ullaakut/cameradar/dictionaries/credentials.json", "The path on which to load a custom credentials JSON dictionary")
-	pflag.StringP("nmap-output", "o", "/tmp/cameradar_scan.xml", "The path on which to save the nmap scan output (XML format)")
+	pflag.StringP("output-file", "o", "", "Output scan results as a JSON file. If not specified, results are not written to a file.")
 	pflag.IntP("scan-speed", "s", 4, "The nmap speed preset to use for scanning (lower is stealthier)")
 	pflag.DurationP("attack-interval", "I", 0, "The interval between each attack  (i.e: 2000ms, higher is stealthier)")
 	pflag.DurationP("timeout", "T", 2000*time.Millisecond, "The timeout to use for attack attempts (i.e: 2000ms)")
