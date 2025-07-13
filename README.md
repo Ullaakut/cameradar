@@ -121,7 +121,7 @@ If you have [VLC Media Player](http://www.videolan.org/vlc/), you should be able
 * **"-T, --timeout"**: (Default: `2000ms`) Set custom timeout value after which an attack attempt without an answer should give up. It's recommended to increase it when attempting to scan unstable and slow networks or to decrease it on fast and reliable networks.
 * **"-r, --custom-routes"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/routes`) Set custom dictionary path for routes
 * **"-c, --custom-credentials"**: (Default: `<CAMERADAR_GOPATH>/dictionaries/credentials.json`) Set custom dictionary path for credentials
-* **"-o, --nmap-output"**: (Default: `/tmp/cameradar_scan.xml`) Set custom nmap output path
+* **"-o, --output-file"**: Output scan results as a JSON file. If not specified, results are not written to a file.
 * **"-d, --debug"**: Enable debug logs
 * **"-v, --verbose"**: Enable verbose curl logs (not recommended for most use)
 * **"-h"**: Display the usage information
