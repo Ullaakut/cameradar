@@ -57,6 +57,9 @@ func (s *Scanner) scan(nmapScanner nmap.ScanRunner) ([]Stream, error) {
 			}
 
 			for _, address := range host.Addresses {
+				if address.AddrType != "ipv4" {
+					continue
+				}
 				streams = append(streams, Stream{
 					Device:  port.Service.Product,
 					Address: address.Addr,
