@@ -230,9 +230,7 @@ func (s *Scanner) routeAttack(stream Stream, route string) bool {
 	c := s.curl.Duphandle()
 
 	attackURL := fmt.Sprintf(
-		"rtsp://%s:%s@%s:%d/%s",
-		stream.Username,
-		stream.Password,
+		"rtsp://%s:%d/%s",
 		stream.Address,
 		stream.Port,
 		route,
@@ -242,7 +240,8 @@ func (s *Scanner) routeAttack(stream Stream, route string) bool {
 
 	// Set proper authentication type.
 	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	_ = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	_ = c.Setopt(curl.OPT_USERNAME, stream.Username)
+	_ = c.Setopt(curl.OPT_PASSWORD, stream.Password)
 
 	// Send a request to the URL of the stream we want to attack.
 	_ = c.Setopt(curl.OPT_URL, attackURL)
@@ -279,9 +278,7 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) bo
 	c := s.curl.Duphandle()
 
 	attackURL := fmt.Sprintf(
-		"rtsp://%s:%s@%s:%d/%s",
-		username,
-		password,
+		"rtsp://%s:%d/%s",
 		stream.Address,
 		stream.Port,
 		stream.Route(),
@@ -291,7 +288,8 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) bo
 
 	// Set proper authentication type.
 	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	_ = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(username, ":", password))
+	_ = c.Setopt(curl.OPT_USERNAME, username)
+	_ = c.Setopt(curl.OPT_PASSWORD, password)
 
 	// Send a request to the URL of the stream we want to attack.
 	_ = c.Setopt(curl.OPT_URL, attackURL)
@@ -329,9 +327,7 @@ func (s *Scanner) validateStream(stream Stream) bool {
 	c := s.curl.Duphandle()
 
 	attackURL := fmt.Sprintf(
-		"rtsp://%s:%s@%s:%d/%s",
-		stream.Username,
-		stream.Password,
+		"rtsp://%s:%d/%s",
 		stream.Address,
 		stream.Port,
 		stream.Route(),
@@ -341,7 +337,8 @@ func (s *Scanner) validateStream(stream Stream) bool {
 
 	// Set proper authentication type.
 	_ = c.Setopt(curl.OPT_HTTPAUTH, stream.AuthenticationType)
-	_ = c.Setopt(curl.OPT_USERPWD, fmt.Sprint(stream.Username, ":", stream.Password))
+	_ = c.Setopt(curl.OPT_USERNAME, stream.Username)
+	_ = c.Setopt(curl.OPT_PASSWORD, stream.Password)
 
 	// Send a request to the URL of the stream we want to attack.
 	_ = c.Setopt(curl.OPT_URL, attackURL)
