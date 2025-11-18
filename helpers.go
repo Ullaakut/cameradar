@@ -1,6 +1,9 @@
 package cameradar
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 func replace(streams []Stream, new Stream) []Stream {
 	var updatedSlice []Stream
@@ -16,9 +19,20 @@ func replace(streams []Stream, new Stream) []Stream {
 	return updatedSlice
 }
 
+// normalizeRoute ensures route has proper formatting to prevent double slashes
+func normalizeRoute(route string) string {
+	// If route is empty, return it as-is
+	if route == "" {
+		return ""
+	}
+	// Remove leading slash if present to avoid double slashes when concatenating
+	return strings.TrimPrefix(route, "/")
+}
+
 // GetCameraRTSPURL generates a stream's RTSP URL.
 func GetCameraRTSPURL(stream Stream) string {
-	return "rtsp://" + stream.Username + ":" + stream.Password + "@" + stream.Address + ":" + fmt.Sprint(stream.Port) + "/" + stream.Route()
+	route := normalizeRoute(stream.Route())
+	return "rtsp://" + stream.Username + ":" + stream.Password + "@" + stream.Address + ":" + fmt.Sprint(stream.Port) + "/" + route
 }
 
 // GetCameraAdminPanelURL returns the URL to the camera's admin panel.
