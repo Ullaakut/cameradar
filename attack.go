@@ -459,6 +459,7 @@ func (s *Scanner) setCurlOptions(c Curler) {
 		_ = c.Setopt(curl.OPT_VERBOSE, 0)
 	}
 }
+
 var ErrConnection = errors.New("connection error")
 
 var connectionErrorSubstrings = []string{
