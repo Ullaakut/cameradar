@@ -199,17 +199,17 @@ func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) {
 	
 	// Otherwise, bruteforce the routes.
 	for _, route := range s.routes {
-		ok, isConnectionError := s.routeAttack(target, route)
+		ok, err := s.routeAttack(target, route)
 		if ok {
 			target.RouteFound = true
 			target.Routes = append(target.Routes, route)
 		}
 		
 		// Track consecutive connection errors
-		if isConnectionError {
+		if err != nil {
 			consecutiveErrors++
 			if consecutiveErrors >= maxConsecutiveErrors {
-				s.term.Errorf("Stream %s: Too many consecutive connection failures (%d), server may be blocking requests", GetCameraRTSPURL(target), consecutiveErrors)
+				s.term.Errorf("Stream %s: Too many consecutive errors (%d), server may be blocking requests", GetCameraRTSPURL(target), consecutiveErrors)
 				break
 			}
 		} else {
@@ -293,18 +293,20 @@ func (s *Scanner) routeAttack(stream Stream, route string) (bool, error) {
 	err := c.Perform()
 	if err != nil {
 		// Check if it's a connection error (reset, timeout, etc.)
-		isConnError := isConnectionError(err)
-		if !s.verbose || !isConnError {
+		if isConnectionError(err) {
+			return false, fmt.Errorf("connection error: %w", err)
+		}
+		if !s.verbose {
 			s.term.Errorf("Perform failed for %q (auth %d): %v", attackURL, stream.AuthenticationType, err)
 		}
-		return false, isConnError
+		return false, err
 	}
 
 	// Get return code for the request.
 	rc, err := c.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
 		s.term.Errorf("Getinfo failed: %v", err)
-		return false, false
+		return false, err
 	}
 
 	if s.debug {
@@ -313,15 +315,15 @@ func (s *Scanner) routeAttack(stream Stream, route string) (bool, error) {
 	
 	// 503 Service Unavailable indicates server is rate-limiting/blocking
 	if rc == httpServiceUnavailable {
-		return false, true // Treat as connection error
+		return false, fmt.Errorf("service unavailable (503): server may be rate-limiting")
 	}
 	
 	// If it's a 401 or 403, it means that the credentials are wrong but the route might be okay.
 	// If it's a 200, the stream is accessed successfully.
 	if rc == httpOK || rc == httpUnauthorized || rc == httpForbidden {
-		return true, false
+		return true, nil
 	}
-	return false, false
+	return false, nil
 }
 
 func (s *Scanner) credAttack(stream Stream, username string, password string) (bool, bool) {
