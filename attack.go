@@ -454,37 +454,27 @@ func (s *Scanner) setCurlOptions(c Curler) {
 	}
 }
 
-// isConnectionError checks if the error is a connection-related error
+var connectionErrorSubstrings = []string{
+	"connection reset",
+	"recv failure",
+	"timeout",
+	"connection refused",
+	"broken pipe",
+	"cseq",
+	"503",               // service unavailable / possible rate limiting
+	"service unavailable",
+}
+
+// isConnectionError reports whether err looks like a connection-related error.
 func isConnectionError(err error) bool {
 	if err == nil {
 		return false
 	}
-	errMsg := err.Error()
-	// Check for common connection error patterns
-	return containsAny(errMsg, []string{
-		"connection reset",
-		"Connection reset",
-		"recv failure",
-		"Recv failure",
-		"timeout",
-		"Timeout",
-		"connection refused",
-		"Connection refused",
-		"broken pipe",
-		"CSeq",
-		"503", // Service Unavailable indicates rate limiting
-		"Service Unavailable",
-	})
-}
 
-func containsAny(s string, substrs []string) bool {
-	for _, substr := range substrs {
-		if len(s) >= len(substr) {
-			for i := 0; i <= len(s)-len(substr); i++ {
-				if s[i:i+len(substr)] == substr {
-					return true
-				}
-			}
+	msg := strings.ToLower(err.Error())
+	for _, needle := range connectionErrorSubstrings {
+		if strings.Contains(msg, needle) {
+			return true
 		}
 	}
 	return false
