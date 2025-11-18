@@ -263,7 +263,7 @@ func (s *Scanner) detectAuthMethod(stream Stream) int {
 	return authType.(int)
 }
 
-func (s *Scanner) routeAttack(stream Stream, route string) (bool, bool) {
+func (s *Scanner) routeAttack(stream Stream, route string) (bool, error) {
 	c := s.curl.Duphandle()
 
 	normalizedRoute := normalizeRoute(route)
