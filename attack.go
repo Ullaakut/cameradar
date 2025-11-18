@@ -164,7 +164,7 @@ func (s *Scanner) attackCameraCredentials(target Stream, resChan chan<- Stream) 
 			}
 			
 			// Track consecutive connection errors
-			if isConnectionError(err) {
+			if errors.Is(err, ErrConnection) {
 				consecutiveErrors++
 				if consecutiveErrors >= maxConsecutiveErrors {
 					s.term.Errorf("Stream %s: Too many consecutive connection failures (%d), server may be blocking requests", GetCameraRTSPURL(target), consecutiveErrors)
