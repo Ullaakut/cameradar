@@ -21,10 +21,6 @@ func replace(streams []Stream, new Stream) []Stream {
 
 // normalizeRoute ensures route has proper formatting to prevent double slashes
 func normalizeRoute(route string) string {
-	// If route is empty, return it as-is
-	if route == "" {
-		return ""
-	}
 	// Remove leading slash if present to avoid double slashes when concatenating
 	return strings.TrimPrefix(route, "/")
 }
