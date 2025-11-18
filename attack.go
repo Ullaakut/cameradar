@@ -3,19 +3,11 @@ package cameradar
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/Ullaakut/go-curl"
-)
-
-// HTTP responses.
-const (
-	httpOK                = 200
-	httpUnauthorized      = 401
-	httpForbidden         = 403
-	httpNotFound          = 404
-	httpServiceUnavailable = 503
 )
 
 // CURL RTSP request types.
@@ -151,30 +143,30 @@ func (s *Scanner) DetectAuthMethods(targets []Stream) []Stream {
 func (s *Scanner) attackCameraCredentials(target Stream, resChan chan<- Stream) {
 	consecutiveErrors := 0
 	maxConsecutiveErrors := 5 // Stop after 5 consecutive connection failures
-	
+
 	for _, username := range s.credentials.Usernames {
 		for _, password := range s.credentials.Passwords {
 			err := s.credAttack(target, username, password)
-			if err == nil {
+			if err != nil {
+				switch {
+				case errors.Is(err, ErrConnection):
+					consecutiveErrors++
+					if consecutiveErrors >= maxConsecutiveErrors {
+						s.term.Errorf("Stream %s: Too many consecutive connection failures (%d), server may be blocking requests", GetCameraRTSPURL(target), consecutiveErrors)
+						break
+					}
+				default:
+					consecutiveErrors = 0 // Reset on non-connection errors
+				}
+
+				time.Sleep(s.attackInterval)
+			} else {
 				target.CredentialsFound = true
 				target.Username = username
 				target.Password = password
 				resChan <- target
 				return
 			}
-			
-			// Track consecutive connection errors
-			if errors.Is(err, ErrConnection) {
-				consecutiveErrors++
-				if consecutiveErrors >= maxConsecutiveErrors {
-					s.term.Errorf("Stream %s: Too many consecutive connection failures (%d), server may be blocking requests", GetCameraRTSPURL(target), consecutiveErrors)
-					break
-				}
-			} else {
-				consecutiveErrors = 0 // Reset on non-connection errors
-			}
-			
-			time.Sleep(s.attackInterval)
 		}
 		if consecutiveErrors >= maxConsecutiveErrors {
 			break // Exit outer loop as well
@@ -199,25 +191,28 @@ func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) {
 
 	consecutiveErrors := 0
 	maxConsecutiveErrors := 5 // Stop after 5 consecutive connection failures
-	
+
 	// Otherwise, bruteforce the routes.
 	for _, route := range s.routes {
 		err := s.routeAttack(target, route)
-		if err == nil {
+		if err != nil {
+			switch {
+			case errors.Is(err, ErrConnection):
+				// Track consecutive connection errors
+				consecutiveErrors++
+				if consecutiveErrors >= maxConsecutiveErrors {
+					s.term.Errorf("Stream %s: Too many consecutive errors (%d), server may be blocking requests", GetCameraRTSPURL(target), consecutiveErrors)
+					break
+				}
+			default:
+				consecutiveErrors = 0 // Reset on non-connection errors
+			}
+		} else {
 			target.RouteFound = true
 			target.Routes = append(target.Routes, route)
 			consecutiveErrors = 0 // Reset on success
-		} else if errors.Is(err, ErrConnection) {
-			// Track consecutive connection errors
-			consecutiveErrors++
-			if consecutiveErrors >= maxConsecutiveErrors {
-				s.term.Errorf("Stream %s: Too many consecutive errors (%d), server may be blocking requests", GetCameraRTSPURL(target), consecutiveErrors)
-				break
-			}
-		} else {
-			consecutiveErrors = 0 // Reset on non-connection errors
 		}
-		
+
 		time.Sleep(s.attackInterval)
 	}
 
@@ -315,17 +310,16 @@ func (s *Scanner) routeAttack(stream Stream, route string) error {
 		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
 	}
 
-	// 503 Service Unavailable indicates server is rate-limiting/blocking
-	if rc == httpServiceUnavailable {
-		return fmt.Errorf("%w: service unavailable (503): server may be rate-limiting", ErrConnection)
-	}
-	
 	// If it's a 401 or 403, it means that the credentials are wrong but the route might be okay.
 	// If it's a 200, the stream is accessed successfully.
-	if rc == httpOK || rc == httpUnauthorized || rc == httpForbidden {
+	switch rc {
+	case http.StatusOK, http.StatusUnauthorized, http.StatusForbidden:
 		return nil
+	case http.StatusServiceUnavailable:
+		return fmt.Errorf("%w: service unavailable (503): server may be rate-limiting", ErrConnection)
+	default:
+		return fmt.Errorf("unexpected response: %d", rc)
 	}
-	return fmt.Errorf("unexpected response: %d", rc)
 }
 
 func (s *Scanner) credAttack(stream Stream, username string, password string) error {
@@ -378,17 +372,17 @@ func (s *Scanner) credAttack(stream Stream, username string, password string) er
 		s.term.Debugln("DESCRIBE", attackURL, "RTSP/1.0 >", rc)
 	}
 
-	// 503 Service Unavailable indicates server is rate-limiting/blocking
-	if rc == httpServiceUnavailable {
-		return fmt.Errorf("service unavailable (503): server may be rate-limiting")
-	}
-
+	switch rc {
 	// If it's a 404, it means that the route is incorrect but the credentials might be okay.
 	// If it's a 200, the stream is accessed successfully.
-	if rc == httpOK || rc == httpNotFound {
+	case http.StatusOK, http.StatusNotFound:
 		return nil
+	case http.StatusServiceUnavailable:
+		return fmt.Errorf("service unavailable (503): server may be rate-limiting")
+	default:
+		return fmt.Errorf("unexpected response: %d", rc)
 	}
-	return fmt.Errorf("unexpected response: %d", rc)
+
 }
 
 func (s *Scanner) validateStream(stream Stream) error {
@@ -436,10 +430,12 @@ func (s *Scanner) validateStream(stream Stream) error {
 	}
 
 	// If it's a 200, the stream is accessed successfully.
-	if rc == httpOK {
+	switch rc {
+	case http.StatusOK:
 		return nil
+	default:
+		return fmt.Errorf("unexpected response: %d", rc)
 	}
-	return fmt.Errorf("unexpected response: %d", rc)
 }
 
 func (s *Scanner) setCurlOptions(c Curler) {
@@ -469,7 +465,7 @@ var connectionErrorSubstrings = []string{
 	"connection refused",
 	"broken pipe",
 	"cseq",
-	"503",               // service unavailable / possible rate limiting
+	"503", // service unavailable / possible rate limiting
 	"service unavailable",
 }
 

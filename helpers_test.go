@@ -58,9 +58,9 @@ func TestReplace(t *testing.T) {
 
 func TestNormalizeRoute(t *testing.T) {
 	testCases := []struct {
-		route          string
-		expectedRoute  string
-		description    string
+		route         string
+		expectedRoute string
+		description   string
 	}{
 		{
 			route:         "/live.sdp",
