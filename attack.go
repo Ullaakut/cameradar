@@ -207,7 +207,7 @@ func (s *Scanner) attackCameraRoute(target Stream, resChan chan<- Stream) {
 			target.RouteFound = true
 			target.Routes = append(target.Routes, route)
 			consecutiveErrors = 0 // Reset on success
-		} else if isConnectionError(err) {
+		} else if errors.Is(err, ErrConnection) {
 			// Track consecutive connection errors
 			consecutiveErrors++
 			if consecutiveErrors >= maxConsecutiveErrors {
