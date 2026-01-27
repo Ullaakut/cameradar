@@ -14,7 +14,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Go Test looks at `mtime` for caching. `git clone` messes with this. Set it consistently to last commit time.
       - name: Restore file modification time
@@ -26,7 +26,7 @@ jobs:
 
       - name: Install Go
         id: install-go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache-dependency-path: |
@@ -40,7 +40,7 @@ jobs:
         if: steps.install-go.outputs.cache-hit != 'true'
 
       - name: Run Linter
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.10.2
 
