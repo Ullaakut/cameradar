@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat" />
     </a>
     <a href="https://github.com/Ullaakut/cameradar/actions">
-        <img src="https://img.shields.io/github/actions/workflow/status/Ullaakut/cameradar/build" />
+        <img src="https://img.shields.io/github/actions/workflow/status/Ullaakut/cameradar/build.yaml" />
     </a>
     <a href='https://coveralls.io/github/Ullaakut/cameradar?branch=master'>
         <img src='https://coveralls.io/repos/github/Ullaakut/cameradar/badge.svg?branch=master' alt='Coverage Status' />
@@ -24,10 +24,9 @@
     </a>
 </p>
 
-## An RTSP stream access tool with a Go library
+## RTSP stream access tool
 
 Cameradar scans RTSP endpoints on authorized targets, and uses dictionary attacks to bruteforce their credentials and routes.
-Use the CLI for end-to-end scanning or import the library in Go code.
 
 ### What Cameradar does
 
@@ -55,6 +54,10 @@ Use the CLI for end-to-end scanning or import the library in Go code.
 - [Frequently asked questions](#frequently-asked-questions)
 - [Examples](#examples)
 - [License](#license)
+
+---
+
+<p align="center"><img src="images/example.gif"/></p>
 
 ## Quick start with Docker
 

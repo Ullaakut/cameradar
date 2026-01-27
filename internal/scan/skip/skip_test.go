@@ -13,7 +13,6 @@ import (
 func TestNew_ExpandsTargetsAndPorts(t *testing.T) {
 	targets := []string{
 		"192.0.2.0/30",
-		"localhost",
 		"192.0.2.15",
 		"192.0.2.10-11",
 	}
@@ -25,7 +24,6 @@ func TestNew_ExpandsTargetsAndPorts(t *testing.T) {
 	require.NoError(t, err)
 
 	addrs := []netip.Addr{
-		netip.MustParseAddr("127.0.0.1"),
 		netip.MustParseAddr("192.0.2.0"),
 		netip.MustParseAddr("192.0.2.1"),
 		netip.MustParseAddr("192.0.2.2"),
@@ -92,7 +90,12 @@ func TestNew_ResolvesHostnames(t *testing.T) {
 	streams, err := scanner.Scan(t.Context())
 	require.NoError(t, err)
 	require.NotEmpty(t, streams)
-	assert.Equal(t, netip.MustParseAddr("127.0.0.1"), streams[0].Address)
+	addr := streams[0].Address
+	assert.True(t,
+		addr == netip.MustParseAddr("127.0.0.1") || addr == netip.MustParseAddr("::1"),
+		"expected localhost to resolve to 127.0.0.1 or ::1, got %s",
+		addr.String(),
+	)
 }
 
 func TestNew_ReturnsErrorOnHostnameLookupFailure(t *testing.T) {
