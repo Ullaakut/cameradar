@@ -1,5 +1,0 @@
-#EXTM3U
-#EXTINF:-1,127.0.0.1:8554 (GStreamer rtspd)
-rtsp://admin:12345@127.0.0.1:8554/live.sdp
-#EXTINF:-1,127.0.0.1:8555 (GStreamer rtspd)
-rtsp://admin:12345@127.0.0.1:8555/live.sdp

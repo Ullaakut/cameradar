@@ -42,7 +42,15 @@ jobs:
       - name: Run Linter
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.10.2
+          version: v2.7.2
+
+      - name: Setup gotestsum
+        uses: gertd/action-gotestsum@v3.0.0
+        with:
+          gotestsum_version: v1.13.0
+
+      - name: Download nmap
+        run: sudo apt-get install -y nmap
 
       - name: Run Tests
         env:
