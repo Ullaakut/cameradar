@@ -420,6 +420,8 @@ func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 		case <-time.After(a.attackInterval):
 		}
 
+		attempts++
+
 		nextRoute := buildIncrementedRoute(match, nextNumber)
 		if slices.Contains(target.Routes, nextRoute) {
 			if !match.isChannel {
@@ -443,7 +445,6 @@ func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 			))
 			return target, nil
 		}
-		attempts++
 		if !ok {
 			return target, nil
 		}

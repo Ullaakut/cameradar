@@ -1,6 +1,7 @@
 package attack_test
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -50,11 +51,11 @@ func TestNew(t *testing.T) {
 
 func TestAttacker_Attack_BasicAuth(t *testing.T) {
 	addr, port := startRTSPServer(t, rtspServerConfig{
-		allowedRoute: "stream",
-		requireAuth:  true,
-		username:     "user",
-		password:     "pass",
-		authMethod:   headers.AuthMethodBasic,
+		allowRoutes: []string{"stream"},
+		requireAuth: true,
+		username:    "user",
+		password:    "pass",
+		authMethod:  headers.AuthMethodBasic,
 	})
 
 	dict := testDictionary{
@@ -101,9 +102,9 @@ func TestAttacker_Attack_AuthVariants(t *testing.T) {
 		{
 			name: "no authentication",
 			config: rtspServerConfig{
-				allowedRoute: "stream",
-				requireAuth:  false,
-				authMethod:   headers.AuthMethodBasic,
+				allowRoutes: []string{"stream"},
+				requireAuth: false,
+				authMethod:  headers.AuthMethodBasic,
 			},
 			dict: testDictionary{
 				routes: []string{"stream"},
@@ -117,11 +118,11 @@ func TestAttacker_Attack_AuthVariants(t *testing.T) {
 		{
 			name: "digest authentication",
 			config: rtspServerConfig{
-				allowedRoute: "stream",
-				requireAuth:  true,
-				username:     "user",
-				password:     "pass",
-				authMethod:   headers.AuthMethodDigest,
+				allowRoutes: []string{"stream"},
+				requireAuth: true,
+				username:    "user",
+				password:    "pass",
+				authMethod:  headers.AuthMethodDigest,
 			},
 			dict: testDictionary{
 				routes:    []string{"stream"},
@@ -193,9 +194,9 @@ func TestAttacker_Attack_ValidationErrors(t *testing.T) {
 
 func TestAttacker_Attack_ReturnsErrorWhenRouteMissing(t *testing.T) {
 	addr, port := startRTSPServer(t, rtspServerConfig{
-		allowedRoute: "stream",
-		requireAuth:  false,
-		authMethod:   headers.AuthMethodBasic,
+		allowRoutes: []string{"stream"},
+		requireAuth: false,
+		authMethod:  headers.AuthMethodBasic,
 	})
 
 	dict := testDictionary{
@@ -221,11 +222,11 @@ func TestAttacker_Attack_ReturnsErrorWhenRouteMissing(t *testing.T) {
 
 func TestAttacker_Attack_ReturnsErrorWhenCredentialsMissing(t *testing.T) {
 	addr, port := startRTSPServer(t, rtspServerConfig{
-		allowedRoute: "stream",
-		requireAuth:  true,
-		username:     "user",
-		password:     "pass",
-		authMethod:   headers.AuthMethodBasic,
+		allowRoutes: []string{"stream"},
+		requireAuth: true,
+		username:    "user",
+		password:    "pass",
+		authMethod:  headers.AuthMethodBasic,
 	})
 
 	dict := testDictionary{
@@ -254,12 +255,12 @@ func TestAttacker_Attack_CredentialAttemptFails(t *testing.T) {
 	reporter := &recordingReporter{}
 
 	addr, port := startRTSPServer(t, rtspServerConfig{
-		allowedRoute: "stream",
-		requireAuth:  true,
-		username:     "user",
-		password:     "pass",
-		authMethod:   headers.AuthMethodBasic,
-		failOnAuth:   true,
+		allowRoutes: []string{"stream"},
+		requireAuth: true,
+		username:    "user",
+		password:    "pass",
+		authMethod:  headers.AuthMethodBasic,
+		failOnAuth:  true,
 	})
 
 	dict := testDictionary{
@@ -310,10 +311,10 @@ func TestAttacker_Attack_AllowsDummyRoute(t *testing.T) {
 
 func TestAttacker_Attack_ValidationFailsWhenSetupErrors(t *testing.T) {
 	addr, port := startRTSPServer(t, rtspServerConfig{
-		allowedRoute: "stream",
-		requireAuth:  false,
-		authMethod:   headers.AuthMethodBasic,
-		setupStatus:  base.StatusUnsupportedTransport,
+		allowRoutes: []string{"stream"},
+		requireAuth: false,
+		authMethod:  headers.AuthMethodBasic,
+		setupStatus: base.StatusUnsupportedTransport,
 	})
 
 	dict := testDictionary{
@@ -333,6 +334,71 @@ func TestAttacker_Attack_ValidationFailsWhenSetupErrors(t *testing.T) {
 	require.Len(t, got, 1)
 	assert.False(t, got[0].Available)
 	assert.True(t, got[0].RouteFound)
+}
+
+func TestAttacker_Attack_IncrementalRoutesStopsOnFirstMissAndAvoidsDuplicates(t *testing.T) {
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowRoutes: []string{"channel1", "channel2"},
+		requireAuth: false,
+		authMethod:  headers.AuthMethodBasic,
+	})
+
+	dict := testDictionary{
+		routes:    []string{"channel1", "channel2"},
+		usernames: []string{"user"},
+		passwords: []string{"pass"},
+	}
+
+	attacker, err := attack.New(dict, 0, time.Second, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.ElementsMatch(t, []string{"channel1", "channel2"}, got[0].Routes)
+	assert.Equal(t, 1, countRoute(got[0].Routes, "channel2"))
+}
+
+func TestAttacker_Attack_IncrementalRoutesStopsAtCap(t *testing.T) {
+	allowedRoutes := make([]string, 0, 50)
+	for i := 1; i <= 50; i++ {
+		allowedRoutes = append(allowedRoutes, fmt.Sprintf("channel%d", i))
+	}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowRoutes: allowedRoutes,
+		requireAuth: false,
+		authMethod:  headers.AuthMethodBasic,
+	})
+
+	dict := testDictionary{
+		routes:    []string{"channel1"},
+		usernames: []string{"user"},
+		passwords: []string{"pass"},
+	}
+
+	attacker, err := attack.New(dict, 0, time.Second, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	const expectedRoutes = 33 // channel1 + 32 incremental attempts
+	assert.Len(t, got[0].Routes, expectedRoutes)
+	assert.Contains(t, got[0].Routes, "channel33")
+	assert.NotContains(t, got[0].Routes, "channel34")
 }
 
 type testDictionary struct {
@@ -376,13 +442,24 @@ func (r *recordingReporter) Summary([]cameradar.Stream, error) {}
 
 func (r *recordingReporter) Close() {}
 
-func (r *recordingReporter) HasDebugContaining(value string) bool {
+func (r *recordingReporter) ContainsDebug(value string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	for _, message := range r.debugMessages {
 		if strings.Contains(message, value) {
 			return true
 		}
 	}
 	return false
+}
+
+func countRoute(routes []string, route string) int {
+	count := 0
+	for _, value := range routes {
+		if value == route {
+			count++
+		}
+	}
+	return count
 }
