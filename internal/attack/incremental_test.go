@@ -66,6 +66,18 @@ func TestDetectIncrementalRoute_OverflowAtEndFallsBack(t *testing.T) {
 	assert.Equal(t, "/bar999999999999999999999999999999", match.suffix)
 }
 
+func TestDetectIncrementalRoute_ChannelKeywordShouldNotBindAcrossParams(t *testing.T) {
+	// The channel keyword should not bind to digits in other query parameters.
+	route := "/path?channelname=foo&version=12"
+
+	match, ok := detectIncrementalRoute(route)
+	require.True(t, ok)
+	assert.False(t, match.isChannel)
+	assert.Equal(t, 12, match.number)
+	assert.Equal(t, "/path?channelname=foo&version=", match.prefix)
+	assert.Equal(t, "", match.suffix)
+}
+
 func TestBuildIncrementedRoute_ZeroPadding(t *testing.T) {
 	match := incrementalRoute{
 		prefix: "/channel",

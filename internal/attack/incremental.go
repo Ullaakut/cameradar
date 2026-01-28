@@ -60,7 +60,7 @@ func findChannelIncrement(route string) (incrementalRoute, bool) {
 			}
 			pos += index
 
-			start, end, ok := firstNumberAfter(route, pos+len(pattern))
+			start, end, ok := firstNumberAfterKey(route, pos+len(pattern))
 			if ok {
 				num, width, parseOK := parseNumber(route, start, end)
 				if parseOK {
@@ -131,23 +131,41 @@ func parseNumber(route string, start, end int) (int, int, bool) {
 	return num, len(value), true
 }
 
-// firstNumberAfter returns the first numeric token after a given index.
-func firstNumberAfter(route string, after int) (start, end int, ok bool) {
+// firstNumberAfterKey returns the first numeric token after a keyword, limited to
+// the current token and requiring an '=' delimiter (query param or path segment).
+func firstNumberAfterKey(route string, after int) (start, end int, ok bool) {
 	if after < 0 {
 		after = 0
 	}
 
+	tokenEnd := len(route)
 	for i := after; i < len(route); i++ {
+		if isTokenDelimiter(route[i]) {
+			tokenEnd = i
+			break
+		}
+	}
+
+	relEq := strings.IndexByte(route[after:tokenEnd], '=')
+	searchStart := after
+	if relEq != -1 {
+		searchStart = after + relEq + 1
+	}
+	for i := searchStart; i < tokenEnd; i++ {
 		if !isDigit(route[i]) {
+			if relEq == -1 {
+				break
+			}
 			continue
 		}
 
 		end := i + 1
-		for end < len(route) && isDigit(route[end]) {
+		for end < tokenEnd && isDigit(route[end]) {
 			end++
 		}
 		return i, end, true
 	}
+
 	return 0, 0, false
 }
 
@@ -162,4 +180,13 @@ func buildIncrementedRoute(match incrementalRoute, number int) string {
 
 func isDigit(b byte) bool {
 	return b >= '0' && b <= '9'
+}
+
+func isTokenDelimiter(b byte) bool {
+	switch b {
+	case '&', '/', '?', '#':
+		return true
+	default:
+		return false
+	}
 }
