@@ -41,7 +41,7 @@ func detectIncrementalRoute(route string) (incrementalRoute, bool) {
 }
 
 // findChannelIncrement locates a numeric segment tied to channel-like keywords.
-// It returns the last matching segment so we increment the most specific part.
+// It returns the last match for the first keyword that yields a hit.
 //
 // Supported keywords include: channel_id, channelid, channelno, channel, channelname.
 func findChannelIncrement(route string) (incrementalRoute, bool) {
