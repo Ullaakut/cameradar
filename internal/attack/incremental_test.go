@@ -78,6 +78,67 @@ func TestDetectIncrementalRoute_ChannelKeywordShouldNotBindAcrossParams(t *testi
 	assert.Equal(t, "", match.suffix)
 }
 
+func TestDetectIncrementalRoute_ChannelKeywordStopsAtDelimiter(t *testing.T) {
+	// Digits after a delimiter should not be associated with a channel keyword.
+	route := "/path/channel?channel=foo/7"
+
+	match, ok := detectIncrementalRoute(route)
+	require.True(t, ok)
+	assert.False(t, match.isChannel)
+	assert.Equal(t, 7, match.number)
+	assert.Equal(t, "/path/channel?channel=foo/", match.prefix)
+	assert.Equal(t, "", match.suffix)
+}
+
+func TestDetectIncrementalRoute_ChannelKeywordWithoutDigitsFallsBack(t *testing.T) {
+	// channel keyword without digits should fall back to last numeric token.
+	route := "/path/channel?channel=foo&stream=9"
+
+	match, ok := detectIncrementalRoute(route)
+	require.True(t, ok)
+	assert.False(t, match.isChannel)
+	assert.Equal(t, 9, match.number)
+	assert.Equal(t, "/path/channel?channel=foo&stream=", match.prefix)
+	assert.Equal(t, "", match.suffix)
+}
+
+func TestDetectIncrementalRoute_ChannelKeywordKeepsQueryDigits(t *testing.T) {
+	// channel keyword with query param digits should be detected as channel.
+	route := "/path?channel=03&other=1"
+
+	match, ok := detectIncrementalRoute(route)
+	require.True(t, ok)
+	assert.True(t, match.isChannel)
+	assert.Equal(t, 3, match.number)
+	assert.Equal(t, 2, match.width)
+	assert.Equal(t, "/path?channel=", match.prefix)
+	assert.Equal(t, "&other=1", match.suffix)
+}
+
+func TestDetectIncrementalRoute_ChannelKeywordMultipleMatchesUsesKeywordPriority(t *testing.T) {
+	// Keyword priority should win even if another keyword appears earlier in the route.
+	route := "/path?channel=1&channelid=9"
+
+	match, ok := detectIncrementalRoute(route)
+	require.True(t, ok)
+	assert.True(t, match.isChannel)
+	assert.Equal(t, 9, match.number)
+	assert.Equal(t, "/path?channel=1&channelid=", match.prefix)
+	assert.Equal(t, "", match.suffix)
+}
+
+func TestDetectIncrementalRoute_ChannelKeywordSelectsLastMatchWithinKeyword(t *testing.T) {
+	// The last match for a given keyword should be selected.
+	route := "/path?channel=1&foo=bar&channel=4"
+
+	match, ok := detectIncrementalRoute(route)
+	require.True(t, ok)
+	assert.True(t, match.isChannel)
+	assert.Equal(t, 4, match.number)
+	assert.Equal(t, "/path?channel=1&foo=bar&channel=", match.prefix)
+	assert.Equal(t, "", match.suffix)
+}
+
 func TestBuildIncrementedRoute_ZeroPadding(t *testing.T) {
 	match := incrementalRoute{
 		prefix: "/channel",
