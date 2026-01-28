@@ -86,10 +86,12 @@ func findChannelIncrement(route string) (incrementalRoute, bool) {
 // findLastNumber finds the last numeric token in the route so it can be incremented.
 // This supports routes where the channel number is not the final component.
 func findLastNumber(route string) (incrementalRoute, bool) {
-	for i := len(route) - 1; i >= 0; i-- {
+	for i := len(route) - 1; i >= 0; {
 		if !isDigit(route[i]) {
+			i--
 			continue
 		}
+
 		end := i + 1
 		start := i
 		for start >= 0 && isDigit(route[start]) {
@@ -99,7 +101,8 @@ func findLastNumber(route string) (incrementalRoute, bool) {
 
 		num, width, ok := parseNumber(route, start, end)
 		if !ok {
-			return incrementalRoute{}, false
+			i = start - 1
+			continue
 		}
 
 		return incrementalRoute{

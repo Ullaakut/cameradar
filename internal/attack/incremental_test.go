@@ -54,6 +54,18 @@ func TestDetectIncrementalRoute_NoNumber(t *testing.T) {
 	assert.Equal(t, incrementalRoute{}, match)
 }
 
+func TestDetectIncrementalRoute_OverflowAtEndFallsBack(t *testing.T) {
+	// The trailing token overflows strconv.Atoi, so we fall back to earlier numbers.
+	route := "/foo1/bar999999999999999999999999999999"
+
+	match, ok := detectIncrementalRoute(route)
+	require.True(t, ok)
+	assert.False(t, match.isChannel)
+	assert.Equal(t, 1, match.number)
+	assert.Equal(t, "/foo", match.prefix)
+	assert.Equal(t, "/bar999999999999999999999999999999", match.suffix)
+}
+
 func TestBuildIncrementedRoute_ZeroPadding(t *testing.T) {
 	match := incrementalRoute{
 		prefix: "/channel",
