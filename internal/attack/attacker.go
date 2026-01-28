@@ -235,7 +235,7 @@ func (a Attacker) attackCredentialsForStream(ctx context.Context, target camerad
 				msg := fmt.Sprintf("Credentials found for %s:%d", target.Address.String(), target.Port)
 				a.reporter.Progress(cameradar.StepAttackCredentials, msg)
 
-				updated, err := a.tryIncrementalRoutes(ctx, target, target.Route(), true, true)
+				updated, err := a.tryIncrementalRoutes(ctx, target, target.Route(), true)
 				if err != nil {
 					return target, err
 				}
@@ -290,7 +290,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 			target.Routes = appendRouteIfMissing(target.Routes, route)
 			a.reporter.Progress(cameradar.StepAttackRoutes, fmt.Sprintf("Route found for %s:%d -> %s", target.Address.String(), target.Port, route))
 
-			updated, err := a.tryIncrementalRoutes(ctx, target, route, emitProgress, false)
+			updated, err := a.tryIncrementalRoutes(ctx, target, route, emitProgress)
 			if err != nil {
 				return target, err
 			}
@@ -394,7 +394,7 @@ func (a Attacker) routeAttackWithStatus(stream cameradar.Stream, route string, a
 
 func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 	target cameradar.Stream, route string,
-	emitProgress, useCredentials bool,
+	emitProgress bool,
 ) (cameradar.Stream, error) {
 	match, ok := detectIncrementalRoute(route)
 	if !ok {
@@ -433,7 +433,7 @@ func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 			a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 		}
 
-		ok, err := a.incrementalRouteAttack(target, nextRoute, useCredentials)
+		ok, err := a.routeAttackWithCredentials(target, nextRoute)
 		if err != nil {
 			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("incremental route attempt failed for %s:%d (%s): %v",
 				target.Address.String(),
@@ -457,13 +457,6 @@ func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 		}
 		nextNumber++
 	}
-}
-
-func (a Attacker) incrementalRouteAttack(stream cameradar.Stream, route string, useCredentials bool) (bool, error) {
-	if useCredentials {
-		return a.routeAttackWithCredentials(stream, route)
-	}
-	return a.routeAttack(stream, route)
 }
 
 func appendRouteIfMissing(routes []string, route string) []string {
