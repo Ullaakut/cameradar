@@ -362,23 +362,22 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	return stream, nil
 }
 
+// When no credentials are used, we expect 200, 401 or 403 status codes, which would mean either that the stream is
+// unprotected and this is the correct route, or that it is protected and this is also a correct route.
 func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, error) {
-	u, urlStr, err := buildRTSPURL(stream, route, stream.Username, stream.Password)
-	if err != nil {
-		return false, fmt.Errorf("building rtsp url: %w", err)
-	}
-
-	code, err := a.describeStatus(u)
-	if err != nil {
-		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
-	}
-
-	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
-	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
-	return access, nil
+	return a.routeAttackWithStatus(stream, route, func(code base.StatusCode) bool {
+		return code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
+	})
 }
 
+// When credentials are given, we only expect a 200 status code, which confirms the combination of route and credentials.
 func (a Attacker) routeAttackWithCredentials(stream cameradar.Stream, route string) (bool, error) {
+	return a.routeAttackWithStatus(stream, route, func(code base.StatusCode) bool {
+		return code == base.StatusOK
+	})
+}
+
+func (a Attacker) routeAttackWithStatus(stream cameradar.Stream, route string, allowed func(base.StatusCode) bool) (bool, error) {
 	u, urlStr, err := buildRTSPURL(stream, route, stream.Username, stream.Password)
 	if err != nil {
 		return false, fmt.Errorf("building rtsp url: %w", err)
@@ -390,7 +389,7 @@ func (a Attacker) routeAttackWithCredentials(stream cameradar.Stream, route stri
 	}
 
 	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
-	return code == base.StatusOK, nil
+	return allowed(code), nil
 }
 
 func (a Attacker) tryIncrementalRoutes(ctx context.Context,
@@ -406,7 +405,12 @@ func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 	attempts := 0
 	for {
 		if attempts >= maxIncrementalRouteAttempts {
-			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("incremental route attempts capped at %d for %s:%d", maxIncrementalRouteAttempts, target.Address.String(), target.Port))
+			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf(
+				"incremental route attempts capped at %d for %s:%d",
+				maxIncrementalRouteAttempts,
+				target.Address.String(),
+				target.Port,
+			))
 			return target, nil
 		}
 
