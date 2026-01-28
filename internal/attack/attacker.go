@@ -15,6 +15,8 @@ import (
 // Route that should never be a constructor default.
 const dummyRoute = "/0x8b6c42"
 
+const maxIncrementalRouteAttempts = 32
+
 // Dictionary provides dictionaries for routes, usernames and passwords.
 type Dictionary interface {
 	Routes() []string
@@ -401,7 +403,13 @@ func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 	}
 
 	nextNumber := match.number + 1
+	attempts := 0
 	for {
+		if attempts >= maxIncrementalRouteAttempts {
+			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("incremental route attempts capped at %d for %s:%d", maxIncrementalRouteAttempts, target.Address.String(), target.Port))
+			return target, nil
+		}
+
 		select {
 		case <-ctx.Done():
 			return target, ctx.Err()
@@ -431,6 +439,7 @@ func (a Attacker) tryIncrementalRoutes(ctx context.Context,
 			))
 			return target, nil
 		}
+		attempts++
 		if !ok {
 			return target, nil
 		}
