@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/Ullaakut/cameradar/v6"
@@ -13,6 +14,8 @@ import (
 
 // Route that should never be a constructor default.
 const dummyRoute = "/0x8b6c42"
+
+const maxIncrementalRouteAttempts = 32
 
 // Dictionary provides dictionaries for routes, usernames and passwords.
 type Dictionary interface {
@@ -232,7 +235,12 @@ func (a Attacker) attackCredentialsForStream(ctx context.Context, target camerad
 				msg := fmt.Sprintf("Credentials found for %s:%d", target.Address.String(), target.Port)
 				a.reporter.Progress(cameradar.StepAttackCredentials, msg)
 
-				return target, nil
+				updated, err := a.tryIncrementalRoutes(ctx, target, target.Route(), true)
+				if err != nil {
+					return target, err
+				}
+
+				return updated, nil
 			}
 			time.Sleep(a.attackInterval)
 		}
@@ -257,7 +265,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	}
 	if ok {
 		target.RouteFound = true
-		target.Routes = append(target.Routes, "/")
+		target.Routes = appendRouteIfMissing(target.Routes, "/")
 		a.reporter.Progress(cameradar.StepAttackRoutes, fmt.Sprintf("Default route accepted for %s:%d", target.Address.String(), target.Port))
 		return target, nil
 	}
@@ -279,8 +287,14 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 		}
 		if ok {
 			target.RouteFound = true
-			target.Routes = append(target.Routes, route)
+			target.Routes = appendRouteIfMissing(target.Routes, route)
 			a.reporter.Progress(cameradar.StepAttackRoutes, fmt.Sprintf("Route found for %s:%d -> %s", target.Address.String(), target.Port, route))
+
+			updated, err := a.tryIncrementalRoutes(ctx, target, route, emitProgress)
+			if err != nil {
+				return target, err
+			}
+			target = updated
 		}
 	}
 
@@ -348,7 +362,22 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	return stream, nil
 }
 
+// When no credentials are used, we expect 200, 401 or 403 status codes, which would mean either that the stream is
+// unprotected and this is the correct route, or that it is protected and this is also a correct route.
 func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, error) {
+	return a.routeAttackWithStatus(stream, route, func(code base.StatusCode) bool {
+		return code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
+	})
+}
+
+// When credentials are given, we only expect a 200 status code, which confirms the combination of route and credentials.
+func (a Attacker) routeAttackWithCredentials(stream cameradar.Stream, route string) (bool, error) {
+	return a.routeAttackWithStatus(stream, route, func(code base.StatusCode) bool {
+		return code == base.StatusOK
+	})
+}
+
+func (a Attacker) routeAttackWithStatus(stream cameradar.Stream, route string, allowed func(base.StatusCode) bool) (bool, error) {
 	u, urlStr, err := buildRTSPURL(stream, route, stream.Username, stream.Password)
 	if err != nil {
 		return false, fmt.Errorf("building rtsp url: %w", err)
@@ -360,8 +389,82 @@ func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, erro
 	}
 
 	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
-	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
-	return access, nil
+	return allowed(code), nil
+}
+
+func (a Attacker) tryIncrementalRoutes(ctx context.Context,
+	target cameradar.Stream, route string,
+	emitProgress bool,
+) (cameradar.Stream, error) {
+	match, ok := detectIncrementalRoute(route)
+	if !ok {
+		return target, nil
+	}
+
+	nextNumber := match.number + 1
+	attempts := 0
+	for {
+		if attempts >= maxIncrementalRouteAttempts {
+			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf(
+				"incremental route attempts capped at %d for %s:%d",
+				maxIncrementalRouteAttempts,
+				target.Address.String(),
+				target.Port,
+			))
+			return target, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return target, ctx.Err()
+		case <-time.After(a.attackInterval):
+		}
+
+		attempts++
+
+		nextRoute := buildIncrementedRoute(match, nextNumber)
+		if slices.Contains(target.Routes, nextRoute) {
+			if !match.isChannel {
+				return target, nil
+			}
+			nextNumber++
+			continue
+		}
+
+		if emitProgress {
+			a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
+		}
+
+		ok, err := a.routeAttackWithCredentials(target, nextRoute)
+		if err != nil {
+			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("incremental route attempt failed for %s:%d (%s): %v",
+				target.Address.String(),
+				target.Port,
+				nextRoute,
+				err,
+			))
+			return target, nil
+		}
+		if !ok {
+			return target, nil
+		}
+
+		target.RouteFound = true
+		target.Routes = appendRouteIfMissing(target.Routes, nextRoute)
+		a.reporter.Progress(cameradar.StepAttackRoutes, fmt.Sprintf("Incremental route found for %s:%d -> %s", target.Address.String(), target.Port, nextRoute))
+
+		if !match.isChannel {
+			return target, nil
+		}
+		nextNumber++
+	}
+}
+
+func appendRouteIfMissing(routes []string, route string) []string {
+	if slices.Contains(routes, route) {
+		return routes
+	}
+	return append(routes, route)
 }
 
 func (a Attacker) credAttack(stream cameradar.Stream, username, password string) (bool, error) {

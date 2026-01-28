@@ -18,27 +18,27 @@ import (
 )
 
 type rtspServerConfig struct {
-	allowAll     bool
-	allowedRoute string
-	requireAuth  bool
-	username     string
-	password     string
-	authMethod   headers.AuthMethod
-	authHeader   base.HeaderValue
-	failOnAuth   bool
-	setupStatus  base.StatusCode
+	allowAll    bool
+	allowRoutes []string
+	requireAuth bool
+	username    string
+	password    string
+	authMethod  headers.AuthMethod
+	authHeader  base.HeaderValue
+	failOnAuth  bool
+	setupStatus base.StatusCode
 }
 
 type testServerHandler struct {
-	stream       *gortsplib.ServerStream
-	allowAll     bool
-	allowedRoute string
-	requireAuth  bool
-	username     string
-	password     string
-	authHeader   base.HeaderValue
-	failOnAuth   bool
-	setupStatus  base.StatusCode
+	stream      *gortsplib.ServerStream
+	allowAll    bool
+	allowRoutes []string
+	requireAuth bool
+	username    string
+	password    string
+	authHeader  base.HeaderValue
+	failOnAuth  bool
+	setupStatus base.StatusCode
 }
 
 func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
@@ -86,20 +86,29 @@ func (h *testServerHandler) OnSetup(ctx *gortsplib.ServerHandlerOnSetupCtx) (*ba
 
 func (h *testServerHandler) routeAllowed(path string) bool {
 	path = strings.TrimLeft(path, "/")
-	return h.allowAll || path == h.allowedRoute
+	if h.allowAll {
+		return true
+	}
+
+	for _, route := range h.allowRoutes {
+		if path == route {
+			return true
+		}
+	}
+	return false
 }
 
 func startRTSPServer(t *testing.T, cfg rtspServerConfig) (netip.Addr, uint16) {
 	t.Helper()
 
 	handler := &testServerHandler{
-		allowAll:     cfg.allowAll,
-		allowedRoute: cfg.allowedRoute,
-		requireAuth:  cfg.requireAuth,
-		username:     cfg.username,
-		password:     cfg.password,
-		failOnAuth:   cfg.failOnAuth,
-		setupStatus:  cfg.setupStatus,
+		allowAll:    cfg.allowAll,
+		allowRoutes: cfg.allowRoutes,
+		requireAuth: cfg.requireAuth,
+		username:    cfg.username,
+		password:    cfg.password,
+		failOnAuth:  cfg.failOnAuth,
+		setupStatus: cfg.setupStatus,
 	}
 
 	if len(cfg.authHeader) > 0 {
