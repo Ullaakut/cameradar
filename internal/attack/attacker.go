@@ -329,7 +329,7 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	}
 	defer client.Close()
 
-	_, res, err := client.Describe(u)
+	res, err := describeRTSP(client, u)
 	if err != nil {
 		var badStatus liberrors.ErrClientBadStatusCode
 		if errors.As(err, &badStatus) && badStatus.Code == base.StatusUnauthorized {

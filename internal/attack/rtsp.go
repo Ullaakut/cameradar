@@ -29,6 +29,12 @@ func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	return client, nil
 }
 
+// describeRTSP is a variable to allow mocking in tests.
+var describeRTSP = func(client *gortsplib.Client, u *base.URL) (*base.Response, error) {
+	_, res, err := client.Describe(u)
+	return res, err
+}
+
 func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
 	client, err := a.newRTSPClient(u)
 	if err != nil {
