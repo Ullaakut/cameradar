@@ -305,7 +305,7 @@ func (a Attacker) detectAuthMethods(ctx context.Context, targets []cameradar.Str
 		case cameradar.AuthDigest:
 			authMethod = "digest"
 		default:
-			return streams, fmt.Errorf("unknown authentication method %d for %s:%d", streams[i].AuthenticationType, streams[i].Address.String(), streams[i].Port)
+			authMethod = fmt.Sprintf("unknown (%d)", streams[i].AuthenticationType)
 		}
 
 		a.reporter.Progress(cameradar.StepDetectAuth, fmt.Sprintf("Detected %s authentication for %s:%d", authMethod, streams[i].Address.String(), streams[i].Port))
@@ -332,8 +332,10 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	_, res, err := client.Describe(u)
 	if err != nil {
 		var badStatus liberrors.ErrClientBadStatusCode
-		if errors.As(err, &badStatus) && res != nil && badStatus.Code == base.StatusUnauthorized {
-			stream.AuthenticationType = authTypeFromHeaders(res.Header["WWW-Authenticate"])
+		if errors.As(err, &badStatus) && badStatus.Code == base.StatusUnauthorized {
+			if res != nil {
+				stream.AuthenticationType = authTypeFromHeaders(res.Header["WWW-Authenticate"])
+			}
 			a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, badStatus.Code))
 			return stream, nil
 		}

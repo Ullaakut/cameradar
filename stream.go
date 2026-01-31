@@ -9,7 +9,8 @@ type AuthType int
 
 // Supported authentication methods.
 const (
-	AuthNone AuthType = iota
+	AuthUnknown AuthType = iota
+	AuthNone
 	AuthBasic
 	AuthDigest
 )
