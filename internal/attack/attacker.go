@@ -333,6 +333,7 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	if err != nil {
 		var badStatus liberrors.ErrClientBadStatusCode
 		if errors.As(err, &badStatus) && badStatus.Code == base.StatusUnauthorized {
+			stream.AuthenticationType = cameradar.AuthUnknown
 			if res != nil {
 				stream.AuthenticationType = authTypeFromHeaders(res.Header["WWW-Authenticate"])
 			}

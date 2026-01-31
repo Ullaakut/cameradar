@@ -35,7 +35,6 @@ func TestDetectAuthMethod_UnauthorizedWithoutResponseDoesNotError(t *testing.T) 
 
 	got, err := attacker.detectAuthMethod(t.Context(), stream)
 	assert.Equal(t, cameradar.AuthUnknown, got.AuthenticationType)
-	assert.Equal(t, cameradar.AuthUnknown, got.AuthenticationType)
 }
 
 func TestDetectAuthMethod_SetsAuthNoneOnSuccess(t *testing.T) {
