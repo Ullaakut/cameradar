@@ -110,6 +110,12 @@ func TestDetectAuthMethod(t *testing.T) {
 			want: cameradar.AuthDigest,
 		},
 		{
+			name:       "unknown auth on unauthorized without www-authenticate",
+			statusCode: base.StatusUnauthorized,
+			headers:    nil,
+			want:       cameradar.AuthUnknown,
+		},
+		{
 			name:       "unknown auth on other status",
 			statusCode: base.StatusNotFound,
 			headers:    nil,

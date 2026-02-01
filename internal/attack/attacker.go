@@ -188,7 +188,8 @@ func (a Attacker) reattackRoutes(ctx context.Context, streams []cameradar.Stream
 
 func needsReattack(streams []cameradar.Stream) bool {
 	for _, stream := range streams {
-		if stream.RouteFound && stream.CredentialsFound {
+		if stream.RouteFound && stream.CredentialsFound && stream.Available {
+			// This stream is fully discovered, no need to re-attack.
 			continue
 		}
 		return true
@@ -390,7 +391,7 @@ func (a Attacker) describeWithRetry(ctx context.Context, client *gortsplib.Clien
 		return nil, nil, err
 	}
 
-	return desc, res, err
+	return nil, nil, fmt.Errorf("describe retries exhausted for %q: %w", urlStr, err)
 }
 
 func (a Attacker) handleDescribeError(stream cameradar.Stream, urlStr string, err error) (cameradar.Stream, error) {
