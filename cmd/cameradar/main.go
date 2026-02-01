@@ -28,7 +28,11 @@ const (
 	flagOutput            = "output"
 )
 
-var version = "dev"
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 var flags = cmd.Flags{
 	&cli.StringSliceFlag{

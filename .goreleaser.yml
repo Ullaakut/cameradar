@@ -46,21 +46,21 @@ archives:
 
 dockers:
   - image_templates:
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-amd64"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-amd64"
       - "ullaakut/{{ .ProjectName }}:latest-amd64"
     dockerfile: Dockerfile
     use: buildx
     goos: linux
     goarch: amd64
   - image_templates:
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-386"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-386"
       - "ullaakut/{{ .ProjectName }}:latest-386"
     dockerfile: Dockerfile
     use: buildx
     goos: linux
     goarch: 386
   - image_templates:
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv6"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-armv6"
       - "ullaakut/{{ .ProjectName }}:latest-armv6"
     dockerfile: Dockerfile
     use: buildx
@@ -68,7 +68,7 @@ dockers:
     goarch: arm
     goarm: 6
   - image_templates:
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv7"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-armv7"
       - "ullaakut/{{ .ProjectName }}:latest-armv7"
     dockerfile: Dockerfile
     use: buildx
@@ -76,7 +76,7 @@ dockers:
     goarch: arm
     goarm: 7
   - image_templates:
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-arm64"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-arm64"
       - "ullaakut/{{ .ProjectName }}:latest-arm64"
     dockerfile: Dockerfile
     use: buildx
@@ -84,13 +84,13 @@ dockers:
     goarch: arm64
 
 docker_manifests:
-  - name_template: "ullaakut/{{ .ProjectName }}:{{ .Version }}"
+  - name_template: "ullaakut/{{ .ProjectName }}:v{{ .Version }}"
     image_templates:
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-amd64"
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-386"
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv6"
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-armv7"
-      - "ullaakut/{{ .ProjectName }}:{{ .Version }}-arm64"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-amd64"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-386"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-armv6"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-armv7"
+      - "ullaakut/{{ .ProjectName }}:v{{ .Version }}-arm64"
   - name_template: "ullaakut/{{ .ProjectName }}:latest"
     image_templates:
       - "ullaakut/{{ .ProjectName }}:latest-amd64"

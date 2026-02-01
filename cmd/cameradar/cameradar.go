@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/Ullaakut/cameradar/v6/internal/attack"
@@ -60,9 +61,26 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	interactive := isInteractiveTerminal()
-	reporter, err := ui.NewReporter(mode, cmd.Bool(flagDebug), os.Stdout, interactive)
+	buildInfo := ui.BuildInfo{Version: version, Commit: commit, Date: date}
+	reporter, err := ui.NewReporter(mode, cmd.Bool(flagDebug), os.Stdout, interactive, buildInfo)
 	if err != nil {
 		return err
+	}
+	if plainReporter, ok := reporter.(*ui.PlainReporter); ok {
+		resolvedMode := resolveMode(mode, interactive)
+		plainReporter.PrintStartup(buildInfo, buildStartupOptions(
+			targets,
+			ports,
+			routesPath,
+			credsPath,
+			outputPath,
+			cmd.Int16(flagScanSpeed),
+			cmd.Duration(flagAttackInterval),
+			cmd.Duration(flagTimeout),
+			cmd.Bool(flagSkipScan),
+			cmd.Bool(flagDebug),
+			resolvedMode,
+		))
 	}
 	if outputPath != "" {
 		reporter = output.NewM3UReporter(reporter, outputPath)
@@ -100,6 +118,53 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return c.Run(ctx)
+}
+
+func resolveMode(mode cameradar.Mode, interactive bool) cameradar.Mode {
+	if mode != cameradar.ModeAuto {
+		return mode
+	}
+	if interactive {
+		return cameradar.ModeTUI
+	}
+	return cameradar.ModePlain
+}
+
+func buildStartupOptions(
+	targets []string,
+	ports []string,
+	routesPath string,
+	credsPath string,
+	outputPath string,
+	scanSpeed int16,
+	attackInterval time.Duration,
+	timeout time.Duration,
+	skipScan bool,
+	debug bool,
+	mode cameradar.Mode,
+) []string {
+	options := []string{
+		fmt.Sprintf("targets: %s", strings.Join(targets, ", ")),
+		fmt.Sprintf("ports: %s", strings.Join(ports, ", ")),
+		fmt.Sprintf("custom-routes: %s", fallbackValue(routesPath, "builtin")),
+		fmt.Sprintf("custom-credentials: %s", fallbackValue(credsPath, "builtin")),
+		fmt.Sprintf("scan-speed: %d", scanSpeed),
+		fmt.Sprintf("skip-scan: %t", skipScan),
+		fmt.Sprintf("attack-interval: %s", attackInterval),
+		fmt.Sprintf("timeout: %s", timeout),
+		fmt.Sprintf("debug: %t", debug),
+		fmt.Sprintf("ui: %s", mode),
+		fmt.Sprintf("output: %s", fallbackValue(outputPath, "disabled")),
+	}
+	return options
+}
+
+func fallbackValue(value string, fallback string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return fallback
+	}
+	return trimmed
 }
 
 func isInteractiveTerminal() bool {
