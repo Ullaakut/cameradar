@@ -19,6 +19,9 @@ import (
 )
 
 func runCameradar(ctx context.Context, cmd *cli.Command) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	targetInputs := cmd.StringSlice(flagTargets)
 	if len(targetInputs) == 0 {
 		return errors.New("at least one target must be specified")
@@ -62,7 +65,7 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 
 	interactive := isInteractiveTerminal()
 	buildInfo := ui.BuildInfo{Version: version, Commit: commit, Date: date}
-	reporter, err := ui.NewReporter(mode, cmd.Bool(flagDebug), os.Stdout, interactive, buildInfo)
+	reporter, err := ui.NewReporter(mode, cmd.Bool(flagDebug), os.Stdout, interactive, buildInfo, cancel)
 	if err != nil {
 		return err
 	}
