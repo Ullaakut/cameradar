@@ -97,6 +97,37 @@ func TestDetectAuthMethod_SetsAuthFromWWWAuthenticate(t *testing.T) {
 	assert.Equal(t, cameradar.AuthDigest, got.AuthenticationType)
 }
 
+func TestDetectAuthMethod_FallsBackOnUnparseableAuthenticateHeader(t *testing.T) {
+	originalDescribe := describeRTSP
+	t.Cleanup(func() {
+		describeRTSP = originalDescribe
+	})
+
+	attacker, err := New(stubDictionary{}, 0, time.Second, ui.NopReporter{})
+	require.NoError(t, err)
+
+	stream := cameradar.Stream{
+		Address: netip.MustParseAddr("127.0.0.1"),
+		Port:    8554,
+		Routes:  []string{"stream"},
+	}
+
+	res := &base.Response{StatusCode: base.StatusUnauthorized}
+	res.Header = base.Header{
+		"WWW-Authenticate": base.HeaderValue{
+			`Digest realm="Please log in with a valid username", nonce="752a62306daf32b401a41004555c7663", "opaque"="", "stale"="FALSE", "algorithm"="MD5"`,
+		},
+	}
+
+	describeRTSP = func(*gortsplib.Client, *base.URL) (*base.Response, error) {
+		return res, liberrors.ErrClientBadStatusCode{Code: base.StatusUnauthorized}
+	}
+
+	got, err := attacker.detectAuthMethod(t.Context(), stream)
+	require.NoError(t, err)
+	assert.Equal(t, cameradar.AuthDigest, got.AuthenticationType)
+}
+
 type stubDictionary struct{}
 
 func (stubDictionary) Routes() []string { return nil }

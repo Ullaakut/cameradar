@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/bluenviron/gortsplib/v5"
 	"github.com/bluenviron/gortsplib/v5/pkg/base"
+	"github.com/bluenviron/gortsplib/v5/pkg/description"
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
@@ -186,7 +188,7 @@ func (a Attacker) reattackRoutes(ctx context.Context, streams []cameradar.Stream
 
 func needsReattack(streams []cameradar.Stream) bool {
 	for _, stream := range streams {
-		if stream.RouteFound && stream.CredentialsFound && stream.Available {
+		if stream.RouteFound && stream.CredentialsFound {
 			continue
 		}
 		return true
@@ -287,70 +289,6 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	return target, nil
 }
 
-func (a Attacker) detectAuthMethods(ctx context.Context, targets []cameradar.Stream) ([]cameradar.Stream, error) {
-	streams, err := runParallel(ctx, targets, a.detectAuthMethod)
-	if err != nil {
-		return streams, err
-	}
-
-	for i := range streams {
-		a.reporter.Progress(cameradar.StepDetectAuth, cameradar.ProgressTickMessage())
-
-		var authMethod string
-		switch streams[i].AuthenticationType {
-		case cameradar.AuthNone:
-			authMethod = "no"
-		case cameradar.AuthBasic:
-			authMethod = "basic"
-		case cameradar.AuthDigest:
-			authMethod = "digest"
-		default:
-			authMethod = fmt.Sprintf("unknown (%d)", streams[i].AuthenticationType)
-		}
-
-		a.reporter.Progress(cameradar.StepDetectAuth, fmt.Sprintf("Detected %s authentication for %s:%d", authMethod, streams[i].Address.String(), streams[i].Port))
-	}
-
-	return streams, nil
-}
-
-func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream) (cameradar.Stream, error) {
-	if ctx.Err() != nil {
-		return stream, ctx.Err()
-	}
-	u, urlStr, err := buildRTSPURL(stream, stream.Route(), "", "")
-	if err != nil {
-		return stream, fmt.Errorf("building rtsp url: %w", err)
-	}
-
-	client, err := a.newRTSPClient(u)
-	if err != nil {
-		return stream, fmt.Errorf("starting rtsp client: %w", err)
-	}
-	defer client.Close()
-
-	res, err := describeRTSP(client, u)
-	if err != nil {
-		var badStatus liberrors.ErrClientBadStatusCode
-		if errors.As(err, &badStatus) && badStatus.Code == base.StatusUnauthorized {
-			stream.AuthenticationType = cameradar.AuthUnknown
-			if res != nil {
-				stream.AuthenticationType = authTypeFromHeaders(res.Header["WWW-Authenticate"])
-			}
-			a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, badStatus.Code))
-			return stream, nil
-		}
-		return stream, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
-	}
-
-	if res != nil {
-		a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, res.StatusCode))
-	}
-
-	stream.AuthenticationType = cameradar.AuthNone
-	return stream, nil
-}
-
 func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, error) {
 	u, urlStr, err := buildRTSPURL(stream, route, stream.Username, stream.Password)
 	if err != nil {
@@ -402,7 +340,7 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	}
 	defer client.Close()
 
-	desc, res, err := client.Describe(u)
+	desc, res, err := a.describeWithRetry(ctx, client, u, urlStr)
 	if err != nil {
 		return a.handleDescribeError(stream, urlStr, err)
 	}
@@ -416,7 +354,6 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	if err != nil {
 		return a.handleSetupError(stream, urlStr, err)
 	}
-
 	a.logSetupResponse(urlStr, res)
 
 	stream.Available = res != nil && res.StatusCode == base.StatusOK
@@ -427,9 +364,39 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	return stream, nil
 }
 
+func (a Attacker) describeWithRetry(ctx context.Context, client *gortsplib.Client, u *base.URL, urlStr string) (*description.Session, *base.Response, error) {
+	var (
+		desc *description.Session
+		res  *base.Response
+		err  error
+	)
+	for range 5 {
+		desc, res, err = client.Describe(u)
+		if err == nil {
+			return desc, res, nil
+		}
+
+		var badStatus liberrors.ErrClientBadStatusCode
+		if errors.As(err, &badStatus) && badStatus.Code == base.StatusServiceUnavailable {
+			a.reporter.Debug(cameradar.StepValidateStreams, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d (retrying)", urlStr, badStatus.Code))
+			select {
+			case <-ctx.Done():
+				return nil, nil, ctx.Err()
+			case <-time.After(time.Second):
+			}
+			continue
+		}
+
+		return nil, nil, err
+	}
+
+	return desc, res, err
+}
+
 func (a Attacker) handleDescribeError(stream cameradar.Stream, urlStr string, err error) (cameradar.Stream, error) {
 	var badStatus liberrors.ErrClientBadStatusCode
 	if errors.As(err, &badStatus) && badStatus.Code == base.StatusServiceUnavailable {
+		a.reporter.Debug(cameradar.StepValidateStreams, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, badStatus.Code))
 		a.reporter.Progress(cameradar.StepValidateStreams, fmt.Sprintf("Stream unavailable for %s:%d (RTSP %d)",
 			stream.Address.String(),
 			stream.Port,
@@ -438,6 +405,8 @@ func (a Attacker) handleDescribeError(stream cameradar.Stream, urlStr string, er
 		stream.Available = false
 		return stream, nil
 	}
+
+	a.reporter.Debug(cameradar.StepValidateStreams, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > error: %v", urlStr, err))
 
 	return stream, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 }

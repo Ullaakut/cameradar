@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/bluenviron/gortsplib/v5"
@@ -45,7 +46,7 @@ func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
 	_, res, err := client.Describe(u)
 	if err != nil {
 		var badStatus liberrors.ErrClientBadStatusCode
-		if errors.As(err, &badStatus) && res != nil {
+		if errors.As(err, &badStatus) {
 			return badStatus.Code, nil
 		}
 		return 0, err
@@ -59,7 +60,7 @@ func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
 
 func authTypeFromHeaders(values base.HeaderValue) cameradar.AuthType {
 	if len(values) == 0 {
-		return cameradar.AuthNone
+		return cameradar.AuthUnknown
 	}
 
 	var hasBasic bool
@@ -69,6 +70,9 @@ func authTypeFromHeaders(values base.HeaderValue) cameradar.AuthType {
 		var authHeader headers.Authenticate
 		err := authHeader.Unmarshal(base.HeaderValue{value})
 		if err != nil {
+			lower := strings.ToLower(value)
+			hasDigest = hasDigest || strings.Contains(lower, "digest")
+			hasBasic = hasBasic || strings.Contains(lower, "basic")
 			continue
 		}
 
@@ -86,7 +90,7 @@ func authTypeFromHeaders(values base.HeaderValue) cameradar.AuthType {
 	if hasBasic {
 		return cameradar.AuthBasic
 	}
-	return cameradar.AuthType(-1)
+	return cameradar.AuthUnknown
 }
 
 func buildRTSPURL(stream cameradar.Stream, route, username, password string) (*base.URL, string, error) {
