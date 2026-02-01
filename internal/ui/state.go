@@ -16,6 +16,7 @@ type modelState struct {
 	summary         []summaryTable
 	summaryStreams  []cameradar.Stream
 	summaryFinal    bool
+	buildInfo       BuildInfo
 	debug           bool
 	spinner         spinner.Model
 	progress        progress.Model
@@ -129,7 +130,7 @@ func (m *modelState) handleWindowSizeMsg(msg tea.WindowSizeMsg) {
 
 func (m *modelState) View() string {
 	var builder strings.Builder
-	builder.WriteString(sectionStyle.Render("Steps"))
+	builder.WriteString(sectionStyle.Render(m.buildInfo.TUIHeader()))
 	builder.WriteString("\n")
 	builder.WriteString(renderProgress(m))
 	builder.WriteString("\n")

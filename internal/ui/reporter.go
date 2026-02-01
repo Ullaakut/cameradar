@@ -20,7 +20,7 @@ type Reporter interface {
 }
 
 // NewReporter creates a Reporter based on the requested mode.
-func NewReporter(mode cameradar.Mode, debug bool, out io.Writer, interactive bool) (Reporter, error) {
+func NewReporter(mode cameradar.Mode, debug bool, out io.Writer, interactive bool, buildInfo BuildInfo) (Reporter, error) {
 	if debug {
 		return NewPlainReporter(out, debug), nil
 	}
@@ -32,10 +32,10 @@ func NewReporter(mode cameradar.Mode, debug bool, out io.Writer, interactive boo
 		if !interactive {
 			return nil, errors.New("tui mode requires an interactive terminal")
 		}
-		return NewTUIReporter(debug, out)
+		return NewTUIReporter(debug, out, buildInfo)
 	case cameradar.ModeAuto:
 		if interactive {
-			return NewTUIReporter(debug, out)
+			return NewTUIReporter(debug, out, buildInfo)
 		}
 		return NewPlainReporter(out, debug), nil
 	default:

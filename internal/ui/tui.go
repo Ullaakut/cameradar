@@ -72,7 +72,7 @@ type TUIReporter struct {
 }
 
 // NewTUIReporter creates a new Bubble Tea reporter.
-func NewTUIReporter(debug bool, out io.Writer) (*TUIReporter, error) {
+func NewTUIReporter(debug bool, out io.Writer, buildInfo BuildInfo) (*TUIReporter, error) {
 	spin := spinner.New()
 	spin.Spinner = spinner.Dot
 	spin.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
@@ -88,6 +88,7 @@ func NewTUIReporter(debug bool, out io.Writer) (*TUIReporter, error) {
 		steps:          cameradar.Steps(),
 		status:         make(map[cameradar.Step]state),
 		debug:          debug,
+		buildInfo:      buildInfo,
 		spinner:        spin,
 		progress:       prog,
 		progressTotals: make(map[cameradar.Step]int),
