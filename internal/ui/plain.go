@@ -94,9 +94,7 @@ func normalizeLevel(level string) string {
 		return "DBUG"
 	case "ERROR":
 		return "EROR"
-	case "START":
-		return "STEP"
-	case "STEP":
+	case "START", "STEP":
 		return "STEP"
 	}
 	if len(level) >= 4 {

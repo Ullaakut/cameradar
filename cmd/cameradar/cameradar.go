@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"golang.org/x/term"
 )
 
+//nolint:cyclop // Splitting this function does not make it clearer.
 func runCameradar(ctx context.Context, cmd *cli.Command) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -147,22 +149,22 @@ func buildStartupOptions(
 	mode cameradar.Mode,
 ) []string {
 	options := []string{
-		fmt.Sprintf("targets: %s", strings.Join(targets, ", ")),
-		fmt.Sprintf("ports: %s", strings.Join(ports, ", ")),
-		fmt.Sprintf("custom-routes: %s", fallbackValue(routesPath, "builtin")),
-		fmt.Sprintf("custom-credentials: %s", fallbackValue(credsPath, "builtin")),
-		fmt.Sprintf("scan-speed: %d", scanSpeed),
-		fmt.Sprintf("skip-scan: %t", skipScan),
-		fmt.Sprintf("attack-interval: %s", attackInterval),
-		fmt.Sprintf("timeout: %s", timeout),
-		fmt.Sprintf("debug: %t", debug),
-		fmt.Sprintf("ui: %s", mode),
-		fmt.Sprintf("output: %s", fallbackValue(outputPath, "disabled")),
+		"targets: " + strings.Join(targets, ", "),
+		"ports: " + strings.Join(ports, ", "),
+		"custom-routes: " + fallbackValue(routesPath, "builtin"),
+		"custom-credentials: " + fallbackValue(credsPath, "builtin"),
+		"scan-speed: " + strconv.FormatInt(int64(scanSpeed), 10),
+		"skip-scan: " + strconv.FormatBool(skipScan),
+		"attack-interval: " + attackInterval.String(),
+		"timeout: " + timeout.String(),
+		"debug: " + strconv.FormatBool(debug),
+		"ui: " + string(mode),
+		"output: " + fallbackValue(outputPath, "disabled"),
 	}
 	return options
 }
 
-func fallbackValue(value string, fallback string) string {
+func fallbackValue(value, fallback string) string {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
 		return fallback
