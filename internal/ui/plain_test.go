@@ -45,3 +45,31 @@ func TestPlainReporter_Outputs(t *testing.T) {
 		assert.Equal(t, "", strings.TrimSpace(content))
 	})
 }
+
+func TestPlainReporter_PrintStartup(t *testing.T) {
+	t.Run("prints build info and options", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		reporter := ui.NewPlainReporter(out, false)
+
+		reporter.PrintStartup(ui.BuildInfo{Version: "v1.2.3", Commit: "abcdefghi"}, []string{
+			"targets: 127.0.0.1",
+			"ports: 554",
+		})
+
+		content := out.String()
+		assert.Contains(t, content, " [INFO] Startup: Running cameradar version 1.2.3, commit abcdefg")
+		assert.Contains(t, content, " [INFO] Startup: targets: 127.0.0.1")
+		assert.Contains(t, content, " [INFO] Startup: ports: 554")
+	})
+
+	t.Run("prints only build info when options empty", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		reporter := ui.NewPlainReporter(out, false)
+
+		reporter.PrintStartup(ui.BuildInfo{Version: "", Commit: "none"}, nil)
+
+		content := out.String()
+		assert.Contains(t, content, " [INFO] Startup: Running cameradar version dev, commit unknown")
+		assert.Equal(t, 1, strings.Count(content, " Startup: "))
+	})
+}
