@@ -214,7 +214,7 @@ func TestAttacker_Attack_ReturnsErrorWhenRouteMissing(t *testing.T) {
 
 	got, err := attacker.Attack(t.Context(), streams)
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "detecting authentication methods")
+	assert.ErrorContains(t, err, "validating streams")
 	require.Len(t, got, 1)
 	assert.False(t, got[0].RouteFound)
 }

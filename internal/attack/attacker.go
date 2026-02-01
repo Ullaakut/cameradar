@@ -14,7 +14,7 @@ import (
 )
 
 // Route that should never be a constructor default.
-const dummyRoute = "/0x8b6c42"
+const dummyRoute = "0x8b6c42"
 
 // Dictionary provides dictionaries for routes, usernames and passwords.
 type Dictionary interface {

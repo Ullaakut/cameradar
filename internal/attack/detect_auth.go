@@ -2,12 +2,10 @@ package attack
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/bluenviron/gortsplib/v5/pkg/base"
-	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
 func (a Attacker) detectAuthMethods(ctx context.Context, targets []cameradar.Stream) ([]cameradar.Stream, error) {
@@ -48,42 +46,23 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 		return stream, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	client, err := a.newRTSPClient(u)
+	statusCode, headers, err := a.probeDescribeHeaders(ctx, u, urlStr)
 	if err != nil {
-		return stream, fmt.Errorf("starting rtsp client: %w", err)
-	}
-	defer client.Close()
-
-	res, err := describeRTSP(client, u)
-	if err == nil {
-		if res != nil {
-			a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, res.StatusCode))
-		}
-
-		stream.AuthenticationType = cameradar.AuthNone
-		return stream, nil
-	}
-
-	return a.handleDetectAuthError(stream, urlStr, res, err)
-}
-
-func (a Attacker) handleDetectAuthError(stream cameradar.Stream, urlStr string, res *base.Response, err error) (cameradar.Stream, error) {
-	var badStatus liberrors.ErrClientBadStatusCode
-	if !errors.As(err, &badStatus) || badStatus.Code != base.StatusUnauthorized {
 		a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > error: %v", urlStr, err))
 		stream.AuthenticationType = cameradar.AuthUnknown
 		return stream, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
 
-	stream.AuthenticationType = cameradar.AuthUnknown
-	if res == nil {
-		a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, badStatus.Code))
-		return stream, nil
+	a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, statusCode))
+	values := headerValues(headers, "WWW-Authenticate")
+	switch statusCode {
+	case base.StatusOK:
+		stream.AuthenticationType = cameradar.AuthNone
+	case base.StatusUnauthorized:
+		stream.AuthenticationType = authTypeFromHeaders(values)
+	default:
+		stream.AuthenticationType = cameradar.AuthUnknown
 	}
-
-	stream.AuthenticationType = authTypeFromHeaders(res.Header["WWW-Authenticate"])
-	a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, badStatus.Code))
-	a.reporter.Debug(cameradar.StepDetectAuth, "WWW-Authenticate header value is "+fmt.Sprint(res.Header["WWW-Authenticate"]))
 
 	return stream, nil
 }
