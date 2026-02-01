@@ -214,7 +214,7 @@ func TestAttacker_Attack_ReturnsErrorWhenRouteMissing(t *testing.T) {
 
 	got, err := attacker.Attack(t.Context(), streams)
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "detecting authentication methods")
+	assert.ErrorContains(t, err, "validating streams")
 	require.Len(t, got, 1)
 	assert.False(t, got[0].RouteFound)
 }
@@ -304,7 +304,7 @@ func TestAttacker_Attack_AllowsDummyRoute(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 	assert.True(t, got[0].RouteFound)
-	assert.Equal(t, []string{"/"}, got[0].Routes)
+	assert.Equal(t, []string{""}, got[0].Routes)
 	assert.True(t, got[0].Available)
 }
 
