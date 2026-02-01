@@ -7,6 +7,7 @@ import (
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -14,7 +15,6 @@ type modelState struct {
 	steps           []cameradar.Step
 	status          map[cameradar.Step]state
 	logs            []logMsg
-	summary         []summaryTable
 	summaryStreams  []cameradar.Stream
 	summaryFinal    bool
 	buildInfo       BuildInfo
@@ -23,6 +23,7 @@ type modelState struct {
 	spinner         spinner.Model
 	progress        progress.Model
 	width           int
+	height          int
 	quitting        bool
 	progressTotals  map[cameradar.Step]int
 	progressCounts  map[cameradar.Step]int
@@ -82,7 +83,6 @@ func (m *modelState) handleStepMsg(msg stepMsg) {
 		markStepComplete(m, msg.step)
 		queueProgressUpdate(m)
 	}
-	m.summary = buildSummaryTables(m.summaryStreams, m.width, m.status, m.summaryFinal)
 }
 
 func (m *modelState) handleLogMsg(msg logMsg) {
@@ -92,7 +92,6 @@ func (m *modelState) handleLogMsg(msg logMsg) {
 func (m *modelState) handleSummaryMsg(msg summaryMsg) {
 	m.summaryStreams = msg.streams
 	m.summaryFinal = msg.final
-	m.summary = buildSummaryTables(msg.streams, m.width, m.status, msg.final)
 	if msg.final {
 		m.status[cameradar.StepSummary] = stateDone
 		markStepComplete(m, cameradar.StepSummary)
@@ -134,55 +133,156 @@ func (m *modelState) handleSpinnerMsg(msg spinner.TickMsg) []tea.Cmd {
 
 func (m *modelState) handleWindowSizeMsg(msg tea.WindowSizeMsg) {
 	m.width = msg.Width
+	m.height = msg.Height
 	m.progress.Width = progressWidth(msg.Width)
-	m.summary = buildSummaryTables(m.summaryStreams, m.width, m.status, m.summaryFinal)
 }
 
 func (m *modelState) View() string {
 	var builder strings.Builder
-	builder.WriteString(sectionStyle.Render(m.buildInfo.TUIHeader()))
-	builder.WriteString("\n")
-	builder.WriteString(renderProgress(m))
-	builder.WriteString("\n")
+	header := sectionStyle.Render(m.buildInfo.TUIHeader())
+	headerLines := splitLines(header)
+	builder.WriteString(strings.Join(headerLines, "\n"))
+	builder.WriteString("\n\n")
 
-	spinnerView := m.spinner.View()
-	for _, step := range m.steps {
-		builder.WriteString(renderStep(step, m.status[step], spinnerView))
-		builder.WriteString("\n")
-	}
+	stepsLines := m.renderSteps()
+	builder.WriteString(strings.Join(stepsLines, "\n"))
+	builder.WriteString("\n\n")
 
-	builder.WriteString("\n")
+	summaryHeight, logsHeight := m.layoutHeights(len(headerLines), len(stepsLines))
+	logsLines := m.renderLogs(logsHeight)
 	builder.WriteString(sectionStyle.Render("Logs"))
 	builder.WriteString("\n")
-	if len(m.logs) == 0 {
-		builder.WriteString(dimStyle.Render("No events yet."))
-		builder.WriteString("\n")
-	} else {
-		for _, entry := range m.logs {
-			builder.WriteString(renderLog(entry))
-			builder.WriteString("\n")
-		}
-	}
+	builder.WriteString(strings.Join(logsLines, "\n"))
+	builder.WriteString("\n\n")
 
+	rowsToShow := max(1, summaryHeight-2)
+	summaryTitle := renderSummaryTitle(m.summaryStreams)
+	summaryTables := buildSummaryTables(m.summaryStreams, m.width, m.status, m.summaryFinal, rowsToShow)
+	builder.WriteString(sectionStyle.Render(summaryTitle))
 	builder.WriteString("\n")
-	builder.WriteString(sectionStyle.Render("Summary"))
-	builder.WriteString("\n")
-	for i, summary := range m.summary {
-		if summary.title != "" {
-			builder.WriteString(subsectionStyle.Render(summary.title))
-			builder.WriteString("\n")
-		}
+	for i, summary := range summaryTables {
 		if summary.emptyMessage != "" {
 			builder.WriteString(dimStyle.Render(summary.emptyMessage))
 			builder.WriteString("\n")
-		} else {
-			builder.WriteString(summaryTableStyle.Render(summary.table.View()))
-			builder.WriteString("\n")
+			continue
 		}
-		if i < len(m.summary)-1 {
+		builder.WriteString(summaryTableStyle.Render(summary.table.View()))
+		if i < len(summaryTables)-1 {
 			builder.WriteString("\n")
 		}
 	}
 
 	return builder.String()
+}
+
+func (m *modelState) FinalView() string {
+	var builder strings.Builder
+	header := sectionStyle.Render(m.buildInfo.TUIHeader())
+	headerLines := splitLines(header)
+	builder.WriteString(strings.Join(headerLines, "\n"))
+	builder.WriteString("\n\n")
+
+	stepsLines := m.renderSteps()
+	builder.WriteString(strings.Join(stepsLines, "\n"))
+	builder.WriteString("\n\n")
+
+	builder.WriteString(sectionStyle.Render("Logs"))
+	builder.WriteString("\n")
+	logLines := m.renderLogsAll()
+	if len(logLines) == 0 {
+		builder.WriteString(dimStyle.Render("No events yet."))
+	} else {
+		builder.WriteString(strings.Join(logLines, "\n"))
+	}
+	builder.WriteString("\n\n")
+
+	summaryTitle := renderSummaryTitle(m.summaryStreams)
+	visibility := summaryVisibility(summaryStatusAllDone())
+	accessible, others := partitionStreams(m.summaryStreams)
+	rows := append(buildSummaryRows(accessible, visibility), buildSummaryRows(others, visibility)...)
+	if len(rows) == 0 {
+		rows = []table.Row{emptySummaryRow()}
+	}
+	columns := summaryColumns(m.width, rows)
+	builder.WriteString(sectionStyle.Render(summaryTitle))
+	builder.WriteString("\n")
+	builder.WriteString(renderSummaryTablePlain(columns, rows))
+	return builder.String()
+}
+
+func (m *modelState) renderSteps() []string {
+	lines := []string{sectionStyle.Render("Steps"), renderProgress(m)}
+	spinnerView := m.spinner.View()
+	for _, step := range m.steps {
+		lines = append(lines, renderStep(step, m.status[step], spinnerView))
+	}
+	return lines
+}
+
+func (m *modelState) renderLogs(height int) []string {
+	if height <= 0 {
+		return nil
+	}
+	if len(m.logs) == 0 {
+		lines := []string{dimStyle.Render("No events yet.")}
+		return padLines(lines, height)
+	}
+
+	start := 0
+	if len(m.logs) > height {
+		start = len(m.logs) - height
+	}
+	lines := make([]string, 0, min(height, len(m.logs)))
+	for _, entry := range m.logs[start:] {
+		lines = append(lines, renderLog(entry))
+	}
+	return padLines(lines, height)
+}
+
+func (m *modelState) renderLogsAll() []string {
+	if len(m.logs) == 0 {
+		return nil
+	}
+	lines := make([]string, 0, len(m.logs))
+	for _, entry := range m.logs {
+		lines = append(lines, renderLog(entry))
+	}
+	return lines
+}
+
+func (m *modelState) layoutHeights(headerLines, stepsLines int) (summaryHeight, logsHeight int) {
+	if m.height <= 0 {
+		return summaryMinHeight, len(m.logs)
+	}
+
+	reserved := headerLines + 1 + stepsLines + 1 + 1 + 1
+	remaining := m.height - reserved
+	remaining = max(0, remaining)
+
+	switch {
+	case remaining < summaryMinHeight:
+		summaryHeight = max(3, remaining)
+	case remaining > summaryMaxHeight:
+		summaryHeight = summaryMaxHeight
+	default:
+		summaryHeight = remaining
+	}
+
+	logsHeight = max(0, remaining-summaryHeight)
+
+	return summaryHeight, logsHeight
+}
+
+func padLines(lines []string, height int) []string {
+	if height <= 0 {
+		return lines
+	}
+	for len(lines) < height {
+		lines = append(lines, "")
+	}
+	return lines
+}
+
+func splitLines(value string) []string {
+	return strings.Split(value, "\n")
 }
