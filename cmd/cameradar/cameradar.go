@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/Ullaakut/cameradar/v6/internal/attack"
@@ -17,7 +19,11 @@ import (
 	"golang.org/x/term"
 )
 
+//nolint:cyclop // Splitting this function does not make it clearer.
 func runCameradar(ctx context.Context, cmd *cli.Command) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	targetInputs := cmd.StringSlice(flagTargets)
 	if len(targetInputs) == 0 {
 		return errors.New("at least one target must be specified")
@@ -60,9 +66,26 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	interactive := isInteractiveTerminal()
-	reporter, err := ui.NewReporter(mode, cmd.Bool(flagDebug), os.Stdout, interactive)
+	buildInfo := ui.BuildInfo{Version: version, Commit: commit, Date: date}
+	reporter, err := ui.NewReporter(mode, cmd.Bool(flagDebug), os.Stdout, interactive, buildInfo, cancel)
 	if err != nil {
 		return err
+	}
+	if plainReporter, ok := reporter.(*ui.PlainReporter); ok {
+		resolvedMode := resolveMode(mode, interactive)
+		plainReporter.PrintStartup(buildInfo, buildStartupOptions(
+			targets,
+			ports,
+			routesPath,
+			credsPath,
+			outputPath,
+			cmd.Int16(flagScanSpeed),
+			cmd.Duration(flagAttackInterval),
+			cmd.Duration(flagTimeout),
+			cmd.Bool(flagSkipScan),
+			cmd.Bool(flagDebug),
+			resolvedMode,
+		))
 	}
 	if outputPath != "" {
 		reporter = output.NewM3UReporter(reporter, outputPath)
@@ -100,6 +123,53 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return c.Run(ctx)
+}
+
+func resolveMode(mode cameradar.Mode, interactive bool) cameradar.Mode {
+	if mode != cameradar.ModeAuto {
+		return mode
+	}
+	if interactive {
+		return cameradar.ModeTUI
+	}
+	return cameradar.ModePlain
+}
+
+func buildStartupOptions(
+	targets []string,
+	ports []string,
+	routesPath string,
+	credsPath string,
+	outputPath string,
+	scanSpeed int16,
+	attackInterval time.Duration,
+	timeout time.Duration,
+	skipScan bool,
+	debug bool,
+	mode cameradar.Mode,
+) []string {
+	options := []string{
+		"targets: " + strings.Join(targets, ", "),
+		"ports: " + strings.Join(ports, ", "),
+		"custom-routes: " + fallbackValue(routesPath, "builtin"),
+		"custom-credentials: " + fallbackValue(credsPath, "builtin"),
+		"scan-speed: " + strconv.FormatInt(int64(scanSpeed), 10),
+		"skip-scan: " + strconv.FormatBool(skipScan),
+		"attack-interval: " + attackInterval.String(),
+		"timeout: " + timeout.String(),
+		"debug: " + strconv.FormatBool(debug),
+		"ui: " + string(mode),
+		"output: " + fallbackValue(outputPath, "disabled"),
+	}
+	return options
+}
+
+func fallbackValue(value, fallback string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return fallback
+	}
+	return trimmed
 }
 
 func isInteractiveTerminal() bool {

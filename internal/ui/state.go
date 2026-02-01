@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
@@ -16,6 +17,8 @@ type modelState struct {
 	summary         []summaryTable
 	summaryStreams  []cameradar.Stream
 	summaryFinal    bool
+	buildInfo       BuildInfo
+	cancel          context.CancelFunc
 	debug           bool
 	spinner         spinner.Model
 	progress        progress.Model
@@ -45,6 +48,14 @@ func (m *modelState) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.handleProgressMsg(typed)
 	case closeMsg:
 		m.quitting = true
+	case tea.KeyMsg:
+		if typed.Type == tea.KeyCtrlC {
+			if m.cancel != nil {
+				m.cancel()
+			}
+			m.quitting = true
+			return m, tea.Quit
+		}
 	case spinner.TickMsg:
 		cmds = m.handleSpinnerMsg(typed)
 	case tea.WindowSizeMsg:
@@ -129,7 +140,7 @@ func (m *modelState) handleWindowSizeMsg(msg tea.WindowSizeMsg) {
 
 func (m *modelState) View() string {
 	var builder strings.Builder
-	builder.WriteString(sectionStyle.Render("Steps"))
+	builder.WriteString(sectionStyle.Render(m.buildInfo.TUIHeader()))
 	builder.WriteString("\n")
 	builder.WriteString(renderProgress(m))
 	builder.WriteString("\n")

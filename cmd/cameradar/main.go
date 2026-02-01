@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -28,7 +29,11 @@ const (
 	flagOutput            = "output"
 )
 
-var version = "dev"
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 var flags = cmd.Flags{
 	&cli.StringSliceFlag{
@@ -128,6 +133,9 @@ func realMain() (code int) {
 
 	err := app.Run(ctx, os.Args)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return 1
+		}
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		return 1
 	}

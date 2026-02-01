@@ -54,7 +54,7 @@ func TestNewReporter(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			out := &bytes.Buffer{}
 
-			reporter, err := ui.NewReporter(test.mode, false, out, test.interactive)
+			reporter, err := ui.NewReporter(test.mode, false, out, test.interactive, ui.BuildInfo{Version: "dev", Commit: "none"}, func() {})
 
 			if test.wantErrContains != "" {
 				require.Error(t, err)
