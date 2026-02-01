@@ -304,7 +304,7 @@ func TestAttacker_Attack_AllowsDummyRoute(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 	assert.True(t, got[0].RouteFound)
-	assert.Equal(t, []string{"/"}, got[0].Routes)
+	assert.Equal(t, []string{""}, got[0].Routes)
 	assert.True(t, got[0].Available)
 }
 

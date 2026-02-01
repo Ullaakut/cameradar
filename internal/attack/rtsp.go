@@ -166,9 +166,9 @@ func headerValues(header base.Header, name string) base.HeaderValue {
 
 func buildRTSPURL(stream cameradar.Stream, route, username, password string) (*base.URL, string, error) {
 	host := net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
-	path := "/" + route
-	if route == "" {
-		path = "/"
+	path := strings.TrimSpace(route)
+	if path != "" && !strings.HasPrefix(path, "/") {
+		path = "/" + path
 	}
 
 	u := &url.URL{

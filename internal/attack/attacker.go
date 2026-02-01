@@ -259,7 +259,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	}
 	if ok {
 		target.RouteFound = true
-		target.Routes = append(target.Routes, "/")
+		target.Routes = append(target.Routes, "") // Add empty route for default.
 		a.reporter.Progress(cameradar.StepAttackRoutes, fmt.Sprintf("Default route accepted for %s:%d", target.Address.String(), target.Port))
 		return target, nil
 	}
