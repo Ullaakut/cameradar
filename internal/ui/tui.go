@@ -59,8 +59,7 @@ type summaryMsg struct {
 }
 
 type summaryTable struct {
-	table        table.Model
-	emptyMessage string
+	table table.Model
 }
 
 const (
@@ -183,20 +182,22 @@ func (r *TUIReporter) Error(step cameradar.Step, err error) {
 
 // Summary implements Reporter.
 func (r *TUIReporter) Summary(streams []cameradar.Stream, _ error) {
-	r.recordSummary(streams)
-	r.send(summaryMsg{streams: copyStreams(streams), final: true})
+	cloned := copyStreams(streams)
+	r.recordSummary(cloned)
+	r.send(summaryMsg{streams: cloned, final: true})
 }
 
 // UpdateSummary updates the summary section with partial results.
 func (r *TUIReporter) UpdateSummary(streams []cameradar.Stream) {
-	r.recordSummary(streams)
-	r.send(summaryMsg{streams: copyStreams(streams), final: false})
+	cloned := copyStreams(streams)
+	r.recordSummary(cloned)
+	r.send(summaryMsg{streams: cloned, final: false})
 }
 
 func (r *TUIReporter) recordSummary(streams []cameradar.Stream) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.last = copyStreams(streams)
+	r.last = streams
 }
 
 func (r *TUIReporter) snapshotSummary() []cameradar.Stream {
@@ -378,7 +379,7 @@ func progressWidth(width int) int {
 	return 36
 }
 
-func buildSummaryTables(streams []cameradar.Stream, width int, status map[cameradar.Step]state, _ bool, maxRows int) []summaryTable {
+func buildSummaryTables(streams []cameradar.Stream, width int, status map[cameradar.Step]state, maxRows int) []summaryTable {
 	visibility := summaryVisibility(status)
 	accessible, others := partitionStreams(streams)
 	rows := append(buildSummaryRows(accessible, visibility), buildSummaryRows(others, visibility)...)

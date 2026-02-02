@@ -157,15 +157,10 @@ func (m *modelState) View() string {
 
 	rowsToShow := max(1, summaryHeight-2)
 	summaryTitle := renderSummaryTitle(m.summaryStreams)
-	summaryTables := buildSummaryTables(m.summaryStreams, m.width, m.status, m.summaryFinal, rowsToShow)
+	summaryTables := buildSummaryTables(m.summaryStreams, m.width, m.status, rowsToShow)
 	builder.WriteString(sectionStyle.Render(summaryTitle))
 	builder.WriteString("\n")
 	for i, summary := range summaryTables {
-		if summary.emptyMessage != "" {
-			builder.WriteString(dimStyle.Render(summary.emptyMessage))
-			builder.WriteString("\n")
-			continue
-		}
 		builder.WriteString(summaryTableStyle.Render(summary.table.View()))
 		if i < len(summaryTables)-1 {
 			builder.WriteString("\n")
