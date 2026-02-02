@@ -112,10 +112,7 @@ func formatStreamLabel(stream cameradar.Stream) string {
 }
 
 func formatRTSPURL(stream cameradar.Stream) string {
-	path := strings.TrimSpace(stream.Route())
-	if path != "" && !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
+	path := "/" + strings.TrimLeft(strings.TrimSpace(stream.Route()), "/")
 
 	credentials := ""
 	if stream.CredentialsFound && (stream.Username != "" || stream.Password != "") {
