@@ -59,10 +59,14 @@ type summaryMsg struct {
 }
 
 type summaryTable struct {
-	title        string
-	table        table.Model
-	emptyMessage string
+	table table.Model
 }
+
+const (
+	summaryMinHeight   = 8
+	summaryMaxHeight   = 10
+	summaryColumnCount = 8
+)
 
 // TUIReporter renders a Bubble Tea based UI.
 type TUIReporter struct {
@@ -70,6 +74,8 @@ type TUIReporter struct {
 	debug   bool
 	once    sync.Once
 	closed  chan struct{}
+	mu      sync.Mutex
+	last    []cameradar.Stream
 }
 
 // NewTUIReporter creates a new Bubble Tea reporter.
@@ -96,7 +102,6 @@ func NewTUIReporter(debug bool, out io.Writer, buildInfo BuildInfo, cancel conte
 		progressTotals: make(map[cameradar.Step]int),
 		progressCounts: make(map[cameradar.Step]int),
 	}
-	initial.summary = buildSummaryTables(nil, initial.width, initial.status, false)
 
 	p := tea.NewProgram(initial, tea.WithInputTTY(), tea.WithOutput(out), tea.WithAltScreen())
 	reporter := &TUIReporter{program: p, debug: debug, closed: make(chan struct{})}
@@ -110,7 +115,19 @@ func NewTUIReporter(debug bool, out io.Writer, buildInfo BuildInfo, cancel conte
 		}
 
 		if rendered, ok := model.(*modelState); ok {
-			_, _ = fmt.Fprintln(out, rendered.View())
+			output := rendered.FinalView()
+			if len(rendered.summaryStreams) == 0 {
+				fallback := reporter.snapshotSummary()
+				if len(fallback) > 0 {
+					tmp := &modelState{
+						summaryStreams: fallback,
+						width:          rendered.width,
+						status:         summaryStatusAllDone(),
+					}
+					output = tmp.FinalView()
+				}
+			}
+			_, _ = fmt.Fprintln(out, output)
 		}
 		close(reporter.closed)
 	}()
@@ -165,12 +182,28 @@ func (r *TUIReporter) Error(step cameradar.Step, err error) {
 
 // Summary implements Reporter.
 func (r *TUIReporter) Summary(streams []cameradar.Stream, _ error) {
-	r.send(summaryMsg{streams: copyStreams(streams), final: true})
+	cloned := copyStreams(streams)
+	r.recordSummary(cloned)
+	r.send(summaryMsg{streams: cloned, final: true})
 }
 
 // UpdateSummary updates the summary section with partial results.
 func (r *TUIReporter) UpdateSummary(streams []cameradar.Stream) {
-	r.send(summaryMsg{streams: copyStreams(streams), final: false})
+	cloned := copyStreams(streams)
+	r.recordSummary(cloned)
+	r.send(summaryMsg{streams: cloned, final: false})
+}
+
+func (r *TUIReporter) recordSummary(streams []cameradar.Stream) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.last = streams
+}
+
+func (r *TUIReporter) snapshotSummary() []cameradar.Stream {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return copyStreams(r.last)
 }
 
 // Close implements Reporter.
@@ -346,32 +379,152 @@ func progressWidth(width int) int {
 	return 36
 }
 
-func buildSummaryTables(streams []cameradar.Stream, width int, status map[cameradar.Step]state, final bool) []summaryTable {
+func buildSummaryTables(streams []cameradar.Stream, width int, status map[cameradar.Step]state, maxRows int) []summaryTable {
 	visibility := summaryVisibility(status)
 	accessible, others := partitionStreams(streams)
 	rows := append(buildSummaryRows(accessible, visibility), buildSummaryRows(others, visibility)...)
 	if len(rows) == 0 {
-		message := "Waiting for results..."
-		if final {
-			message = "No streams discovered."
-		}
-		return []summaryTable{{title: "Streams", emptyMessage: message}}
+		rows = []table.Row{emptySummaryRow()}
 	}
 
-	title := fmt.Sprintf("Streams (%d accessible / %d total)", len(accessible), len(streams))
+	if maxRows > 0 {
+		switch {
+		case len(rows) > maxRows:
+			if maxRows == 1 {
+				rows = []table.Row{summaryOverflowRow(len(rows))}
+			} else {
+				visibleRows := maxRows - 1
+				hidden := len(rows) - visibleRows
+				rows = append(rows[:visibleRows], summaryOverflowRow(hidden))
+			}
+		case len(rows) < maxRows:
+			rows = padSummaryRows(rows, maxRows)
+		}
+	}
+
 	columns := summaryColumns(width, rows)
 	model := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(false),
-		table.WithHeight(len(rows)+1),
+		table.WithHeight(len(rows)),
 	)
 	model.SetStyles(summaryTableStyles())
 
-	return []summaryTable{{title: title, table: model}}
+	return []summaryTable{{table: model}}
+}
+
+func renderSummaryTitle(streams []cameradar.Stream) string {
+	accessible, _ := partitionStreams(streams)
+	return fmt.Sprintf("Summary - Streams (%d accessible / %d total)", len(accessible), len(streams))
+}
+
+func summaryStatusAllDone() map[cameradar.Step]state {
+	status := make(map[cameradar.Step]state)
+	for _, step := range cameradar.Steps() {
+		status[step] = stateDone
+	}
+	return status
 }
 
 const emptyEntry = "—"
+
+func emptySummaryRow() table.Row {
+	row := make(table.Row, summaryColumnCount)
+	for i := range row {
+		row[i] = emptyEntry
+	}
+	return row
+}
+
+func padSummaryRows(rows []table.Row, maxRows int) []table.Row {
+	for len(rows) < maxRows {
+		rows = append(rows, emptySummaryRow())
+	}
+	return rows
+}
+
+func summaryOverflowRow(hidden int) table.Row {
+	row := emptySummaryRow()
+	if hidden <= 0 {
+		return row
+	}
+	label := "\u2026 1 more stream"
+	if hidden > 1 {
+		label = fmt.Sprintf("\u2026 %d more streams", hidden)
+	}
+	row[0] = label
+	return row
+}
+
+func renderSummaryTablePlain(columns []table.Column, rows []table.Row) string {
+	colWidths := make([]int, len(columns))
+	for i, col := range columns {
+		colWidths[i] = max(col.Width, len([]rune(col.Title)))
+	}
+
+	var builder strings.Builder
+	builder.WriteString(renderSummaryBorder("┌", "┬", "┐", colWidths))
+	builder.WriteString("\n")
+	builder.WriteString(renderSummaryRow(columnTitles(columns), colWidths))
+	builder.WriteString("\n")
+	builder.WriteString(renderSummaryBorder("├", "┼", "┤", colWidths))
+	for _, row := range rows {
+		builder.WriteString("\n")
+		builder.WriteString(renderSummaryRow(row, colWidths))
+	}
+	builder.WriteString("\n")
+	builder.WriteString(renderSummaryBorder("└", "┴", "┘", colWidths))
+	return builder.String()
+}
+
+func renderSummaryBorder(left, middle, right string, widths []int) string {
+	parts := make([]string, 0, len(widths))
+	for _, width := range widths {
+		parts = append(parts, strings.Repeat("─", width+2))
+	}
+	return left + strings.Join(parts, middle) + right
+}
+
+func renderSummaryRow(cells []string, widths []int) string {
+	var builder strings.Builder
+	builder.WriteString("│")
+	for i, width := range widths {
+		value := ""
+		if i < len(cells) {
+			value = cells[i]
+		}
+		builder.WriteString(" ")
+		builder.WriteString(padAndTrim(value, width))
+		builder.WriteString(" │")
+	}
+	return builder.String()
+}
+
+func padAndTrim(value string, width int) string {
+	if width <= 0 {
+		return ""
+	}
+	runes := []rune(value)
+	if len(runes) > width {
+		return string(runes[:width])
+	}
+	if len(runes) < width {
+		return string(runes) + strings.Repeat(" ", width-len(runes))
+	}
+	return value
+}
+
+func columnTitles(columns []table.Column) []string {
+	if len(columns) == 0 {
+		return nil
+	}
+	titles := make([]string, len(columns))
+	for i, col := range columns {
+		titles[i] = col.Title
+	}
+	return titles
+}
 
 func buildSummaryRows(streams []cameradar.Stream, visibility summaryVisibilityState) []table.Row {
 	rows := make([]table.Row, 0, len(streams))

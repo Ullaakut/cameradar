@@ -4,7 +4,6 @@ import "github.com/charmbracelet/lipgloss"
 
 var (
 	sectionStyle      = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("63"))
-	subsectionStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("111"))
 	infoStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 	debugStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
 	successStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
