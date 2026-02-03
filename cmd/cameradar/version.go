@@ -16,27 +16,29 @@ func printVersion(ctx context.Context, _ *cli.Command) error {
 	return err
 }
 
+const unknownVersion = "unknown"
+
 func getNmapVersion(ctx context.Context) string {
 	output, err := exec.CommandContext(ctx, "nmap", "--version").Output()
 	if err != nil {
-		return "unknown"
+		return unknownVersion
 	}
 
 	lines := strings.SplitN(string(output), "\n", 2)
 	if len(lines) == 0 {
-		return "unknown"
+		return unknownVersion
 	}
 
 	firstLine := strings.TrimSpace(lines[0])
 	const prefix = "Nmap version "
 	if !strings.HasPrefix(firstLine, prefix) {
-		return "unknown"
+		return unknownVersion
 	}
 
 	versionPart := strings.TrimSpace(strings.TrimPrefix(firstLine, prefix))
 	fields := strings.Fields(versionPart)
 	if len(fields) == 0 {
-		return "unknown"
+		return unknownVersion
 	}
 	return fields[0]
 }
