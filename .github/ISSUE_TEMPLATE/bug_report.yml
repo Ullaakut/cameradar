@@ -33,7 +33,7 @@ body:
       label: Environment
       description: How do you run cameradar?
       options:
-        - `ullaakut/cameradar` docker image
+        - "`ullaakut/cameradar` docker image"
         - Precompiled binary from GitHub releases
         - Custom docker image
         - Custom binary build
