@@ -7,12 +7,21 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/Ullaakut/cameradar/v6/internal/ui"
 	"github.com/urfave/cli/v3"
 )
 
 func printVersion(ctx context.Context, _ *cli.Command) error {
+	buildInfo := ui.BuildInfo{Version: version, Commit: commit, Date: date}
 	nmapVersion := getNmapVersion(ctx)
-	_, err := fmt.Fprintf(os.Stdout, "Version:\tv%s\nCommit:\t\t%s\nBuild date:\t%s\nNmap:\t\t%s\n", version, commit, date, nmapVersion)
+	_, err := fmt.Fprintf(
+		os.Stdout,
+		"Version:\t%s\nCommit:\t\t%s\nBuild date:\t%s\nNmap:\t\t%s\n",
+		buildInfo.DisplayVersion(),
+		buildInfo.ShortCommit(),
+		buildInfo.Date,
+		nmapVersion,
+	)
 	return err
 }
 
@@ -25,10 +34,6 @@ func getNmapVersion(ctx context.Context) string {
 	}
 
 	lines := strings.SplitN(string(output), "\n", 2)
-	if len(lines) == 0 {
-		return unknownVersion
-	}
-
 	firstLine := strings.TrimSpace(lines[0])
 	const prefix = "Nmap version "
 	if !strings.HasPrefix(firstLine, prefix) {
