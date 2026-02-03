@@ -1,0 +1,103 @@
+name: Bug report
+description: Create a report to help Cameradar improve
+labels:
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please make sure your problem is not already addressed in another issue.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please give a clear and concise description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Cameradar version
+      description: Output of `cameradar version`
+      render: bash
+      placeholder: |
+        Version:        v6.0.2-SNAPSHOT-c11e321
+        Commit:         c11e3217ea0b1ea9e45d0da4c072e07775bde68c
+        Build date:     2026-02-03T10:02:30Z
+        Nmap:           7.94SVN
+    validations:
+      required: true
+  - type: dropdown
+    id: env
+    attributes:
+      label: Environment
+      description: How do you run cameradar?
+      options:
+        - `ullaakut/cameradar` docker image
+        - Precompiled binary from GitHub releases
+        - Custom docker image
+        - Custom binary build
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: os
+    attributes:
+      label: Operating system
+      description: Operating system where you run cameradar.
+      render: bash
+      placeholder: |
+        - OS: <Windows | macOS | Linux | Other>
+        - OS version: <version>
+        - Architecture: <arch>
+    validations:
+      required: false
+  - type: textarea
+    id: cmd
+    attributes:
+      label: Command
+      description: The command that you ran and all of its arguments. Make sure to redact any sensitive information. Make sure to run your command in debug mode.
+      placeholder: |
+        E.g. `docker run --net=host -it ullaakut/cameradar -t localhost --debug`
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output logs
+      description: Output of the command you ran, including any error messages. Make sure to redact any sensitive information.
+      placeholder: |
+        2026-02-03T09:33:24Z [INFO] Startup: Running cameradar version 6.0.2-SNAPSHOT-75bf524, commit 75bf524
+        2026-02-03T09:33:24Z [INFO] Startup: targets: localhost
+        2026-02-03T09:33:24Z [INFO] Startup: ports: 554, 5554, 8554, http
+        ...
+        Accessible streams: 1
+        • 127.0.0.1:8554 (GStreamer rtspd)
+          Authentication: digest
+          Routes: live.sdp
+          Credentials: admin:12345
+          Availability: yes
+          RTSP URL: rtsp://admin:12345@127.0.0.1:8554/live.sdp
+          Admin panel: http://127.0.0.1/
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What is the expected behavior?
+      placeholder: |
+        E.g. "Cameradar should have been able to find the camera's RTSP stream using the provided credentials."
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Info
+      description: Additional info you want to provide such as system info, target info, network conditions etc.
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Ullaakut/cameradar/blob/main/CODE_OF_CONDUCT.md).
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
