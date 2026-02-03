@@ -121,11 +121,25 @@ func realMain() (code int) {
 		}
 	}()
 
+	scanCommand := &cli.Command{
+		Name:   "scan",
+		Usage:  "Scan targets for RTSP streams",
+		Flags:  flags,
+		Action: runCameradar,
+	}
+
 	app := &cli.Command{
-		Name:    "Cameradar",
-		Version: version,
-		Flags:   flags,
-		Action:  runCameradar,
+		Name:           "Cameradar",
+		Version:        version,
+		DefaultCommand: scanCommand.Name,
+		Commands: []*cli.Command{
+			scanCommand,
+			{
+				Name:   "version",
+				Usage:  "Print version information",
+				Action: printVersion,
+			},
+		},
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
