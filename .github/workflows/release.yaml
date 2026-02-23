@@ -34,7 +34,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         env:
           GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
           DOCKER_REPOSITORY: ullaakut/cameradar
