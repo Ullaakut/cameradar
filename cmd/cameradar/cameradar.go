@@ -79,6 +79,7 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 			routesPath,
 			credsPath,
 			outputPath,
+			cmd.String(flagScanner),
 			cmd.Int16(flagScanSpeed),
 			cmd.Duration(flagAttackInterval),
 			cmd.Duration(flagTimeout),
@@ -97,6 +98,7 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 		Targets:   targets,
 		Ports:     ports,
 		ScanSpeed: cmd.Int16(flagScanSpeed),
+		Scanner:   cmd.String(flagScanner),
 	}
 	var scanner cameradar.StreamScanner
 	scanner, err = scan.New(config, reporter)
@@ -141,6 +143,7 @@ func buildStartupOptions(
 	routesPath string,
 	credsPath string,
 	outputPath string,
+	scanner string,
 	scanSpeed int16,
 	attackInterval time.Duration,
 	timeout time.Duration,
@@ -153,6 +156,7 @@ func buildStartupOptions(
 		"ports: " + strings.Join(ports, ", "),
 		"custom-routes: " + fallbackValue(routesPath, "builtin"),
 		"custom-credentials: " + fallbackValue(credsPath, "builtin"),
+		"scanner: " + fallbackValue(scanner, "nmap"),
 		"scan-speed: " + strconv.FormatInt(int64(scanSpeed), 10),
 		"skip-scan: " + strconv.FormatBool(skipScan),
 		"attack-interval: " + attackInterval.String(),

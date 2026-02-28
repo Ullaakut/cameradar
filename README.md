@@ -189,12 +189,12 @@ docker run --rm -t --net=host \
 ### Skip discovery with `--skip-scan`
 
 If you already know the RTSP endpoints, you can skip discovery and treat each
-target and port as a stream candidate. This mode does not run nmap and can be
+target and port as a stream candidate. This mode does not run discovery and can be
 useful on restricted networks or when you want to attack a known inventory.
 
 Skipping discovery means:
 
-- Cameradar does not run nmap and does not detect device models.
+- Cameradar does not run discovery and does not detect device models.
 - Targets resolve to IP addresses. Hostnames resolve via DNS.
 - CIDR blocks and IPv4 ranges expand to every address in the range.
 - Large ranges create many targets, so use them carefully.
@@ -211,6 +211,30 @@ docker run --rm -t --net=host \
 
 In this example, Cameradar attempts dictionary attacks against
 ports 554 and 8554 of `192.168.1.10`.
+
+### Choose the discovery scanner with `--scanner`
+
+Cameradar supports two discovery backends:
+
+- `nmap` (default)
+- `masscan`
+
+Use `nmap` when you want more reliable RTSP discovery: it performs service
+identification and can better distinguish RTSP from other open ports.
+
+Use `masscan` when scanning very large networks: it is generally faster and
+more efficient at scale, but it does not provide service discovery.
+
+```bash
+docker run --rm -t --net=host \
+    ullaakut/cameradar \
+    --scanner masscan \
+    --ports "554,8554" \
+    --targets 192.168.1.0/24
+```
+
+> [!WARNING]  
+> `--scan-speed` only applies to the `nmap` scanner.
 
 ## Security and responsible use
 
@@ -287,11 +311,26 @@ It replaces the default credentials dictionary used for the dictionary attack.
 
 If unset, Cameradar uses the built-in credentials dictionary.
 
+### `SCANNER` / `--scanner`
+
+This optional variable sets the discovery backend.
+
+* `nmap` includes service discovery and is generally more reliable when you want
+to specifically identify RTSP services.
+* `masscan` is generally more efficient for large-scale discovery, but it does
+not identify services and therefore can be less specific for RTSP.
+
+Supported values: `nmap`, `masscan`
+
+Default value: `nmap`
+
 ### `SCAN_SPEED` / `--scan-speed` / `-s`
 
 This optional variable sets nmap discovery presets for speed or accuracy.
 Lower it on slow networks and raise it on fast networks.
 See [nmap timing templates](https://nmap.org/book/man-performance.html).
+
+This option is ignored when `--scanner masscan` is used.
 
 Default value: `4`
 
@@ -324,7 +363,7 @@ Default value: `2000ms`
 
 This optional variable enables more verbose output.
 
-It outputs nmap results, cURL requests, and more.
+It outputs discovery results (`nmap` or `masscan`), cURL requests, and more.
 
 Default: `false`
 
@@ -413,6 +452,12 @@ Cameradar supports both basic and digest authentication.
 > Running cameradar on a subnetwork with custom dictionaries, on ports 554, 5554 and 8554
 
 `docker run --rm -t --net=host -v /tmp:/tmp ullaakut/cameradar --targets 192.168.0.0/24 --custom-credentials "/tmp/dictionaries/credentials.json" --custom-routes "/tmp/dictionaries/routes" --ports 554,5554,8554`
+
+> Running cameradar with masscan discovery
+
+`docker run --rm -t --net=host ullaakut/cameradar --scanner masscan --targets 192.168.0.0/24 --ports 554,8554`
+
+For a local binary example, see `examples/masscan_scan_example.sh`.
 
 ## License
 
