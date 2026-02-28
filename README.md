@@ -457,8 +457,6 @@ Cameradar supports both basic and digest authentication.
 
 `docker run --rm -t --net=host ullaakut/cameradar --scanner masscan --targets 192.168.0.0/24 --ports 554,8554`
 
-For a local binary example, see `examples/masscan_scan_example.sh`.
-
 ## License
 
 Copyright 2026 Ullaakut
