@@ -42,7 +42,7 @@ func New(config Config, reporter Reporter) (cameradar.StreamScanner, error) {
 		return skip.New(expandedTargets, config.Ports), nil
 	}
 
-	scanner := strings.TrimSpace(config.Scanner)
+	scanner := strings.ToLower(strings.TrimSpace(config.Scanner))
 	if scanner == "" {
 		scanner = ScannerNmap
 	}
