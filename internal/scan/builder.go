@@ -1,9 +1,19 @@
 package scan
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/internal/scan/masscan"
 	"github.com/Ullaakut/cameradar/v6/internal/scan/nmap"
 	"github.com/Ullaakut/cameradar/v6/internal/scan/skip"
+)
+
+// Supported discovery backends.
+const (
+	ScannerNmap    = "nmap"
+	ScannerMasscan = "masscan"
 )
 
 // Config configures how Cameradar discovers RTSP streams.
@@ -12,6 +22,7 @@ type Config struct {
 	Targets   []string
 	Ports     []string
 	ScanSpeed int16
+	Scanner   string
 }
 
 // Reporter reports scan progress and debug information.
@@ -31,5 +42,17 @@ func New(config Config, reporter Reporter) (cameradar.StreamScanner, error) {
 		return skip.New(expandedTargets, config.Ports), nil
 	}
 
-	return nmap.New(config.ScanSpeed, expandedTargets, config.Ports, reporter)
+	scanner := strings.ToLower(strings.TrimSpace(config.Scanner))
+	if scanner == "" {
+		scanner = ScannerNmap
+	}
+
+	switch scanner {
+	case ScannerNmap:
+		return nmap.New(config.ScanSpeed, expandedTargets, config.Ports, reporter)
+	case ScannerMasscan:
+		return masscan.New(expandedTargets, config.Ports, reporter)
+	default:
+		return nil, fmt.Errorf("unsupported scanner %q", scanner)
+	}
 }

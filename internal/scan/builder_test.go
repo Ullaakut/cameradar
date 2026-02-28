@@ -64,3 +64,31 @@ func TestNew_SkipScanPropagatesErrors(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "invalid port range")
 }
+
+func TestNew_UnsupportedScanner(t *testing.T) {
+	config := scan.Config{
+		Targets: []string{"192.0.2.1"},
+		Ports:   []string{"554"},
+		Scanner: "unsupported",
+	}
+
+	_, err := scan.New(config, nil)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "unsupported scanner")
+}
+
+func TestNew_SkipScanIgnoresUnsupportedScanner(t *testing.T) {
+	config := scan.Config{
+		SkipScan: true,
+		Targets:  []string{"192.0.2.1"},
+		Ports:    []string{"554"},
+		Scanner:  "unsupported",
+	}
+
+	scanner, err := scan.New(config, nil)
+	require.NoError(t, err)
+
+	streams, err := scanner.Scan(t.Context())
+	require.NoError(t, err)
+	assert.Equal(t, []cameradar.Stream{{Address: netip.MustParseAddr("192.0.2.1"), Port: 554}}, streams)
+}

@@ -2,7 +2,10 @@ FROM alpine
 
 RUN apk --update add --no-cache nmap \
     nmap-nselibs \
-    nmap-scripts
+    nmap-scripts \
+    masscan \
+    libpcap \
+    libpcap-dev
 
 WORKDIR /app/cameradar
 

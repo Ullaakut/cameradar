@@ -1,8 +1,9 @@
 module github.com/Ullaakut/cameradar/v6
 
-go 1.25.0
+go 1.25.3
 
 require (
+	github.com/Ullaakut/masscan v1.0.0
 	github.com/Ullaakut/nmap/v4 v4.0.0
 	github.com/bluenviron/gortsplib/v5 v5.3.0
 	github.com/charmbracelet/bubbles v0.21.0

@@ -20,6 +20,7 @@ const (
 	flagPorts             = "ports"
 	flagCustomRoutes      = "custom-routes"
 	flagCustomCredentials = "custom-credentials"
+	flagScanner           = "scanner"
 	flagScanSpeed         = "scan-speed"
 	flagAttackInterval    = "attack-interval"
 	flagTimeout           = "timeout"
@@ -61,6 +62,12 @@ var flags = cmd.Flags{
 		Usage:   "The path on which to load a custom credentials JSON dictionary",
 		Aliases: []string{"c"},
 		Sources: cli.EnvVars(strcase.ToSNAKE(flagCustomCredentials)),
+	},
+	&cli.StringFlag{
+		Name:    flagScanner,
+		Usage:   "Discovery scanner backend: nmap or masscan",
+		Sources: cli.EnvVars(strcase.ToSNAKE(flagScanner)),
+		Value:   "nmap",
 	},
 	&cli.Int16Flag{
 		Name:    flagScanSpeed,
