@@ -2,7 +2,7 @@
 
 <p align="center">
     <a href="#license">
-        <img src="https://img.shields.io/badge/license-Apache-blue.svg?style=flat" />
+        <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat" />
     </a>
     <a href="https://hub.docker.com/r/ullaakut/cameradar/">
         <img src="https://img.shields.io/docker/pulls/ullaakut/cameradar.svg?style=flat" />
