@@ -2,10 +2,8 @@
 
 <!-- A brief description of the change being made with this pull request. -->
 
-<!--
-Fixes [#XXX](https://github.com/Ulaakut/cameradar/issues/XXX)
--->
+Fixes #
 
 ## How did I test it?
 
-<!-- A brief description the steps taken to test this pull request. -->
+<!-- A brief description of the steps taken to test this pull request. -->
