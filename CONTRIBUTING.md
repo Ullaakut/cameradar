@@ -22,12 +22,36 @@ make test
 
 ## Formatting and linting
 
-Run `gofmt` on changed files.
 Keep code idiomatic and consistent with existing style.
+By default, follow the [Uber Go Style Guide](https://github.com/uber-go/guide) and the guidelines from [Effective Go](https://go.dev/doc/effective_go).
 
 ```bash
 make fmt
 ```
+
+### Dependency for linting
+
+* golangci-lint
+    * see current version defined in `.github/workflows/test.yaml` at `jobs.tests.steps.["Run linter"]`
+    * configured in `.golangci.yml`
+
+```bash
+make lint
+```
+
+## Commit messages and PR titles
+
+Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages and pull request titles.
+
+- Use the format: `type: subject`
+- Write the subject in imperative mood: `add`, `update`, `remove`, `fix`, `refactor`
+- Do not use gerunds in subjects: avoid `adding`, `updating`, `removing`
+
+Examples:
+
+- `feat: add RTSP timeout flag`
+- `fix: remove duplicate progress line`
+- `docs: update commit message guidelines`
 
 ## Reporting issues
 
@@ -43,3 +67,4 @@ Only scan authorized targets.
 4. Add or update tests when possible.
 5. Ensure `make test` passes.
 6. Try to bring as much test coverage as possible with your changes.
+7. Use a Conventional Commit-style PR title with an imperative subject.
