@@ -5,14 +5,14 @@ go 1.25.3
 require (
 	github.com/Ullaakut/masscan v1.0.0
 	github.com/Ullaakut/nmap/v4 v4.0.0
-	github.com/bluenviron/gortsplib/v5 v5.3.2
+	github.com/bluenviron/gortsplib/v5 v5.4.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/ettle/strcase v0.2.0
 	github.com/hamba/cmd/v3 v3.1.0
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli/v3 v3.6.2
+	github.com/urfave/cli/v3 v3.7.0
 	golang.org/x/term v0.40.0
 )
 
@@ -20,7 +20,7 @@ require (
 	github.com/VictoriaMetrics/metrics v1.40.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bluenviron/mediacommon/v2 v2.8.0 // indirect
+	github.com/bluenviron/mediacommon/v2 v2.8.1 // indirect
 	github.com/cactus/go-statsd-client/v5 v5.1.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -81,7 +81,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.8.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090 // indirect
