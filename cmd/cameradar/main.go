@@ -38,11 +38,10 @@ var (
 
 var flags = cmd.Flags{
 	&cli.StringSliceFlag{
-		Name:     flagTargets,
-		Usage:    "The targets on which to scan for open RTSP streams in a network range format",
-		Aliases:  []string{"t"},
-		Sources:  cli.EnvVars(strcase.ToSNAKE(flagTargets)),
-		Required: true,
+		Name:    flagTargets,
+		Usage:   "The targets on which to scan for open RTSP streams in a network range format",
+		Aliases: []string{"t"},
+		Sources: cli.EnvVars(strcase.ToSNAKE(flagTargets)),
 	},
 	&cli.StringSliceFlag{
 		Name:    flagPorts,
@@ -128,19 +127,13 @@ func realMain() (code int) {
 		}
 	}()
 
-	scanCommand := &cli.Command{
-		Name:   "scan",
-		Usage:  "Scan targets for RTSP streams",
-		Flags:  flags,
-		Action: runCameradar,
-	}
-
 	app := &cli.Command{
-		Name:           "Cameradar",
-		Version:        version,
-		DefaultCommand: scanCommand.Name,
+		Name:    "Cameradar",
+		Version: version,
+		Usage:   "Scan targets for RTSP streams",
+		Flags:   flags,
+		Action:  runCameradar,
 		Commands: []*cli.Command{
-			scanCommand,
 			{
 				Name:   "version",
 				Usage:  "Print version information",
