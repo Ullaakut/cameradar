@@ -47,9 +47,8 @@ Cameradar scans RTSP endpoints on authorized targets, and uses dictionary attack
 - [Security and responsible use](#security-and-responsible-use)
 - [Output](#output)
 - [Check camera access](#check-camera-access)
-- [Command-line options](#command-line-options)
+- [Command-line options and environment variables](#command-line-options-and-environment-variables)
 - [Input file format](#input-file-format)
-- [Environment variables](#environment-variables)
 - [Build and contribute](#build-and-contribute)
 - [Frequently asked questions](#frequently-asked-questions)
 - [Examples](#examples)
@@ -75,7 +74,7 @@ docker run --rm -t --net=host ullaakut/cameradar --targets 192.168.100.0/24
 
 This scans ports 554, 5554, and 8554 on the target subnet.
 It attempts to enumerate RTSP streams.
-For all options, see [command-line options](#command-line-options).
+For all options, see [Configuration reference](https://github.com/Ullaakut/cameradar/wiki/Configuration-Reference).
 
 - Targets can be CIDRs, IPs, IP ranges or a hostname.
     - Subnet: `172.16.100.0/24`
@@ -107,7 +106,7 @@ Use this option if Docker is not available or if you want a local build.
 1. `go install github.com/Ullaakut/cameradar/v6/cmd/cameradar@latest`
 
 The `cameradar` binary is now in your `$GOPATH/bin`.
-For available flags, see [command-line options](#command-line-options).
+For available flags, see [Configuration reference](https://github.com/Ullaakut/cameradar/wiki/Configuration-Reference).
 
 ## Install on Android (Termux)
 
@@ -273,117 +272,11 @@ localhost
 When you use `--skip-scan`, Cameradar expands each entry into explicit IP
 addresses before building the target list.
 
-## Options
+## Command-line options and environment variables
 
-### `TARGETS` / `--targets` / `-t`
+The complete CLI and environment variable reference is maintained in [Configuration reference](https://github.com/Ullaakut/cameradar/wiki/Configuration-Reference).
 
-This variable is required.
-It specifies the target that Cameradar scans and attempts to access.
-
-Examples:
-
-* `172.16.100.0/24`
-* `192.168.1.1`
-* `localhost`
-* `192.168.1.140-255`
-* `192.168.2-3.0-255`
-
-### `PORTS` / `--ports` / `-p`
-
-This variable is optional and allows you to specify the ports to scan.
-
-Default value: `554,5554,8554`
-
-Change these only if you are sure cameras stream over different ports.
-Most cameras use these defaults.
-
-### `CUSTOM_ROUTES` / `--custom-routes` / `-r`
-
-This option is optional.
-It replaces the default routes dictionary used for the dictionary attack.
-
-If unset, Cameradar uses the built-in routes dictionary.
-
-### `CUSTOM_CREDENTIALS` / `--custom-credentials` / `-c`
-
-This option is optional.
-It replaces the default credentials dictionary used for the dictionary attack.
-
-If unset, Cameradar uses the built-in credentials dictionary.
-
-### `SCANNER` / `--scanner`
-
-This optional variable sets the discovery backend.
-
-* `nmap` includes service discovery and is generally more reliable when you want
-to specifically identify RTSP services.
-* `masscan` is generally more efficient for large-scale discovery, but it does
-not identify services and therefore can be less specific for RTSP.
-
-Supported values: `nmap`, `masscan`
-
-Default value: `nmap`
-
-### `SCAN_SPEED` / `--scan-speed` / `-s`
-
-This optional variable sets nmap discovery presets for speed or accuracy.
-Lower it on slow networks and raise it on fast networks.
-See [nmap timing templates](https://nmap.org/book/man-performance.html).
-
-This option is ignored when `--scanner masscan` is used.
-
-Default value: `4`
-
-### `SKIP_SCAN` / `--skip-scan`
-
-This optional flag skips network discovery and assumes every target and port
-pair is an RTSP stream.
-
-Use it when you already know the RTSP endpoints or when discovery is blocked.
-For best results, specify only RTSP ports.
-
-Default value: `false`
-
-### `ATTACK_INTERVAL` / `--attack-interval` / `-I`
-
-This optional variable sets a delay between attacks.
-Increase it for networks that may block brute-force attempts.
-Default: no delay.
-
-Default value: `0ms`
-
-### `TIMEOUT` / `--timeout` / `-T`
-
-This optional variable sets the timeout for requests sent to the cameras.
-Increase it for slow networks and decrease it for fast networks.
-
-Default value: `2000ms`
-
-### `DEBUG` / `--debug` / `-d`
-
-This optional variable enables more verbose output.
-
-It outputs discovery results (`nmap` or `masscan`), cURL requests, and more.
-
-Default: `false`
-
-### `UI` / `--ui`
-
-This option selects the UI mode.
-
-* `auto` selects `tui` if your terminal is interactive, `plain` otherwise
-* `tui` shows a fullscreen interface with a progress bar and shows the results in a table
-* `plain` logs the steps taken by cameradar as plain text and is meant to be used by non-interactive terminals
-
-Supported values: `auto`, `tui`, `plain`
-
-Default: `auto`
-
-### `OUTPUT` / `--output`
-
-This optional variable writes an M3U playlist of the discovered streams to the given file path.
-
-Example: `/tmp/cameradar.m3u`
+This includes all supported flags, defaults, accepted values, and env var mapping.
 
 ## Build and contribute
 
@@ -403,41 +296,7 @@ The `cameradar` binary is now in `$GOPATH/bin/cameradar`.
 
 ## Frequently asked questions
 
-> Cameradar does not detect any camera!
-
-This usually means the cameras are not streaming over RTSP.
-It can also mean the targets are not in your scan range.
-CCTV cameras are often on private subnets.
-Use `-t` to set the correct targets.
-If you still see no results, open an issue with device details.
-
-> Cameradar detects my cameras, but does not manage to access them!
-
-The camera configuration may have changed, so defaults do not match.
-Cameradar uses defaults unless you provide custom dictionaries.
-Add your credentials and routes, then follow the [configuration](#configuration) section.
-
-> What happened to the C++ version?
-
-The 1.1.4 tag contains the legacy C++ implementation.
-It is slower and less stable than the Go version, so it is not recommended to use.
-
-> I want to scan my local network or my own machine, and it does not work! What's going on?
-
-Use `--net=host` when running the Docker image, or use the installed binary.
-
-> I don't have a camera, but I'd like to try Cameradar!
-
-Run the following container, then run Cameradar against it:
-
-`docker run -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 ullaakut/rtspatt`
-
-Cameradar should discover the `admin` / `12345` credentials.
-You can try other default credentials listed in the dictionaries.
-
-> What authentication types does Cameradar support?
-
-Cameradar supports both basic and digest authentication.
+See [Troubleshooting & FAQ](https://github.com/Ullaakut/cameradar/wiki/Troubleshooting-%26-FAQ)
 
 ## Examples
 
