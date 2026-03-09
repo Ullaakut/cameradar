@@ -27,6 +27,7 @@ type Stream struct {
 	CredentialsFound bool `json:"credentials_found"`
 	RouteFound       bool `json:"route_found"`
 	Available        bool `json:"available"`
+	HTTPTunnel       bool `json:"http_tunnel"`
 
 	AuthenticationType AuthType `json:"authentication_type"`
 }

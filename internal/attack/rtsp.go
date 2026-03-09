@@ -19,10 +19,13 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
-func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
+func (a Attacker) newRTSPClient(u *base.URL, tunnel bool) (*gortsplib.Client, error) {
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
+	}
+	if tunnel {
+		client.Tunnel = gortsplib.TunnelHTTP
 	}
 	client.Scheme = u.Scheme
 	client.Host = u.Host
@@ -35,8 +38,8 @@ func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	return client, nil
 }
 
-func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
-	client, err := a.newRTSPClient(u)
+func (a Attacker) describeStatus(u *base.URL, tunnel bool) (base.StatusCode, error) {
+	client, err := a.newRTSPClient(u, tunnel)
 	if err != nil {
 		return 0, err
 	}

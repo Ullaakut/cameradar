@@ -68,7 +68,9 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 			}
 
 			if !strings.Contains(port.Service.Name, "rtsp") {
-				continue
+				if !strings.Contains(port.Service.Name, "http") {
+					continue
+				}
 			}
 
 			for _, address := range host.Addresses {
@@ -79,9 +81,10 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 				}
 
 				streams = append(streams, cameradar.Stream{
-					Device:  port.Service.Product,
-					Address: addr,
-					Port:    port.ID,
+					Device:     port.Service.Product,
+					Address:    addr,
+					Port:       port.ID,
+					HTTPTunnel: strings.Contains(port.Service.Name, "http"),
 				})
 			}
 		}

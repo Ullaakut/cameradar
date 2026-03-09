@@ -296,7 +296,7 @@ func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, erro
 		return false, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	code, err := a.describeStatus(u)
+	code, err := a.describeStatus(u, stream.HTTPTunnel)
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
@@ -312,7 +312,7 @@ func (a Attacker) credAttack(stream cameradar.Stream, username, password string)
 		return false, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	code, err := a.describeStatus(u)
+	code, err := a.describeStatus(u, stream.HTTPTunnel)
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
@@ -335,7 +335,7 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 		return stream, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	client, err := a.newRTSPClient(u)
+	client, err := a.newRTSPClient(u, stream.HTTPTunnel)
 	if err != nil {
 		return stream, fmt.Errorf("starting rtsp client: %w", err)
 	}
