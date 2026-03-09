@@ -14,6 +14,49 @@ Clone the repo and install dependencies using Go modules.
 go mod download
 ```
 
+### Test against fake targets
+
+Use the following options when you want reproducible local testing.
+
+#### Testing discovery behavior
+
+Use `scanme.nmap.org` to validate discovery-related behavior.
+
+- `scanme.nmap.org` does not expose RTSP or RTSPS ports.
+- Target its open ports (for example `22`, `80`, `9929`, `31337`) to test discovery flow, reporting, and scan handling.
+
+Example command:
+
+```bash
+cameradar -t scanme.nmap.org -p 22
+```
+
+#### Testing RTSP and attack behavior
+
+Use [RTSPAllTheThings](https://github.com/Ullaakut/RTSPAllTheThings) to test RTSP-specific logic and camera attack flows.
+
+- It supports both basic and digest authentication.
+- It behaves like a standards-compliant RTSP camera.
+
+> [!CAUTION]
+> It is no longer maintained and has limited camera emulation coverage.
+
+Example command:
+
+```bash
+docker run --net=host -p 8554:8554 -e RTSP_USERNAME=admin -e RTSP_PASSWORD=12345 -e RTSP_PORT=8554 -e RTSP_AUTHENTICATION_METHOD=digest ullaakut/rtspatt
+```
+
+Many real cameras slightly diverge from strict RTSP behavior. For example, some devices allow `DESCRIBE` without authentication, or return `403` and `404` in an order that differs from strict expectations.
+Unfortunately, RTSPATT cannot reproduce those behaviors.
+
+#### Prefer real cameras when possible
+
+The most reliable testing method is running against real cameras and real network conditions.
+
+> [!CAUTION]
+> Scan only authorized targets and networks.
+
 ## Run tests
 
 ```bash
