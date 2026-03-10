@@ -142,6 +142,22 @@ func TestDetectAuthMethod(t *testing.T) {
 	}
 }
 
+func TestDetectAuthMethod_HTTPTunnel_NonFatal(t *testing.T) {
+	attacker, err := New(testDictionary{}, 0, time.Second, ui.NopReporter{})
+	require.NoError(t, err)
+
+	// Use a port with no server listening — connection will fail.
+	stream := cameradar.Stream{
+		Address:       netip.MustParseAddr("127.0.0.1"),
+		Port:          1,
+		UseHTTPTunnel: true,
+	}
+
+	got, err := attacker.detectAuthMethod(t.Context(), stream)
+	require.NoError(t, err, "auth detection failure should not be fatal for tunneled streams")
+	assert.Equal(t, cameradar.AuthUnknown, got.AuthenticationType)
+}
+
 func startRTSPProbeServer(t *testing.T, statusCode base.StatusCode, headers base.Header) (netip.Addr, uint16) {
 	t.Helper()
 

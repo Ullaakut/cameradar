@@ -40,12 +40,62 @@ func TestScanner_Scan(t *testing.T) {
 			}),
 			wantStreams: []cameradar.Stream{
 				{
-					Device:  "ACME",
-					Address: netip.MustParseAddr("127.0.0.1"),
-					Port:    8554,
+					Device:        "ACME",
+					Address:       netip.MustParseAddr("127.0.0.1"),
+					Port:          8554,
+					UseHTTPTunnel: false,
+				},
+				{
+					Device:        "ACME",
+					Address:       netip.MustParseAddr("127.0.0.1"),
+					Port:          80,
+					UseHTTPTunnel: true,
 				},
 			},
-			wantProgress: "Found 1 RTSP streams",
+			wantProgress: "Found 2 RTSP streams",
+		},
+		{
+			name: "keeps rtsp and http candidates while filtering closed ports",
+			result: buildRun(nmaplib.Host{
+				Addresses: []nmaplib.Address{
+					{Addr: "127.0.0.1"},
+					{Addr: "not-an-ip"},
+				},
+				Ports: []nmaplib.Port{
+					openPort(8554, "rtsp", "ACME"),
+					closedPort(554, "rtsp", "ACME"),
+					openPort(80, "http", "ACME"),
+					openPort(9443, "https", "ACME"),
+					openPort(8443, "", "ACME"),
+				},
+			}),
+			wantStreams: []cameradar.Stream{
+				{
+					Device:        "ACME",
+					Address:       netip.MustParseAddr("127.0.0.1"),
+					Port:          8554,
+					UseHTTPTunnel: false,
+				},
+				{
+					Device:        "ACME",
+					Address:       netip.MustParseAddr("127.0.0.1"),
+					Port:          80,
+					UseHTTPTunnel: true,
+				},
+				{
+					Device:        "ACME",
+					Address:       netip.MustParseAddr("127.0.0.1"),
+					Port:          9443,
+					UseHTTPTunnel: true,
+				},
+				{
+					Device:        "ACME",
+					Address:       netip.MustParseAddr("127.0.0.1"),
+					Port:          8443,
+					UseHTTPTunnel: true,
+				},
+			},
+			wantProgress: "Found 4 RTSP streams",
 		},
 		{
 			name: "collects multiple hosts",
