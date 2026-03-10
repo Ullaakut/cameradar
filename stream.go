@@ -65,10 +65,5 @@ func (s Stream) String() string {
 
 // URL parses the stream's RTSP URL into a *base.URL.
 func (s Stream) URL() (*base.URL, error) {
-	parsed, err := base.ParseURL(s.String())
-	if err != nil {
-		return nil, err
-	}
-
-	return parsed, nil
+	return base.ParseURL(s.String())
 }

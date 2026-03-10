@@ -41,14 +41,11 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	if ctx.Err() != nil {
 		return stream, ctx.Err()
 	}
-	authStream := stream
-	authStream.Username = ""
-	authStream.Password = ""
-	u, err := authStream.URL()
+	u, err := stream.URL()
 	if err != nil {
 		return stream, fmt.Errorf("building rtsp url: %w", err)
 	}
-	urlStr := authStream.String()
+	urlStr := stream.String()
 
 	statusCode, headers, err := a.probeDescribeHeaders(ctx, u, urlStr)
 	if err != nil {

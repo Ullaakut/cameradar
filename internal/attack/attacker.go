@@ -327,7 +327,6 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	if err != nil {
 		return stream, fmt.Errorf("building rtsp url: %w", err)
 	}
-	urlStr := stream.String()
 
 	client, err := a.newRTSPClient(stream)
 	if err != nil {
@@ -335,6 +334,7 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	}
 	defer client.Close()
 
+	urlStr := stream.String()
 	desc, res, err := a.describeWithRetry(ctx, client, u, urlStr)
 	if err != nil {
 		return a.handleDescribeError(stream, urlStr, err)
