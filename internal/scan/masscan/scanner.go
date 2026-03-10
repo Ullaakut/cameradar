@@ -84,8 +84,8 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 			}
 
 			streams = append(streams, cameradar.Stream{
-				Address:    addr,
-				Port:       uint16(port.Number),
+				Address:       addr,
+				Port:          uint16(port.Number),
 				UseHTTPTunnel: isCommonHTTPPort(uint16(port.Number)),
 			})
 		}

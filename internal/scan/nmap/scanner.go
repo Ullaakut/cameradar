@@ -107,7 +107,7 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 	updater.UpdateSummary(streams)
 }
 
-// Extracting the classifying logic to an external function to avoid nesting if loops
+// Extracting the classifying logic to an external function to avoid nesting if loops.
 func streamCandidate(serviceName string, port uint16) (bool, bool) {
 	serviceName = strings.ToLower(strings.TrimSpace(serviceName))
 
