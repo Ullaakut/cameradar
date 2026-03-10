@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	"net/textproto"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -172,26 +171,4 @@ func headerValues(header base.Header, name string) base.HeaderValue {
 		}
 	}
 	return nil
-}
-
-func buildRTSPURL(stream cameradar.Stream, route, username, password string) (*base.URL, string, error) {
-	host := net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
-	path := "/" + strings.TrimLeft(strings.TrimSpace(route), "/") // Ensure path starts with a single "/"
-
-	u := &url.URL{
-		Scheme: "rtsp",
-		Host:   host,
-		Path:   path,
-	}
-	if username != "" || password != "" {
-		u.User = url.UserPassword(username, password)
-	}
-
-	urlStr := u.String()
-	parsed, err := base.ParseURL(urlStr)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return parsed, urlStr, nil
 }
