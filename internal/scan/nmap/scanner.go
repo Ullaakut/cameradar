@@ -67,10 +67,9 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 				continue
 			}
 
-			if !strings.Contains(port.Service.Name, "rtsp") {
-				if !strings.Contains(port.Service.Name, "http") {
-					continue
-				}
+			isCandidate, useHTTPTunnel := streamCandidate(port.Service.Name, port.ID)
+			if !isCandidate {
+				continue
 			}
 
 			for _, address := range host.Addresses {
@@ -81,10 +80,10 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 				}
 
 				streams = append(streams, cameradar.Stream{
-					Device:     port.Service.Product,
-					Address:    addr,
-					Port:       port.ID,
-					HTTPTunnel: strings.Contains(port.Service.Name, "http"),
+					Device:        port.Service.Product,
+					Address:       addr,
+					Port:          port.ID,
+					UseHTTPTunnel: useHTTPTunnel,
 				})
 			}
 		}
@@ -106,4 +105,32 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 		return
 	}
 	updater.UpdateSummary(streams)
+}
+
+// Extracting the classifying logic to an external function to avoid nesting if loops
+func streamCandidate(serviceName string, port uint16) (bool, bool) {
+	serviceName = strings.ToLower(strings.TrimSpace(serviceName))
+
+	if strings.Contains(serviceName, "rtsp") {
+		return true, false
+	}
+
+	if serviceName == "http" || serviceName == "https" {
+		return true, true
+	}
+
+	if serviceName == "" && isCommonHTTPPort(port) {
+		return true, true
+	}
+
+	return false, false
+}
+
+func isCommonHTTPPort(port uint16) bool {
+	switch port {
+	case 80, 443, 8080, 8443:
+		return true
+	default:
+		return false
+	}
 }

@@ -41,15 +41,22 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	if ctx.Err() != nil {
 		return stream, ctx.Err()
 	}
-	u, urlStr, err := buildRTSPURL(stream, stream.Route(), "", "")
+	authStream := stream
+	authStream.Username = ""
+	authStream.Password = ""
+	u, err := authStream.URL()
 	if err != nil {
 		return stream, fmt.Errorf("building rtsp url: %w", err)
 	}
+	urlStr := authStream.String()
 
 	statusCode, headers, err := a.probeDescribeHeaders(ctx, u, urlStr)
 	if err != nil {
 		a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > error: %v", urlStr, err))
 		stream.AuthenticationType = cameradar.AuthUnknown
+		if stream.UseHTTPTunnel {
+			return stream, nil
+		}
 		return stream, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
 

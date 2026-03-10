@@ -3,6 +3,7 @@ package attack
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -19,16 +20,17 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
-func (a Attacker) newRTSPClient(u *base.URL, tunnel bool) (*gortsplib.Client, error) {
+func (a Attacker) newRTSPClient(stream cameradar.Stream) (*gortsplib.Client, error) {
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
 	}
-	if tunnel {
+	client.Scheme = "rtsp"
+	client.Host = net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
+	if stream.UseHTTPTunnel {
 		client.Tunnel = gortsplib.TunnelHTTP
+		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
-	client.Scheme = u.Scheme
-	client.Host = u.Host
 
 	err := client.Start()
 	if err != nil {
@@ -38,8 +40,13 @@ func (a Attacker) newRTSPClient(u *base.URL, tunnel bool) (*gortsplib.Client, er
 	return client, nil
 }
 
-func (a Attacker) describeStatus(u *base.URL, tunnel bool) (base.StatusCode, error) {
-	client, err := a.newRTSPClient(u, tunnel)
+func (a Attacker) describeStatus(stream cameradar.Stream) (base.StatusCode, error) {
+	u, err := stream.URL()
+	if err != nil {
+		return 0, fmt.Errorf("building rtsp url: %w", err)
+	}
+
+	client, err := a.newRTSPClient(stream)
 	if err != nil {
 		return 0, err
 	}

@@ -1,7 +1,13 @@
 package cameradar
 
 import (
+	"net"
 	"net/netip"
+	"net/url"
+	"strconv"
+	"strings"
+
+	"github.com/bluenviron/gortsplib/v5/pkg/base"
 )
 
 // AuthType represents the RTSP authentication method.
@@ -27,7 +33,7 @@ type Stream struct {
 	CredentialsFound bool `json:"credentials_found"`
 	RouteFound       bool `json:"route_found"`
 	Available        bool `json:"available"`
-	HTTPTunnel       bool `json:"http_tunnel"`
+	UseHTTPTunnel    bool `json:"http_tunnel"`
 
 	AuthenticationType AuthType `json:"authentication_type"`
 }
@@ -38,4 +44,31 @@ func (s Stream) Route() string {
 		return s.Routes[0]
 	}
 	return ""
+}
+
+// String builds the RTSP URL for this stream.
+func (s Stream) String() string {
+	host := net.JoinHostPort(s.Address.String(), strconv.Itoa(int(s.Port)))
+	path := "/" + strings.TrimLeft(strings.TrimSpace(s.Route()), "/")
+
+	u := &url.URL{
+		Scheme: "rtsp",
+		Host:   host,
+		Path:   path,
+	}
+	if s.Username != "" || s.Password != "" {
+		u.User = url.UserPassword(s.Username, s.Password)
+	}
+
+	return u.String()
+}
+
+// URL parses the stream's RTSP URL into a *base.URL.
+func (s Stream) URL() (*base.URL, error) {
+	parsed, err := base.ParseURL(s.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
 }

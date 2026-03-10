@@ -291,33 +291,26 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 }
 
 func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, error) {
-	u, urlStr, err := buildRTSPURL(stream, route, stream.Username, stream.Password)
+	stream.Routes = []string{route}
+	code, err := a.describeStatus(stream)
 	if err != nil {
-		return false, fmt.Errorf("building rtsp url: %w", err)
+		return false, fmt.Errorf("performing describe request at %q: %w", stream, err)
 	}
 
-	code, err := a.describeStatus(u, stream.HTTPTunnel)
-	if err != nil {
-		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
-	}
-
-	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
+	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
 	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
 	return access, nil
 }
 
 func (a Attacker) credAttack(stream cameradar.Stream, username, password string) (bool, error) {
-	u, urlStr, err := buildRTSPURL(stream, stream.Route(), username, password)
+	stream.Username = username
+	stream.Password = password
+	code, err := a.describeStatus(stream)
 	if err != nil {
-		return false, fmt.Errorf("building rtsp url: %w", err)
+		return false, fmt.Errorf("performing describe request at %q: %w", stream, err)
 	}
 
-	code, err := a.describeStatus(u, stream.HTTPTunnel)
-	if err != nil {
-		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
-	}
-
-	a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
+	a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
 	return code == base.StatusOK || code == base.StatusNotFound, nil
 }
 
@@ -330,12 +323,13 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 		return stream, ctx.Err()
 	}
 
-	u, urlStr, err := buildRTSPURL(stream, stream.Route(), stream.Username, stream.Password)
+	u, err := stream.URL()
 	if err != nil {
 		return stream, fmt.Errorf("building rtsp url: %w", err)
 	}
+	urlStr := stream.String()
 
-	client, err := a.newRTSPClient(u, stream.HTTPTunnel)
+	client, err := a.newRTSPClient(stream)
 	if err != nil {
 		return stream, fmt.Errorf("starting rtsp client: %w", err)
 	}
