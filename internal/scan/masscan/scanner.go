@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/pkg/ports"
 	masscanlib "github.com/Ullaakut/masscan"
 )
 
@@ -86,7 +87,7 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 			streams = append(streams, cameradar.Stream{
 				Address:       addr,
 				Port:          uint16(port.Number),
-				UseHTTPTunnel: isCommonHTTPPort(uint16(port.Number)),
+				UseHTTPTunnel: ports.IsCommonHTTPPort(uint16(port.Number)),
 			})
 		}
 	}
@@ -107,12 +108,4 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 		return
 	}
 	updater.UpdateSummary(streams)
-}
-
-func isCommonHTTPPort(port uint16) bool {
-	switch port {
-	case 80, 443, 8080, 8443:
-		return true
-	}
-	return false
 }

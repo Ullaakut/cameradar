@@ -24,14 +24,29 @@ func (a Attacker) newRTSPClient(stream cameradar.Stream) (*gortsplib.Client, err
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
 	}
-	client.Scheme = "rtsp"
-	client.Host = net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
+	u, err := stream.URL()
+	if err != nil {
+		return nil, fmt.Errorf("building rtsp url: %w", err)
+	}
+
+	switch u.Scheme {
+	case "rtsp", "rtsps":
+		client.Scheme = u.Scheme
+	case "http":
+		client.Scheme = "rtsp"
+	case "https":
+		client.Scheme = "rtsps"
+	default:
+		return nil, fmt.Errorf("unsupported scheme %q", u.Scheme)
+	}
+
+	client.Host = u.Host
 	if stream.UseHTTPTunnel {
 		client.Tunnel = gortsplib.TunnelHTTP
 		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	err := client.Start()
+	err = client.Start()
 	if err != nil {
 		return nil, err
 	}

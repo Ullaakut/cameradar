@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/pkg/ports"
 	nmaplib "github.com/Ullaakut/nmap/v4"
 )
 
@@ -119,18 +120,9 @@ func streamCandidate(serviceName string, port uint16) (bool, bool) {
 		return true, true
 	}
 
-	if serviceName == "" && isCommonHTTPPort(port) {
+	if serviceName == "" && ports.IsCommonHTTPPort(port) {
 		return true, true
 	}
 
 	return false, false
-}
-
-func isCommonHTTPPort(port uint16) bool {
-	switch port {
-	case 80, 443, 8080, 8443:
-		return true
-	default:
-		return false
-	}
 }
