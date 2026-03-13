@@ -24,6 +24,8 @@ type Stream struct {
 	Address  netip.Addr `json:"address"  validate:"required"`
 	Port     uint16     `json:"port"     validate:"required"`
 
+	Secure bool `json:"secure"`
+
 	CredentialsFound bool `json:"credentials_found"`
 	RouteFound       bool `json:"route_found"`
 	Available        bool `json:"available"`
