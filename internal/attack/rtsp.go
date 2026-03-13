@@ -19,22 +19,28 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
+const (
+	schemeRTSP  = "rtsp"
+	schemeRTSPS = "rtsps"
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+)
+
 func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
+		Scheme:       u.Scheme,
 	}
 
 	switch u.Scheme {
-	case "rtsp":
-		client.Scheme = "rtsp"
-	case "rtsps":
-		client.Scheme = "rtsps"
-	case "http":
-		client.Scheme = "rtsp"
+	case schemeRTSP, schemeRTSPS:
+		// Nothing to do.
+	case schemeHTTP:
+		client.Scheme = schemeRTSP
 		client.Tunnel = gortsplib.TunnelHTTP
-	case "https":
-		client.Scheme = "rtsps"
+	case schemeHTTPS:
+		client.Scheme = schemeRTSPS
 		client.Tunnel = gortsplib.TunnelHTTP
 		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	default:
