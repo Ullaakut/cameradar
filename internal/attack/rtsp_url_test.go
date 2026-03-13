@@ -2,6 +2,7 @@ package attack
 
 import (
 	"net/netip"
+	"net/url"
 	"testing"
 
 	"github.com/Ullaakut/cameradar/v6"
@@ -107,6 +108,36 @@ func TestStreamURL(t *testing.T) {
 			},
 			wantURL: "rtsp://user:@192.168.0.10:554/stream",
 		},
+		{
+			name: "http scheme",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream"},
+				Scheme:  "http",
+			},
+			wantURL: "http://192.168.0.10:554/stream",
+		},
+		{
+			name: "https scheme",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream"},
+				Scheme:  "https",
+			},
+			wantURL: "https://192.168.0.10:554/stream",
+		},
+		{
+			name: "rtsps scheme",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream"},
+				Scheme:  "rtsps",
+			},
+			wantURL: "rtsps://192.168.0.10:554/stream",
+		},
 	}
 
 	for _, test := range tests {
@@ -114,8 +145,12 @@ func TestStreamURL(t *testing.T) {
 			gotURL := test.stream.String()
 			require.Equal(t, test.wantURL, gotURL)
 
-			_, err := test.stream.URL()
+			parsedURL, err := test.stream.URL()
 			require.NoError(t, err)
+
+			expectedURL, err := url.Parse(test.wantURL)
+			require.NoError(t, err)
+			require.Equal(t, expectedURL.Scheme, parsedURL.Scheme)
 		})
 	}
 }
