@@ -40,7 +40,7 @@ func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 		client.Scheme = schemeRTSP
 		client.Tunnel = gortsplib.TunnelHTTP
 	case schemeHTTPS:
-		client.Scheme = schemeRTSPS
+		client.Scheme = schemeRTSP
 		client.Tunnel = gortsplib.TunnelHTTP
 		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	default:
