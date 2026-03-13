@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/textproto"
 	"net/url"
 	"strconv"
@@ -115,6 +116,36 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr 
 	}
 
 	return base.StatusCode(code), headers, nil
+}
+
+func (a Attacker) handleRedirect(stream *cameradar.Stream, resHeaders base.Header) {
+	locations := headerValues(resHeaders, "Location")
+	if len(locations) == 0 {
+		return
+	}
+	location, err := base.ParseURL(locations[0])
+	if err != nil {
+		return
+	}
+	
+	switch location.Scheme {
+	case "rtsps":
+		stream.Secure = true
+	case "rtsp":
+		stream.Secure = false
+	}
+	
+	if location.Hostname() != "" {
+		if addr, err := netip.ParseAddr(location.Hostname()); err == nil {
+			stream.Address = addr
+		}
+	}
+	
+	if location.Port() != "" {
+		if port, err := strconv.Atoi(location.Port()); err == nil {
+			stream.Port = uint16(port)
+		}
+	}
 }
 
 func authTypeFromHeaders(values base.HeaderValue) cameradar.AuthType {
