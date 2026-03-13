@@ -296,7 +296,6 @@ func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, erro
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", stream, err)
 	}
-
 	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
 	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
 	return access, nil
@@ -309,7 +308,6 @@ func (a Attacker) credAttack(stream cameradar.Stream, username, password string)
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", stream, err)
 	}
-
 	a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
 	return code == base.StatusOK || code == base.StatusNotFound, nil
 }
