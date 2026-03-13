@@ -112,16 +112,11 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 // Extracting the classifying logic to an external function to avoid nesting if loops.
 func streamCandidate(serviceName string, port uint16) bool {
 	serviceName = strings.ToLower(strings.TrimSpace(serviceName))
-
 	if strings.Contains(serviceName, "rtsp") {
 		return true
 	}
 
 	if ports.InferTunnelScheme(port, serviceName) != "" {
-		return true
-	}
-
-	if serviceName == "" && ports.InferTunnelScheme(port, "") != "" {
 		return true
 	}
 
