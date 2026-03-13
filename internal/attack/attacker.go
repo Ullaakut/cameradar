@@ -317,16 +317,12 @@ func (a Attacker) credAttack(ctx context.Context, stream cameradar.Stream, usern
 		return false, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	code, headers, err := a.probeDescribeHeaders(ctx, u, urlStr)
+	code, err := a.describeStatus(u)
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
 
 	a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
-
-	if code == base.StatusMovedPermanently {
-		a.handleRedirect(&stream, headers)
-	}
 
 	return code == base.StatusOK || code == base.StatusNotFound, nil
 }

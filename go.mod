@@ -1,3 +1,4 @@
+
 module github.com/Ullaakut/cameradar/v6
 
 go 1.25.3
