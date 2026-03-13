@@ -72,16 +72,16 @@ func TestScanner_Scan(t *testing.T) {
 					Secure:  false,
 				},
 				{
-					Device:  "Model C",
-					Address: netip.MustParseAddr("192.0.2.10"),
-					Port:    322,
-					Secure:  true,
-				},
-				{
 					Device:  "Model A",
 					Address: netip.MustParseAddr("192.0.2.11"),
 					Port:    8554,
 					Secure:  false,
+				},
+				{
+					Device:  "Model C",
+					Address: netip.MustParseAddr("192.0.2.10"),
+					Port:    322,
+					Secure:  true,
 				},
 				{
 					Device:  "Model C",
