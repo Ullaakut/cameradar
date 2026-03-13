@@ -217,7 +217,7 @@ func (a Attacker) attackCredentialsForStream(ctx context.Context, target camerad
 			}
 
 			a.reporter.Progress(cameradar.StepAttackCredentials, cameradar.ProgressTickMessage())
-			ok, err := a.credAttack(ctx, target, username, password)
+			ok, err := a.credAttack(target, username, password)
 			if err != nil {
 				target.CredentialsFound = false
 
@@ -253,7 +253,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	if emitProgress {
 		a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 	}
-	ok, err := a.routeAttack(ctx, target, dummyRoute)
+	ok, err := a.routeAttack(target, dummyRoute)
 	if err != nil {
 		a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route probe failed for %s:%d: %v", target.Address.String(), target.Port, err))
 		return target, nil
@@ -275,7 +275,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 		if emitProgress {
 			a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 		}
-		ok, err := a.routeAttack(ctx, target, route)
+		ok, err := a.routeAttack(target, route)
 		if err != nil {
 			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route attempt failed for %s:%d (%s): %v", target.Address.String(), target.Port, route, err))
 			return target, nil
@@ -296,6 +296,7 @@ func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, erro
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", stream, err)
 	}
+
 	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
 	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
 	return access, nil
@@ -308,6 +309,7 @@ func (a Attacker) credAttack(stream cameradar.Stream, username, password string)
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", stream, err)
 	}
+
 	a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
 	return code == base.StatusOK || code == base.StatusNotFound, nil
 }
