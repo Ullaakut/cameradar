@@ -73,16 +73,39 @@ func TestFormatSummary(t *testing.T) {
 				"Authentication: digest",
 				"Routes: stream1, stream2",
 				"Credentials: user:pass",
+				"Credentials: none",
 				"RTSP URL: rtsp://user:pass@10.0.0.1:8554/stream1",
 				"Admin panel: http://10.0.0.1/",
 				"Admin panel: http://10.0.0.2/",
 			},
 			wantNotContains: []string{
-				"RTSP URL: rtsp://10.0.0.2",
 				"Error:",
 			},
 			orderedPairs: [][2]string{
 				{"• 10.0.0.1:8554", "• 10.0.0.2:554"},
+			},
+		},
+		{
+			name: "empty discovered credentials render as none",
+			streams: []cameradar.Stream{
+				{
+					Address:            netip.MustParseAddr("10.0.0.4"),
+					Port:               554,
+					Available:          true,
+					RouteFound:         true,
+					Routes:             []string{"stream"},
+					CredentialsFound:   true,
+					AuthenticationType: cameradar.AuthNone,
+				},
+			},
+			wantContains: []string{
+				"Accessible streams: 1",
+				"Credentials: none",
+				"RTSP URL: rtsp://10.0.0.4:554/stream",
+			},
+			wantNotContains: []string{
+				"Credentials: :",
+				"rtsp://:@10.0.0.4:554/stream",
 			},
 		},
 	}

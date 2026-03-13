@@ -542,7 +542,7 @@ func buildSummaryRows(streams []cameradar.Stream, visibility summaryVisibilitySt
 
 		credentials := emptyEntry
 		if visibility.showCredentials && stream.CredentialsFound {
-			credentials = fmt.Sprintf("%s:%s", stream.Username, stream.Password)
+			credentials = formatCredentials(stream)
 		}
 
 		available := emptyEntry
