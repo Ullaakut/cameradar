@@ -83,9 +83,12 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 				continue
 			}
 
+			isSecure := port.Number == 322 || port.Number == 8322
+
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
 				Port:    uint16(port.Number),
+				Secure: isSecure,
 			})
 		}
 	}
