@@ -16,7 +16,7 @@ func TestNew_ExpandsTargetsAndPorts(t *testing.T) {
 		"192.0.2.15",
 		"192.0.2.10-11",
 	}
-	ports := []string{"554", "8554-8555"}
+	ports := []string{"554", "322", "8554-8555"}
 
 	scanner := skip.New(targets, ports)
 
@@ -32,7 +32,7 @@ func TestNew_ExpandsTargetsAndPorts(t *testing.T) {
 		netip.MustParseAddr("192.0.2.11"),
 		netip.MustParseAddr("192.0.2.15"),
 	}
-	portsExpected := []uint16{554, 8554, 8555}
+	portsExpected := []uint16{554, 322, 8554, 8555}
 
 	var want []string
 	for _, addr := range addrs {
@@ -44,6 +44,13 @@ func TestNew_ExpandsTargetsAndPorts(t *testing.T) {
 	var got []string
 	for _, stream := range streams {
 		got = append(got, stream.Address.String()+":"+strconv.Itoa(int(stream.Port)))
+
+		if stream.Port == 322 || stream.Port == 8322 {
+			assert.True(t, stream.Secure)
+		} else {
+			assert.False(t, stream.Secure)
+		}
+
 	}
 
 	assert.ElementsMatch(t, want, got)
