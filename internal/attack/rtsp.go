@@ -152,7 +152,6 @@ func (a Attacker) handleRedirect(stream *cameradar.Stream, resHeaders base.Heade
 	}
 
 	if location.Hostname() != "" {
-
 		addr, err := netip.ParseAddr(location.Hostname())
 		if err == nil {
 			stream.Address = addr
@@ -160,7 +159,6 @@ func (a Attacker) handleRedirect(stream *cameradar.Stream, resHeaders base.Heade
 	}
 
 	if location.Port() != "" {
-
 		port, err := strconv.Atoi(location.Port())
 		if err == nil {
 			if port >= 0 && port <= 65535 {
