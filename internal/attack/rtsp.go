@@ -21,6 +21,11 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
+const (
+	rtsp  = "rtsp"
+	rtsps = "rtsps"
+)
+
 func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
@@ -69,7 +74,7 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr 
 	var conn net.Conn
 	var err error
 
-	if u.Scheme == "rtsps" {
+	if u.Scheme == rtsps {
 		tlsDialer := &tls.Dialer{NetDialer: dialer, Config: &tls.Config{InsecureSkipVerify: true}}
 		conn, err = tlsDialer.DialContext(ctx, "tcp", u.Host)
 	} else {
@@ -140,9 +145,9 @@ func (a Attacker) handleRedirect(stream *cameradar.Stream, resHeaders base.Heade
 	}
 
 	switch location.Scheme {
-	case "rtsps":
+	case rtsps:
 		stream.Secure = true
-	case "rtsp":
+	case rtsp:
 		stream.Secure = false
 	}
 
@@ -210,9 +215,9 @@ func buildRTSPURL(stream cameradar.Stream, route, username, password string) (*b
 	host := net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
 	path := "/" + strings.TrimLeft(strings.TrimSpace(route), "/") // Ensure path starts with a single "/"
 
-	scheme := "rtsp"
+	scheme := rtsp
 	if stream.Secure {
-		scheme = "rtsps"
+		scheme = rtsps
 	}
 
 	u := &url.URL{
