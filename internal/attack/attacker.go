@@ -253,7 +253,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	if emitProgress {
 		a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 	}
-	ok, err := a.routeAttack(ctx, target, dummyRoute)
+	ok, err := a.routeAttack(ctx, &target, dummyRoute)
 	if err != nil {
 		a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route probe failed for %s:%d: %v", target.Address.String(), target.Port, err))
 		return target, nil
@@ -275,7 +275,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 		if emitProgress {
 			a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 		}
-		ok, err := a.routeAttack(ctx, target, route)
+		ok, err := a.routeAttack(ctx, &target, route)
 		if err != nil {
 			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route attempt failed for %s:%d (%s): %v", target.Address.String(), target.Port, route, err))
 			return target, nil
@@ -290,8 +290,8 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	return target, nil
 }
 
-func (a Attacker) routeAttack(ctx context.Context, stream cameradar.Stream, route string) (bool, error) {
-	u, urlStr, err := buildRTSPURL(stream, route, stream.Username, stream.Password)
+func (a Attacker) routeAttack(ctx context.Context, stream *cameradar.Stream, route string) (bool, error) {
+	u, urlStr, err := buildRTSPURL(*stream, route, stream.Username, stream.Password)
 	if err != nil {
 		return false, fmt.Errorf("building rtsp url: %w", err)
 	}
@@ -304,9 +304,11 @@ func (a Attacker) routeAttack(ctx context.Context, stream cameradar.Stream, rout
 	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
 
 	if code == base.StatusMovedPermanently {
-		a.handleRedirect(&stream, headers)
-		u, urlStr, err = buildRTSPURL(stream, route, stream.Username, stream.Password)
+		a.handleRedirect(stream, headers)
+		fmt.Printf("%+v\n", stream)
+		u, urlStr, err = buildRTSPURL(*stream, route, stream.Username, stream.Password)
 		if err == nil {
+			fmt.Println(u)
 			code, _, err = a.probeDescribeHeaders(ctx, u, urlStr)
 			if err == nil {
 				a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 (redirect followed) > %d", urlStr, code))
