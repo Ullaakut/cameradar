@@ -66,7 +66,16 @@ func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
 // which is exactly what we need in order to detect authentication methods.
 func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr string) (base.StatusCode, base.Header, error) {
 	dialer := &net.Dialer{Timeout: a.timeout}
-	conn, err := dialer.DialContext(ctx, "tcp", u.Host)
+	var conn net.Conn
+	var err error
+
+	if u.Scheme == "rtsps" {
+		tlsDialer := &tls.Dialer{NetDialer: dialer, Config: &tls.Config{InsecureSkipVerify: true}}
+		conn, err = tlsDialer.DialContext(ctx, "tcp", u.Host)
+	} else {
+		conn, err = dialer.DialContext(ctx, "tcp", u.Host)
+	}
+
 	if err != nil {
 		return 0, nil, err
 	}

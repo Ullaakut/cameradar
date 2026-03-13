@@ -224,7 +224,7 @@ func (a Attacker) attackCredentialsForStream(ctx context.Context, target camerad
 				msg := fmt.Sprintf("credential attempt failed for %s:%d (%s:%s): %v", target.Address.String(), target.Port, username, password, err)
 				a.reporter.Debug(cameradar.StepAttackCredentials, msg)
 
-				return target, nil
+				continue
 			}
 
 			if ok {
@@ -328,6 +328,7 @@ func (a Attacker) credAttack(ctx context.Context, stream cameradar.Stream, usern
 
 	code, err := a.describeStatus(u)
 	if err != nil {
+		a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("Error testing %s:%s -> %v", username, password, err))
 		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
 
