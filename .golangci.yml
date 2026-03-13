@@ -47,6 +47,8 @@ linters:
     generated: lax
     rules:
       - path: (.+)\.go$
+        text: 'string `none` has (.+) occurrences, make it a constant'
+      - path: (.+)\.go$
         text: 'ST1000: at least one file in a package should have a package comment'
       - path: (.+)\.go$
         text: 'package-comments: should have a package comment'
