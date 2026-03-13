@@ -40,7 +40,7 @@ func TestRunScan(t *testing.T) {
 				},
 			},
 			wantStreams: []cameradar.Stream{
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 554, UseHTTPTunnel: false},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 554},
 			},
 			wantProgress: []string{
 				"Skipping invalid port 0 on 192.0.2.10",
@@ -58,13 +58,13 @@ func TestRunScan(t *testing.T) {
 				},
 			},
 			wantStreams: []cameradar.Stream{
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8554, UseHTTPTunnel: false},
-				{Address: netip.MustParseAddr("198.51.100.9"), Port: 554, UseHTTPTunnel: false},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8554},
+				{Address: netip.MustParseAddr("198.51.100.9"), Port: 554},
 			},
 			wantProgress: []string{"Found 2 RTSP streams"},
 		},
 		{
-			name: "sets UseHTTPTunnel for common HTTP ports",
+			name: "sets scheme for common HTTP ports",
 			result: &masscanlib.Run{
 				Hosts: []masscanlib.Host{
 					{
@@ -80,11 +80,11 @@ func TestRunScan(t *testing.T) {
 				},
 			},
 			wantStreams: []cameradar.Stream{
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 554, UseHTTPTunnel: false},
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 80, UseHTTPTunnel: true},
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 443, UseHTTPTunnel: true},
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8080, UseHTTPTunnel: true},
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8443, UseHTTPTunnel: true},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 554},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 80, Scheme: "http"},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 443, Scheme: "https"},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8080, Scheme: "http"},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8443, Scheme: "https"},
 			},
 			wantProgress: []string{"Found 5 RTSP streams"},
 		},

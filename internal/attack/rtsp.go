@@ -19,34 +19,31 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
-func (a Attacker) newRTSPClient(stream cameradar.Stream) (*gortsplib.Client, error) {
+func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
 	}
-	u, err := stream.URL()
-	if err != nil {
-		return nil, fmt.Errorf("building rtsp url: %w", err)
-	}
 
 	switch u.Scheme {
-	case "rtsp", "rtsps":
-		client.Scheme = u.Scheme
+	case "rtsp":
+		client.Scheme = "rtsp"
+	case "rtsps":
+		client.Scheme = "rtsps"
 	case "http":
 		client.Scheme = "rtsp"
+		client.Tunnel = gortsplib.TunnelHTTP
 	case "https":
 		client.Scheme = "rtsps"
+		client.Tunnel = gortsplib.TunnelHTTP
+		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	default:
-		return nil, fmt.Errorf("unsupported scheme %q", u.Scheme)
+		return nil, fmt.Errorf("unsupported URL scheme: %q", u.Scheme)
 	}
 
 	client.Host = u.Host
-	if stream.UseHTTPTunnel {
-		client.Tunnel = gortsplib.TunnelHTTP
-		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	}
 
-	err = client.Start()
+	err := client.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +57,7 @@ func (a Attacker) describeStatus(stream cameradar.Stream) (base.StatusCode, erro
 		return 0, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	client, err := a.newRTSPClient(stream)
+	client, err := a.newRTSPClient(u)
 	if err != nil {
 		return 0, err
 	}

@@ -143,18 +143,30 @@ func TestDetectAuthMethod(t *testing.T) {
 }
 
 func TestDetectAuthMethod_HTTPTunnel_NonFatal(t *testing.T) {
-	attacker, err := New(testDictionary{}, 0, time.Second, ui.NopReporter{})
-	require.NoError(t, err)
-
-	stream := cameradar.Stream{
-		Address:       netip.MustParseAddr("127.0.0.1"),
-		Port:          1,
-		UseHTTPTunnel: true,
+	tests := []struct {
+		name   string
+		scheme string
+	}{
+		{name: "http tunnel", scheme: "http"},
+		{name: "https tunnel", scheme: "https"},
 	}
 
-	got, err := attacker.detectAuthMethod(t.Context(), stream)
-	require.NoError(t, err)
-	assert.Equal(t, cameradar.AuthUnknown, got.AuthenticationType)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			attacker, err := New(testDictionary{}, 0, time.Second, ui.NopReporter{})
+			require.NoError(t, err)
+
+			stream := cameradar.Stream{
+				Address: netip.MustParseAddr("127.0.0.1"),
+				Port:    1,
+				Scheme:  test.scheme,
+			}
+
+			got, err := attacker.detectAuthMethod(t.Context(), stream)
+			require.NoError(t, err)
+			assert.Equal(t, cameradar.AuthUnknown, got.AuthenticationType)
+		})
+	}
 }
 
 func startRTSPProbeServer(t *testing.T, statusCode base.StatusCode, headers base.Header) (netip.Addr, uint16) {

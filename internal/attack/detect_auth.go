@@ -51,7 +51,7 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	if err != nil {
 		a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > error: %v", urlStr, err))
 		stream.AuthenticationType = cameradar.AuthUnknown
-		if stream.UseHTTPTunnel {
+		if stream.Scheme == "http" || stream.Scheme == "https" {
 			return stream, nil
 		}
 		return stream, fmt.Errorf("performing describe request at %q: %w", urlStr, err)

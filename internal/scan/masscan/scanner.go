@@ -84,10 +84,12 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 				continue
 			}
 
+			scheme := ports.InferTunnelScheme(uint16(port.Number), "")
+
 			streams = append(streams, cameradar.Stream{
-				Address:       addr,
-				Port:          uint16(port.Number),
-				UseHTTPTunnel: ports.IsCommonHTTPPort(uint16(port.Number)),
+				Address: addr,
+				Port:    uint16(port.Number),
+				Scheme:  scheme,
 			})
 		}
 	}
