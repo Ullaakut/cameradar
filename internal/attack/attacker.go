@@ -305,6 +305,13 @@ func (a Attacker) routeAttack(ctx context.Context, stream cameradar.Stream, rout
 
 	if code == base.StatusMovedPermanently {
 		a.handleRedirect(&stream, headers)
+		u, urlStr, err = buildRTSPURL(stream, route, stream.Username, stream.Password)
+		if err == nil {
+			code, _, err = a.probeDescribeHeaders(ctx, u, urlStr)
+			if err == nil {
+				a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 (redirect followed) > %d", urlStr, code))
+			}
+		}
 	}
 
 	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden

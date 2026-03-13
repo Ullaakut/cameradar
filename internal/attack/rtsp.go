@@ -3,6 +3,7 @@ package attack
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -24,6 +25,7 @@ func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
+		TLSConfig:    &tls.Config{InsecureSkipVerify: true},
 	}
 	client.Scheme = u.Scheme
 	client.Host = u.Host
@@ -123,24 +125,24 @@ func (a Attacker) handleRedirect(stream *cameradar.Stream, resHeaders base.Heade
 	if len(locations) == 0 {
 		return
 	}
-	location, err := base.ParseURL(locations[0])
+	location, err := url.Parse(locations[0])
 	if err != nil {
 		return
 	}
-	
+
 	switch location.Scheme {
 	case "rtsps":
 		stream.Secure = true
 	case "rtsp":
 		stream.Secure = false
 	}
-	
+
 	if location.Hostname() != "" {
 		if addr, err := netip.ParseAddr(location.Hostname()); err == nil {
 			stream.Address = addr
 		}
 	}
-	
+
 	if location.Port() != "" {
 		if port, err := strconv.Atoi(location.Port()); err == nil {
 			stream.Port = uint16(port)
@@ -198,7 +200,7 @@ func headerValues(header base.Header, name string) base.HeaderValue {
 func buildRTSPURL(stream cameradar.Stream, route, username, password string) (*base.URL, string, error) {
 	host := net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
 	path := "/" + strings.TrimLeft(strings.TrimSpace(route), "/") // Ensure path starts with a single "/"
-	
+
 	scheme := "rtsp"
 	if stream.Secure {
 		scheme = "rtsps"
