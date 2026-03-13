@@ -217,7 +217,7 @@ func (a Attacker) attackCredentialsForStream(ctx context.Context, target camerad
 			}
 
 			a.reporter.Progress(cameradar.StepAttackCredentials, cameradar.ProgressTickMessage())
-			ok, err := a.credAttack(target, username, password)
+			ok, err := a.credAttack(ctx, target, username, password)
 			if err != nil {
 				target.CredentialsFound = false
 
@@ -253,7 +253,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	if emitProgress {
 		a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 	}
-	ok, err := a.routeAttack(target, dummyRoute)
+	ok, err := a.routeAttack(ctx, target, dummyRoute)
 	if err != nil {
 		a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route probe failed for %s:%d: %v", target.Address.String(), target.Port, err))
 		return target, nil
@@ -275,7 +275,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 		if emitProgress {
 			a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 		}
-		ok, err := a.routeAttack(target, route)
+		ok, err := a.routeAttack(ctx, target, route)
 		if err != nil {
 			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route attempt failed for %s:%d (%s): %v", target.Address.String(), target.Port, route, err))
 			return target, nil
