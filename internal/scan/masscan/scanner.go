@@ -88,7 +88,7 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
 				Port:    uint16(port.Number),
-				Secure: isSecure,
+				Secure:  isSecure,
 			})
 		}
 	}
