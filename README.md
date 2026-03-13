@@ -308,7 +308,7 @@ See [Troubleshooting & FAQ](https://github.com/Ullaakut/cameradar/wiki/Troublesh
 
 `docker run --rm -t --net=host -v /tmp:/tmp ullaakut/cameradar --targets /tmp/test.txt --ports 8554`
 
-> Running cameradar on a subnetwork with custom dictionaries, on ports 554, 5554 and 8554
+> Running cameradar on a subnetwork with custom dictionaries, on ports 554, 5554, 8554, 322, and 8322
 
 `docker run --rm -t --net=host -v /tmp:/tmp ullaakut/cameradar --targets 192.168.0.0/24 --custom-credentials "/tmp/dictionaries/credentials.json" --custom-routes "/tmp/dictionaries/routes" --ports 554,5554,8554`
 
