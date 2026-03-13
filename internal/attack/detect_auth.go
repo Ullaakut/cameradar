@@ -45,28 +45,40 @@ func (a Attacker) detectAuthMethod(ctx context.Context, stream cameradar.Stream)
 	if err != nil {
 		return stream, fmt.Errorf("building rtsp url: %w", err)
 	}
-	urlStr := stream.String()
 
-	statusCode, headers, err := a.probeDescribeHeaders(ctx, u, urlStr)
+	statusCode, headers, err := a.probeDescribeHeaders(ctx, u)
 	if err != nil {
-		a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > error: %v", urlStr, err))
-		stream.AuthenticationType = cameradar.AuthUnknown
-		if stream.Scheme == "http" || stream.Scheme == "https" {
+		a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > error: %v", u, err))
+		if stream.Scheme == schemeHTTP || stream.Scheme == schemeHTTPS {
+			statusCode, statusErr := a.describeStatus(stream)
+			if statusErr == nil {
+				a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d (fallback)", u, statusCode))
+				stream.AuthenticationType = authTypeFromStatus(statusCode, nil)
+				return stream, nil
+			}
+
+			stream.AuthenticationType = cameradar.AuthUnknown
 			return stream, nil
 		}
-		return stream, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
+
+		stream.AuthenticationType = cameradar.AuthUnknown
+		return stream, fmt.Errorf("performing describe request at %q: %w", u, err)
 	}
 
-	a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, statusCode))
+	a.reporter.Debug(cameradar.StepDetectAuth, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", u, statusCode))
 	values := headerValues(headers, "WWW-Authenticate")
-	switch statusCode {
-	case base.StatusOK:
-		stream.AuthenticationType = cameradar.AuthNone
-	case base.StatusUnauthorized:
-		stream.AuthenticationType = authTypeFromHeaders(values)
-	default:
-		stream.AuthenticationType = cameradar.AuthUnknown
-	}
+	stream.AuthenticationType = authTypeFromStatus(statusCode, values)
 
 	return stream, nil
+}
+
+func authTypeFromStatus(statusCode base.StatusCode, wwwAuthenticate base.HeaderValue) cameradar.AuthType {
+	switch statusCode {
+	case base.StatusOK:
+		return cameradar.AuthNone
+	case base.StatusUnauthorized:
+		return authTypeFromHeaders(wwwAuthenticate)
+	default:
+		return cameradar.AuthUnknown
+	}
 }

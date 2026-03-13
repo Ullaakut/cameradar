@@ -78,6 +78,49 @@ func TestAuthTypeFromHeaders(t *testing.T) {
 	}
 }
 
+func TestAuthTypeFromStatus(t *testing.T) {
+	tests := []struct {
+		name         string
+		statusCode   base.StatusCode
+		headers      base.HeaderValue
+		wantAuthType cameradar.AuthType
+	}{
+		{
+			name:         "status ok means no auth",
+			statusCode:   base.StatusOK,
+			wantAuthType: cameradar.AuthNone,
+		},
+		{
+			name:         "status unauthorized with basic",
+			statusCode:   base.StatusUnauthorized,
+			headers:      headers.Authenticate{Method: headers.AuthMethodBasic, Realm: "cam"}.Marshal(),
+			wantAuthType: cameradar.AuthBasic,
+		},
+		{
+			name:         "status unauthorized with digest",
+			statusCode:   base.StatusUnauthorized,
+			headers:      headers.Authenticate{Method: headers.AuthMethodDigest, Realm: "cam", Nonce: "nonce"}.Marshal(),
+			wantAuthType: cameradar.AuthDigest,
+		},
+		{
+			name:         "status unauthorized without auth headers",
+			statusCode:   base.StatusUnauthorized,
+			wantAuthType: cameradar.AuthUnknown,
+		},
+		{
+			name:         "status not found is unknown",
+			statusCode:   base.StatusNotFound,
+			wantAuthType: cameradar.AuthUnknown,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.wantAuthType, authTypeFromStatus(test.statusCode, test.headers))
+		})
+	}
+}
+
 func TestDetectAuthMethod(t *testing.T) {
 	tests := []struct {
 		name       string

@@ -26,30 +26,39 @@ const (
 	schemeHTTPS = "https"
 )
 
-func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
+func (a Attacker) newRTSPClient(stream cameradar.Stream) (*gortsplib.Client, error) {
+	u, err := stream.URL()
+	if err != nil {
+		return nil, fmt.Errorf("building rtsp url: %w", err)
+	}
+	if u.Scheme != schemeRTSP && u.Scheme != schemeRTSPS {
+		return nil, fmt.Errorf("unsupported rtsp url scheme: %q", u.Scheme)
+	}
+
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
 		Scheme:       u.Scheme,
+		Host:         u.Host,
 	}
 
-	switch u.Scheme {
+	switch stream.Scheme {
+	case "":
+		// No explicit transport was requested. Use plain RTSP/RTSPS from the URL.
 	case schemeRTSP, schemeRTSPS:
 		// Nothing to do.
 	case schemeHTTP:
 		client.Scheme = schemeRTSP
 		client.Tunnel = gortsplib.TunnelHTTP
 	case schemeHTTPS:
-		client.Scheme = schemeRTSP
+		client.Scheme = schemeRTSPS
 		client.Tunnel = gortsplib.TunnelHTTP
 		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	default:
-		return nil, fmt.Errorf("unsupported URL scheme: %q", u.Scheme)
+		return nil, fmt.Errorf("unsupported stream transport scheme: %q", stream.Scheme)
 	}
 
-	client.Host = u.Host
-
-	err := client.Start()
+	err = client.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +72,7 @@ func (a Attacker) describeStatus(stream cameradar.Stream) (base.StatusCode, erro
 		return 0, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	client, err := a.newRTSPClient(u)
+	client, err := a.newRTSPClient(stream)
 	if err != nil {
 		return 0, err
 	}
@@ -88,7 +97,7 @@ func (a Attacker) describeStatus(stream cameradar.Stream) (base.StatusCode, erro
 //
 // NOTE: We do not use gortsplib here because it does not expose response headers when the status code is 401 Unauthorized,
 // which is exactly what we need in order to detect authentication methods.
-func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr string) (base.StatusCode, base.Header, error) {
+func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.StatusCode, base.Header, error) {
 	dialer := &net.Dialer{Timeout: a.timeout}
 	conn, err := dialer.DialContext(ctx, "tcp", u.Host)
 	if err != nil {
@@ -108,7 +117,7 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr 
 
 	request := fmt.Sprintf(
 		"DESCRIBE %s RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: cameradar\r\nAccept: application/sdp\r\nHost: %s\r\n\r\n",
-		urlStr,
+		u,
 		u.Host,
 	)
 	_, err = conn.Write([]byte(request))

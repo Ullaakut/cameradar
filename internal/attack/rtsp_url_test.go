@@ -11,9 +11,10 @@ import (
 
 func TestStreamURL(t *testing.T) {
 	tests := []struct {
-		name    string
-		stream  cameradar.Stream
-		wantURL string
+		name             string
+		stream           cameradar.Stream
+		wantURL          string
+		wantParsedScheme string
 	}{
 		{
 			name: "empty route",
@@ -116,7 +117,8 @@ func TestStreamURL(t *testing.T) {
 				Routes:  []string{"stream"},
 				Scheme:  "http",
 			},
-			wantURL: "http://192.168.0.10:554/stream",
+			wantURL:          "http://192.168.0.10:554/stream",
+			wantParsedScheme: "rtsp",
 		},
 		{
 			name: "https scheme",
@@ -126,7 +128,8 @@ func TestStreamURL(t *testing.T) {
 				Routes:  []string{"stream"},
 				Scheme:  "https",
 			},
-			wantURL: "https://192.168.0.10:554/stream",
+			wantURL:          "https://192.168.0.10:554/stream",
+			wantParsedScheme: "rtsps",
 		},
 		{
 			name: "rtsps scheme",
@@ -136,7 +139,8 @@ func TestStreamURL(t *testing.T) {
 				Routes:  []string{"stream"},
 				Scheme:  "rtsps",
 			},
-			wantURL: "rtsps://192.168.0.10:554/stream",
+			wantURL:          "rtsps://192.168.0.10:554/stream",
+			wantParsedScheme: "rtsps",
 		},
 	}
 
@@ -150,7 +154,11 @@ func TestStreamURL(t *testing.T) {
 
 			expectedURL, err := url.Parse(test.wantURL)
 			require.NoError(t, err)
-			require.Equal(t, expectedURL.Scheme, parsedURL.Scheme)
+			wantParsedScheme := test.wantParsedScheme
+			if wantParsedScheme == "" {
+				wantParsedScheme = expectedURL.Scheme
+			}
+			require.Equal(t, wantParsedScheme, parsedURL.Scheme)
 		})
 	}
 }
