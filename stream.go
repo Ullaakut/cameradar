@@ -46,7 +46,7 @@ func (s Stream) resolvedScheme() string {
 	return scheme
 }
 
-func parserScheme(scheme string) string {
+func parseScheme(scheme string) string {
 	switch scheme {
 	case "http":
 		return "rtsp"
@@ -87,7 +87,7 @@ func (s Stream) String() string {
 // URL parses the stream's RTSP URL into a *base.URL.
 func (s Stream) URL() (*base.URL, error) {
 	originalScheme := s.resolvedScheme()
-	parseScheme := parserScheme(originalScheme)
+	parseScheme := parseScheme(originalScheme)
 
 	parseStream := s
 	parseStream.Scheme = parseScheme
