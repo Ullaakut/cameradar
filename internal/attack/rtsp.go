@@ -99,7 +99,23 @@ func (a Attacker) describeStatus(stream cameradar.Stream) (base.StatusCode, erro
 // which is exactly what we need in order to detect authentication methods.
 func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.StatusCode, base.Header, error) {
 	dialer := &net.Dialer{Timeout: a.timeout}
-	conn, err := dialer.DialContext(ctx, "tcp", u.Host)
+
+	var (
+		conn net.Conn
+		err  error
+	)
+	switch u.Scheme {
+	case schemeRTSP:
+		conn, err = dialer.DialContext(ctx, "tcp", u.Host)
+	case schemeRTSPS:
+		tlsDialer := &tls.Dialer{
+			NetDialer: dialer,
+			Config:    &tls.Config{InsecureSkipVerify: true},
+		}
+		conn, err = tlsDialer.DialContext(ctx, "tcp", u.Host)
+	default:
+		return 0, nil, fmt.Errorf("unsupported rtsp url scheme: %q", u.Scheme)
+	}
 	if err != nil {
 		return 0, nil, err
 	}

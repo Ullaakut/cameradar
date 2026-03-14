@@ -2,7 +2,13 @@ package attack
 
 import (
 	"bufio"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"math/big"
 	"net"
 	"net/netip"
 	"strings"
@@ -212,6 +218,25 @@ func TestDetectAuthMethod_HTTPTunnel_NonFatal(t *testing.T) {
 	}
 }
 
+func TestDetectAuthMethod_RTSPS(t *testing.T) {
+	addr, port := startRTSPTLSProbeServer(t, base.StatusUnauthorized, base.Header{
+		"WWW-Authenticate": headers.Authenticate{Method: headers.AuthMethodBasic, Realm: "cam"}.Marshal(),
+	})
+
+	attacker, err := New(testDictionary{}, 0, time.Second, ui.NopReporter{})
+	require.NoError(t, err)
+
+	stream := cameradar.Stream{
+		Address: addr,
+		Port:    port,
+		Scheme:  "rtsps",
+	}
+
+	got, err := attacker.detectAuthMethod(t.Context(), stream)
+	require.NoError(t, err)
+	assert.Equal(t, cameradar.AuthBasic, got.AuthenticationType)
+}
+
 func startRTSPProbeServer(t *testing.T, statusCode base.StatusCode, headers base.Header) (netip.Addr, uint16) {
 	t.Helper()
 
@@ -261,6 +286,83 @@ func startRTSPProbeServer(t *testing.T, statusCode base.StatusCode, headers base
 	require.True(t, ok)
 
 	return netip.MustParseAddr("127.0.0.1"), uint16(tcpAddr.Port)
+}
+
+func startRTSPTLSProbeServer(t *testing.T, statusCode base.StatusCode, headers base.Header) (netip.Addr, uint16) {
+	t.Helper()
+
+	listener, err := tls.Listen("tcp", "127.0.0.1:0", testTLSConfig(t))
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = listener.Close()
+	})
+
+	go func() {
+		conn, err := listener.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+
+		_ = conn.SetDeadline(time.Now().Add(time.Second))
+
+		reader := bufio.NewReader(conn)
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				return
+			}
+			if strings.TrimSpace(line) == "" {
+				break
+			}
+		}
+
+		statusText := statusTextFromCode(statusCode)
+
+		var builder strings.Builder
+		_, _ = fmt.Fprintf(&builder, "RTSP/1.0 %d %s\r\n", statusCode, statusText)
+		builder.WriteString("CSeq: 1\r\n")
+		for key, values := range headers {
+			for _, value := range values {
+				_, _ = fmt.Fprintf(&builder, "%s: %s\r\n", key, value)
+			}
+		}
+		builder.WriteString("Content-Length: 0\r\n\r\n")
+
+		_, _ = conn.Write([]byte(builder.String()))
+	}()
+
+	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
+	require.True(t, ok)
+
+	return netip.MustParseAddr("127.0.0.1"), uint16(tcpAddr.Port)
+}
+
+func testTLSConfig(t *testing.T) *tls.Config {
+	t.Helper()
+
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	require.NoError(t, err)
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{{
+			Certificate: [][]byte{der},
+			PrivateKey:  key,
+		}},
+	}
 }
 
 func statusTextFromCode(code base.StatusCode) string {
