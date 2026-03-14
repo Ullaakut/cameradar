@@ -21,7 +21,7 @@ const (
 	AuthDigest
 )
 
-// Stream represents a camera's RTSP stream.
+// Stream represents a camera's stream, typically accessed over RTSP/RTSPS.
 type Stream struct {
 	Device   string     `json:"device"`
 	Username string     `json:"username"`
@@ -65,7 +65,7 @@ func (s Stream) Route() string {
 	return ""
 }
 
-// String builds the RTSP URL for this stream.
+// String builds the stream URL using the configured scheme, defaulting to rtsp.
 func (s Stream) String() string {
 	scheme := s.resolvedScheme()
 
@@ -84,7 +84,7 @@ func (s Stream) String() string {
 	return u.String()
 }
 
-// URL parses the stream's RTSP URL into a *base.URL.
+// URL parses the stream URL into a *base.URL, normalizing http/https to rtsp/rtsps.
 func (s Stream) URL() (*base.URL, error) {
 	s.Scheme = parseScheme(s.resolvedScheme())
 	return base.ParseURL(s.String())
