@@ -71,6 +71,8 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 				continue
 			}
 
+			isSecure := strings.Contains(port.Service.Name, "rtsps") || strings.Contains(port.Service.Name, "ssl") || port.ID == 322 || port.ID == 8322
+
 			for _, address := range host.Addresses {
 				addr, err := netip.ParseAddr(address.Addr)
 				if err != nil {
@@ -82,6 +84,7 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 					Device:  port.Service.Product,
 					Address: addr,
 					Port:    port.ID,
+					Secure:  isSecure,
 				})
 			}
 		}

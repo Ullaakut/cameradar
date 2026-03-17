@@ -54,6 +54,7 @@ func TestScanner_Scan(t *testing.T) {
 					Addresses: []nmaplib.Address{{Addr: "192.0.2.10"}, {Addr: "192.0.2.11"}},
 					Ports: []nmaplib.Port{
 						openPort(8554, "rtsp-alt", "Model A"),
+						openPort(322, "rtsps", "Model C"),
 					},
 				},
 				nmaplib.Host{
@@ -68,19 +69,34 @@ func TestScanner_Scan(t *testing.T) {
 					Device:  "Model A",
 					Address: netip.MustParseAddr("192.0.2.10"),
 					Port:    8554,
+					Secure:  false,
 				},
 				{
 					Device:  "Model A",
 					Address: netip.MustParseAddr("192.0.2.11"),
 					Port:    8554,
+					Secure:  false,
+				},
+				{
+					Device:  "Model C",
+					Address: netip.MustParseAddr("192.0.2.10"),
+					Port:    322,
+					Secure:  true,
+				},
+				{
+					Device:  "Model C",
+					Address: netip.MustParseAddr("192.0.2.11"),
+					Port:    322,
+					Secure:  true,
 				},
 				{
 					Device:  "Model B",
 					Address: netip.MustParseAddr("198.51.100.9"),
 					Port:    554,
+					Secure:  false,
 				},
 			},
-			wantProgress: "Found 3 RTSP streams",
+			wantProgress: "Found 5 RTSP streams",
 		},
 		{
 			name:            "returns error when scan fails",

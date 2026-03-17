@@ -3,9 +3,11 @@ package attack
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/textproto"
 	"net/url"
 	"strconv"
@@ -19,10 +21,16 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
+const (
+	rtsp  = "rtsp"
+	rtsps = "rtsps"
+)
+
 func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
+		TLSConfig:    &tls.Config{InsecureSkipVerify: true},
 	}
 	client.Scheme = u.Scheme
 	client.Host = u.Host
@@ -63,7 +71,16 @@ func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
 // which is exactly what we need in order to detect authentication methods.
 func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr string) (base.StatusCode, base.Header, error) {
 	dialer := &net.Dialer{Timeout: a.timeout}
-	conn, err := dialer.DialContext(ctx, "tcp", u.Host)
+	var conn net.Conn
+	var err error
+
+	if u.Scheme == rtsps {
+		tlsDialer := &tls.Dialer{NetDialer: dialer, Config: &tls.Config{InsecureSkipVerify: true}}
+		conn, err = tlsDialer.DialContext(ctx, "tcp", u.Host)
+	} else {
+		conn, err = dialer.DialContext(ctx, "tcp", u.Host)
+	}
+
 	if err != nil {
 		return 0, nil, err
 	}
@@ -117,6 +134,40 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr 
 	return base.StatusCode(code), headers, nil
 }
 
+func (a Attacker) handleRedirect(stream *cameradar.Stream, resHeaders base.Header) {
+	locations := headerValues(resHeaders, "Location")
+	if len(locations) == 0 {
+		return
+	}
+	location, err := url.Parse(locations[0])
+	if err != nil {
+		return
+	}
+
+	switch location.Scheme {
+	case rtsps:
+		stream.Secure = true
+	case rtsp:
+		stream.Secure = false
+	}
+
+	if location.Hostname() != "" {
+		addr, err := netip.ParseAddr(location.Hostname())
+		if err == nil {
+			stream.Address = addr
+		}
+	}
+
+	if location.Port() != "" {
+		port, err := strconv.Atoi(location.Port())
+		if err == nil {
+			if port >= 0 && port <= 65535 {
+				stream.Port = uint16(port)
+			}
+		}
+	}
+}
+
 func authTypeFromHeaders(values base.HeaderValue) cameradar.AuthType {
 	if len(values) == 0 {
 		return cameradar.AuthUnknown
@@ -168,8 +219,13 @@ func buildRTSPURL(stream cameradar.Stream, route, username, password string) (*b
 	host := net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
 	path := "/" + strings.TrimLeft(strings.TrimSpace(route), "/") // Ensure path starts with a single "/"
 
+	scheme := rtsp
+	if stream.Secure {
+		scheme = rtsps
+	}
+
 	u := &url.URL{
-		Scheme: "rtsp",
+		Scheme: scheme,
 		Host:   host,
 		Path:   path,
 	}

@@ -224,7 +224,7 @@ func (a Attacker) attackCredentialsForStream(ctx context.Context, target camerad
 				msg := fmt.Sprintf("credential attempt failed for %s:%d (%s:%s): %v", target.Address.String(), target.Port, username, password, err)
 				a.reporter.Debug(cameradar.StepAttackCredentials, msg)
 
-				return target, nil
+				continue
 			}
 
 			if ok {
@@ -253,7 +253,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	if emitProgress {
 		a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 	}
-	ok, err := a.routeAttack(target, dummyRoute)
+	ok, err := a.routeAttack(ctx, &target, dummyRoute)
 	if err != nil {
 		a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route probe failed for %s:%d: %v", target.Address.String(), target.Port, err))
 		return target, nil
@@ -275,7 +275,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 		if emitProgress {
 			a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 		}
-		ok, err := a.routeAttack(target, route)
+		ok, err := a.routeAttack(ctx, &target, route)
 		if err != nil {
 			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route attempt failed for %s:%d (%s): %v", target.Address.String(), target.Port, route, err))
 			return target, nil
@@ -290,18 +290,30 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	return target, nil
 }
 
-func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, error) {
-	u, urlStr, err := buildRTSPURL(stream, route, stream.Username, stream.Password)
+func (a Attacker) routeAttack(ctx context.Context, stream *cameradar.Stream, route string) (bool, error) {
+	u, urlStr, err := buildRTSPURL(*stream, route, stream.Username, stream.Password)
 	if err != nil {
 		return false, fmt.Errorf("building rtsp url: %w", err)
 	}
 
-	code, err := a.describeStatus(u)
+	code, headers, err := a.probeDescribeHeaders(ctx, u, urlStr)
 	if err != nil {
 		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
 
 	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
+
+	if code == base.StatusMovedPermanently {
+		a.handleRedirect(stream, headers)
+		u, urlStr, err = buildRTSPURL(*stream, route, stream.Username, stream.Password)
+		if err == nil {
+			code, _, err = a.probeDescribeHeaders(ctx, u, urlStr)
+			if err == nil {
+				a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 (redirect followed) > %d", urlStr, code))
+			}
+		}
+	}
+
 	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
 	return access, nil
 }
@@ -314,10 +326,12 @@ func (a Attacker) credAttack(stream cameradar.Stream, username, password string)
 
 	code, err := a.describeStatus(u)
 	if err != nil {
+		a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("Error testing %s:%s -> %v", username, password, err))
 		return false, fmt.Errorf("performing describe request at %q: %w", urlStr, err)
 	}
 
 	a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", urlStr, code))
+
 	return code == base.StatusOK || code == base.StatusNotFound, nil
 }
 

@@ -19,6 +19,7 @@ func TestBuildRTSPURL(t *testing.T) {
 		route    string
 		username string
 		password string
+		secure   bool
 		wantURL  string
 	}{
 		{
@@ -74,11 +75,27 @@ func TestBuildRTSPURL(t *testing.T) {
 			username: "user",
 			wantURL:  "rtsp://user:@192.168.0.10:554/stream",
 		},
+		{
+			name:    "secure rtsps scheme without credentials",
+			route:   "stream",
+			secure:  true,
+			wantURL: "rtsps://192.168.0.10:554/stream",
+		},
+		{
+			name:     "secure rtsps scheme with credentials",
+			route:    "stream",
+			username: "admin",
+			password: "password",
+			secure:   true,
+			wantURL:  "rtsps://admin:password@192.168.0.10:554/stream",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, gotURL, err := buildRTSPURL(stream, test.route, test.username, test.password)
+			s := stream
+			s.Secure = test.secure
+			_, gotURL, err := buildRTSPURL(s, test.route, test.username, test.password)
 			require.NoError(t, err)
 			require.Equal(t, test.wantURL, gotURL)
 		})

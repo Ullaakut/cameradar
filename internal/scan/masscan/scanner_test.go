@@ -53,15 +53,16 @@ func TestRunScan(t *testing.T) {
 			name: "collects streams from multiple hosts",
 			result: &masscanlib.Run{
 				Hosts: []masscanlib.Host{
-					{Address: "192.0.2.10", Ports: []masscanlib.Port{{Number: 8554, Status: "open"}}},
+					{Address: "192.0.2.10", Ports: []masscanlib.Port{{Number: 8554, Status: "open"}, {Number: 8322, Status: "open"}}},
 					{Address: "198.51.100.9", Ports: []masscanlib.Port{{Number: 554, Status: "open"}}},
 				},
 			},
 			wantStreams: []cameradar.Stream{
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8554},
-				{Address: netip.MustParseAddr("198.51.100.9"), Port: 554},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8554, Secure: false},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8322, Secure: true},
+				{Address: netip.MustParseAddr("198.51.100.9"), Port: 554, Secure: false},
 			},
-			wantProgress: []string{"Found 2 RTSP streams"},
+			wantProgress: []string{"Found 3 RTSP streams"},
 		},
 		{
 			name:            "returns error when scan fails",

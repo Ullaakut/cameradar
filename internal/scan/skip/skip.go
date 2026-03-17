@@ -51,9 +51,11 @@ func buildStreamsFromTargets(ctx context.Context, targets, ports []string) ([]ca
 	streams := make([]cameradar.Stream, 0, len(resolvedTargets)*len(resolvedPorts))
 	for _, addr := range resolvedTargets {
 		for _, port := range resolvedPorts {
+			isSecure := port == 322 || port == 8322
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
 				Port:    port,
+				Secure:  isSecure,
 			})
 		}
 	}

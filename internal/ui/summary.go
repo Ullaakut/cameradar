@@ -126,7 +126,12 @@ func formatRTSPURL(stream cameradar.Stream) string {
 		credentials = stream.Username + ":" + stream.Password + "@"
 	}
 
-	return fmt.Sprintf("rtsp://%s%s:%d%s", credentials, stream.Address.String(), stream.Port, path)
+	scheme := "rtsp"
+	if stream.Secure {
+		scheme = "rtsps"
+	}
+
+	return fmt.Sprintf("%s://%s%s:%d%s", scheme, credentials, stream.Address.String(), stream.Port, path)
 }
 
 func formatAdminPanelURL(stream cameradar.Stream) string {
