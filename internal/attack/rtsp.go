@@ -3,11 +3,11 @@ package attack
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
 	"net/textproto"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -19,15 +19,46 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
 )
 
-func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
+const (
+	schemeRTSP  = "rtsp"
+	schemeRTSPS = "rtsps"
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+)
+
+func (a Attacker) newRTSPClient(stream cameradar.Stream) (*gortsplib.Client, error) {
+	u, err := stream.URL()
+	if err != nil {
+		return nil, fmt.Errorf("building rtsp url: %w", err)
+	}
+	if u.Scheme != schemeRTSP && u.Scheme != schemeRTSPS {
+		return nil, fmt.Errorf("unsupported rtsp url scheme: %q", u.Scheme)
+	}
+
 	client := &gortsplib.Client{
 		ReadTimeout:  a.timeout,
 		WriteTimeout: a.timeout,
+		Scheme:       u.Scheme,
+		Host:         u.Host,
 	}
-	client.Scheme = u.Scheme
-	client.Host = u.Host
 
-	err := client.Start()
+	switch stream.Scheme {
+	case "":
+		// No explicit transport was requested. Use plain RTSP/RTSPS from the URL.
+	case schemeRTSP, schemeRTSPS:
+		// Nothing to do.
+	case schemeHTTP:
+		client.Scheme = schemeRTSP
+		client.Tunnel = gortsplib.TunnelHTTP
+	case schemeHTTPS:
+		client.Scheme = schemeRTSPS
+		client.Tunnel = gortsplib.TunnelHTTP
+		client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	default:
+		return nil, fmt.Errorf("unsupported stream transport scheme: %q", stream.Scheme)
+	}
+
+	err = client.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +66,13 @@ func (a Attacker) newRTSPClient(u *base.URL) (*gortsplib.Client, error) {
 	return client, nil
 }
 
-func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
-	client, err := a.newRTSPClient(u)
+func (a Attacker) describeStatus(stream cameradar.Stream) (base.StatusCode, error) {
+	u, err := stream.URL()
+	if err != nil {
+		return 0, fmt.Errorf("building rtsp url: %w", err)
+	}
+
+	client, err := a.newRTSPClient(stream)
 	if err != nil {
 		return 0, err
 	}
@@ -61,9 +97,25 @@ func (a Attacker) describeStatus(u *base.URL) (base.StatusCode, error) {
 //
 // NOTE: We do not use gortsplib here because it does not expose response headers when the status code is 401 Unauthorized,
 // which is exactly what we need in order to detect authentication methods.
-func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr string) (base.StatusCode, base.Header, error) {
+func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.StatusCode, base.Header, error) {
 	dialer := &net.Dialer{Timeout: a.timeout}
-	conn, err := dialer.DialContext(ctx, "tcp", u.Host)
+
+	var (
+		conn net.Conn
+		err  error
+	)
+	switch u.Scheme {
+	case schemeRTSP:
+		conn, err = dialer.DialContext(ctx, "tcp", u.Host)
+	case schemeRTSPS:
+		tlsDialer := &tls.Dialer{
+			NetDialer: dialer,
+			Config:    &tls.Config{InsecureSkipVerify: true},
+		}
+		conn, err = tlsDialer.DialContext(ctx, "tcp", u.Host)
+	default:
+		return 0, nil, fmt.Errorf("unsupported rtsp url scheme: %q", u.Scheme)
+	}
 	if err != nil {
 		return 0, nil, err
 	}
@@ -81,7 +133,7 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL, urlStr 
 
 	request := fmt.Sprintf(
 		"DESCRIBE %s RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: cameradar\r\nAccept: application/sdp\r\nHost: %s\r\n\r\n",
-		urlStr,
+		u,
 		u.Host,
 	)
 	_, err = conn.Write([]byte(request))
@@ -162,26 +214,4 @@ func headerValues(header base.Header, name string) base.HeaderValue {
 		}
 	}
 	return nil
-}
-
-func buildRTSPURL(stream cameradar.Stream, route, username, password string) (*base.URL, string, error) {
-	host := net.JoinHostPort(stream.Address.String(), strconv.Itoa(int(stream.Port)))
-	path := "/" + strings.TrimLeft(strings.TrimSpace(route), "/") // Ensure path starts with a single "/"
-
-	u := &url.URL{
-		Scheme: "rtsp",
-		Host:   host,
-		Path:   path,
-	}
-	if username != "" || password != "" {
-		u.User = url.UserPassword(username, password)
-	}
-
-	urlStr := u.String()
-	parsed, err := base.ParseURL(urlStr)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return parsed, urlStr, nil
 }

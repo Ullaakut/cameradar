@@ -2,85 +2,163 @@ package attack
 
 import (
 	"net/netip"
+	"net/url"
 	"testing"
 
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildRTSPURL(t *testing.T) {
-	stream := cameradar.Stream{
-		Address: netip.MustParseAddr("192.168.0.10"),
-		Port:    554,
-	}
-
+func TestStreamURL(t *testing.T) {
 	tests := []struct {
-		name     string
-		route    string
-		username string
-		password string
-		wantURL  string
+		name             string
+		stream           cameradar.Stream
+		wantURL          string
+		wantParsedScheme string
 	}{
 		{
-			name:    "empty route",
+			name: "empty route",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+			},
 			wantURL: "rtsp://192.168.0.10:554/",
 		},
 		{
-			name:    "root route",
-			route:   "/",
+			name: "root route",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"/"},
+			},
 			wantURL: "rtsp://192.168.0.10:554/",
 		},
 		{
-			name:    "multiple leading slashes",
-			route:   "////",
+			name: "multiple leading slashes",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"////"},
+			},
 			wantURL: "rtsp://192.168.0.10:554/",
 		},
 		{
-			name:    "route with no leading slash",
-			route:   "stream",
+			name: "route with no leading slash",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream"},
+			},
 			wantURL: "rtsp://192.168.0.10:554/stream",
 		},
 		{
-			name:    "route with leading slash",
-			route:   "/stream",
+			name: "route with leading slash",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"/stream"},
+			},
 			wantURL: "rtsp://192.168.0.10:554/stream",
 		},
 		{
-			name:    "route with trailing slash",
-			route:   "stream/",
+			name: "route with trailing slash",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream/"},
+			},
 			wantURL: "rtsp://192.168.0.10:554/stream/",
 		},
 		{
-			name:    "route with spaces",
-			route:   "  /stream  ",
+			name: "route with spaces",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"  /stream  "},
+			},
 			wantURL: "rtsp://192.168.0.10:554/stream",
 		},
 		{
-			name:     "username and password",
-			route:    "stream",
-			username: "admin",
-			password: "admin123",
-			wantURL:  "rtsp://admin:admin123@192.168.0.10:554/stream",
+			name: "username and password",
+			stream: cameradar.Stream{
+				Address:  netip.MustParseAddr("192.168.0.10"),
+				Port:     554,
+				Routes:   []string{"stream"},
+				Username: "admin",
+				Password: "admin123",
+			},
+			wantURL: "rtsp://admin:admin123@192.168.0.10:554/stream",
 		},
 		{
-			name:     "empty username with password",
-			route:    "stream",
-			password: "pass",
-			wantURL:  "rtsp://:pass@192.168.0.10:554/stream",
+			name: "empty username with password",
+			stream: cameradar.Stream{
+				Address:  netip.MustParseAddr("192.168.0.10"),
+				Port:     554,
+				Routes:   []string{"stream"},
+				Password: "pass",
+			},
+			wantURL: "rtsp://:pass@192.168.0.10:554/stream",
 		},
 		{
-			name:     "username only",
-			route:    "stream",
-			username: "user",
-			wantURL:  "rtsp://user:@192.168.0.10:554/stream",
+			name: "username only",
+			stream: cameradar.Stream{
+				Address:  netip.MustParseAddr("192.168.0.10"),
+				Port:     554,
+				Routes:   []string{"stream"},
+				Username: "user",
+			},
+			wantURL: "rtsp://user:@192.168.0.10:554/stream",
+		},
+		{
+			name: "http scheme",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream"},
+				Scheme:  "http",
+			},
+			wantURL:          "http://192.168.0.10:554/stream",
+			wantParsedScheme: "rtsp",
+		},
+		{
+			name: "https scheme",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream"},
+				Scheme:  "https",
+			},
+			wantURL:          "https://192.168.0.10:554/stream",
+			wantParsedScheme: "rtsps",
+		},
+		{
+			name: "rtsps scheme",
+			stream: cameradar.Stream{
+				Address: netip.MustParseAddr("192.168.0.10"),
+				Port:    554,
+				Routes:  []string{"stream"},
+				Scheme:  "rtsps",
+			},
+			wantURL:          "rtsps://192.168.0.10:554/stream",
+			wantParsedScheme: "rtsps",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, gotURL, err := buildRTSPURL(stream, test.route, test.username, test.password)
-			require.NoError(t, err)
+			gotURL := test.stream.String()
 			require.Equal(t, test.wantURL, gotURL)
+
+			parsedURL, err := test.stream.URL()
+			require.NoError(t, err)
+
+			expectedURL, err := url.Parse(test.wantURL)
+			require.NoError(t, err)
+			wantParsedScheme := test.wantParsedScheme
+			if wantParsedScheme == "" {
+				wantParsedScheme = expectedURL.Scheme
+			}
+			require.Equal(t, wantParsedScheme, parsedURL.Scheme)
 		})
 	}
 }

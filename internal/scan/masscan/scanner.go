@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/pkg/ports"
 	masscanlib "github.com/Ullaakut/masscan"
 )
 
@@ -83,9 +84,12 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 				continue
 			}
 
+			scheme := ports.InferTunnelScheme(uint16(port.Number), "")
+
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
 				Port:    uint16(port.Number),
+				Scheme:  scheme,
 			})
 		}
 	}

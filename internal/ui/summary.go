@@ -88,11 +88,9 @@ func formatStream(stream cameradar.Stream) string {
 		builder.WriteString("  Routes: not found\n")
 	}
 
-	if stream.CredentialsFound {
+	if stream.CredentialsFound || stream.AuthenticationType == cameradar.AuthNone {
 		builder.WriteString("  Credentials: ")
-		builder.WriteString(stream.Username)
-		builder.WriteString(":")
-		builder.WriteString(stream.Password)
+		builder.WriteString(formatCredentials(stream))
 		builder.WriteString("\n")
 	} else {
 		builder.WriteString("  Credentials: not found\n")
@@ -105,7 +103,7 @@ func formatStream(stream cameradar.Stream) string {
 		builder.WriteString("no\n")
 	}
 
-	if stream.RouteFound && stream.CredentialsFound {
+	if stream.RouteFound && (stream.CredentialsFound || stream.AuthenticationType == cameradar.AuthNone) {
 		builder.WriteString("  RTSP URL: ")
 		builder.WriteString(formatRTSPURL(stream))
 		builder.WriteString("\n")
@@ -131,6 +129,14 @@ func formatRTSPURL(stream cameradar.Stream) string {
 
 func formatAdminPanelURL(stream cameradar.Stream) string {
 	return fmt.Sprintf("http://%s/", stream.Address.String())
+}
+
+func formatCredentials(stream cameradar.Stream) string {
+	if stream.Username == "" && stream.Password == "" {
+		return "none"
+	}
+
+	return stream.Username + ":" + stream.Password
 }
 
 func authTypeLabel(auth cameradar.AuthType) string {

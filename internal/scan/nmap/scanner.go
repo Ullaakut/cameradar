@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/pkg/ports"
 	nmaplib "github.com/Ullaakut/nmap/v4"
 )
 
@@ -67,7 +68,8 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 				continue
 			}
 
-			if !strings.Contains(port.Service.Name, "rtsp") {
+			isCandidate := streamCandidate(port.Service.Name, port.ID)
+			if !isCandidate {
 				continue
 			}
 
@@ -78,10 +80,12 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 					continue
 				}
 
+				scheme := ports.InferTunnelScheme(port.ID, port.Service.Name)
 				streams = append(streams, cameradar.Stream{
 					Device:  port.Service.Product,
 					Address: addr,
 					Port:    port.ID,
+					Scheme:  scheme,
 				})
 			}
 		}
@@ -103,4 +107,18 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 		return
 	}
 	updater.UpdateSummary(streams)
+}
+
+// Extracting the classifying logic to an external function to avoid nesting if loops.
+func streamCandidate(serviceName string, port uint16) bool {
+	serviceName = strings.ToLower(strings.TrimSpace(serviceName))
+	if strings.Contains(serviceName, "rtsp") {
+		return true
+	}
+
+	if ports.InferTunnelScheme(port, serviceName) != "" {
+		return true
+	}
+
+	return false
 }

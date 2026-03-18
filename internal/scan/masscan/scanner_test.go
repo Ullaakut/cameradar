@@ -64,6 +64,31 @@ func TestRunScan(t *testing.T) {
 			wantProgress: []string{"Found 2 RTSP streams"},
 		},
 		{
+			name: "sets scheme for common HTTP ports",
+			result: &masscanlib.Run{
+				Hosts: []masscanlib.Host{
+					{
+						Address: "192.0.2.10",
+						Ports: []masscanlib.Port{
+							{Number: 554, Status: "open"},
+							{Number: 80, Status: "open"},
+							{Number: 443, Status: "open"},
+							{Number: 8080, Status: "open"},
+							{Number: 8443, Status: "open"},
+						},
+					},
+				},
+			},
+			wantStreams: []cameradar.Stream{
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 554},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 80, Scheme: "http"},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 443, Scheme: "https"},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8080, Scheme: "http"},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8443, Scheme: "https"},
+			},
+			wantProgress: []string{"Found 5 RTSP streams"},
+		},
+		{
 			name:            "returns error when scan fails",
 			err:             errors.New("scan failed"),
 			wantErrContains: "scanning network",
