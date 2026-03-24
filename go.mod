@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	github.com/Ullaakut/masscan v1.0.0
 	github.com/Ullaakut/nmap/v4 v4.0.0
-	github.com/bluenviron/gortsplib/v5 v5.4.0
+	github.com/bluenviron/gortsplib/v5 v5.5.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -20,7 +20,7 @@ require (
 	github.com/VictoriaMetrics/metrics v1.41.2 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bluenviron/mediacommon/v2 v2.8.1 // indirect
+	github.com/bluenviron/mediacommon/v2 v2.8.3 // indirect
 	github.com/cactus/go-statsd-client/v5 v5.1.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -80,9 +80,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.42.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260226221140-a57be14db171 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
