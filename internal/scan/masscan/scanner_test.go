@@ -58,9 +58,9 @@ func TestRunScan(t *testing.T) {
 				},
 			},
 			wantStreams: []cameradar.Stream{
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8554, Secure: false},
-				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8322, Secure: true},
-				{Address: netip.MustParseAddr("198.51.100.9"), Port: 554, Secure: false},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8554},
+				{Address: netip.MustParseAddr("192.0.2.10"), Port: 8322, Scheme: "rtsps"},
+				{Address: netip.MustParseAddr("198.51.100.9"), Port: 554},
 			},
 			wantProgress: []string{"Found 3 RTSP streams"},
 		},

@@ -120,7 +120,8 @@ func formatRTSPURL(stream cameradar.Stream) string {
 	}
 
 	scheme := "rtsp"
-	if stream.Secure {
+	switch strings.ToLower(strings.TrimSpace(stream.Scheme)) {
+	case "rtsps", "https":
 		scheme = "rtsps"
 	}
 

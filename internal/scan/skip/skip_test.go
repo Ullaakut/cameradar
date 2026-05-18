@@ -46,9 +46,9 @@ func TestNew_ExpandsTargetsAndPorts(t *testing.T) {
 		got = append(got, stream.Address.String()+":"+strconv.Itoa(int(stream.Port)))
 
 		if stream.Port == 322 || stream.Port == 8322 {
-			assert.True(t, stream.Secure)
+			assert.Equal(t, "rtsps", stream.Scheme)
 		} else {
-			assert.False(t, stream.Secure)
+			assert.Empty(t, stream.Scheme)
 		}
 
 	}

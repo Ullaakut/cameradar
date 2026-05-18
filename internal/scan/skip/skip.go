@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/pkg/ports"
 )
 
 // Scanner is a stream scanner that skips discovery and treats every target/port as a stream.
@@ -31,8 +32,8 @@ func (s *Scanner) Scan(ctx context.Context) ([]cameradar.Stream, error) {
 	return buildStreamsFromTargets(ctx, s.targets, s.ports)
 }
 
-func buildStreamsFromTargets(ctx context.Context, targets, ports []string) ([]cameradar.Stream, error) {
-	resolvedPorts, err := parsePorts(ctx, ports)
+func buildStreamsFromTargets(ctx context.Context, targets, portSpecs []string) ([]cameradar.Stream, error) {
+	resolvedPorts, err := parsePorts(ctx, portSpecs)
 	if err != nil {
 		return nil, err
 	}
@@ -51,11 +52,14 @@ func buildStreamsFromTargets(ctx context.Context, targets, ports []string) ([]ca
 	streams := make([]cameradar.Stream, 0, len(resolvedTargets)*len(resolvedPorts))
 	for _, addr := range resolvedTargets {
 		for _, port := range resolvedPorts {
-			isSecure := port == 322 || port == 8322
+			scheme := ports.InferTunnelScheme(port, "")
+			if scheme == "" && (port == 322 || port == 8322) {
+				scheme = "rtsps"
+			}
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
 				Port:    port,
-				Secure:  isSecure,
+				Scheme:  scheme,
 			})
 		}
 	}
