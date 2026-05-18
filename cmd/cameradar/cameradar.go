@@ -177,10 +177,10 @@ func fallbackValue(value, fallback string) string {
 }
 
 func isInteractiveTerminal() bool {
-	if !term.IsTerminal(int(os.Stdout.Fd())) {
+	if !isTerminalFile(os.Stdout) {
 		return false
 	}
-	if !term.IsTerminal(int(os.Stdin.Fd())) {
+	if !isTerminalFile(os.Stdin) {
 		return false
 	}
 
@@ -190,6 +190,21 @@ func isInteractiveTerminal() bool {
 	}
 
 	return true
+}
+
+func isTerminalFile(file *os.File) bool {
+	if file == nil {
+		return false
+	}
+
+	fd := file.Fd()
+	maxIntFD := uintptr(^uint(0) >> 1)
+	if fd > maxIntFD {
+		return false
+	}
+
+	// #nosec G115 -- fd is range-checked above.
+	return term.IsTerminal(int(fd))
 }
 
 // loadTargets merges targets from command line and file paths.

@@ -267,12 +267,11 @@ func parseIPv4Range(target string) ([]netip.Addr, bool, error) {
 		for second := ranges[1].start; second <= ranges[1].end; second++ {
 			for third := ranges[2].start; third <= ranges[2].end; third++ {
 				for fourth := ranges[3].start; fourth <= ranges[3].end; fourth++ {
-					addrs = append(addrs, netip.AddrFrom4([4]byte{
-						byte(first),
-						byte(second),
-						byte(third),
-						byte(fourth),
-					}))
+					addr, err := netip.ParseAddr(fmt.Sprintf("%d.%d.%d.%d", first, second, third, fourth))
+					if err != nil {
+						return nil, true, fmt.Errorf("invalid range %q", target)
+					}
+					addrs = append(addrs, addr)
 				}
 			}
 		}

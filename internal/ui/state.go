@@ -206,7 +206,8 @@ func (m *modelState) FinalView() string {
 }
 
 func (m *modelState) renderSteps() []string {
-	lines := []string{sectionStyle.Render("Steps"), renderProgress(m)}
+	lines := make([]string, 0, 2+len(m.steps))
+	lines = append(lines, sectionStyle.Render("Steps"), renderProgress(m))
 	spinnerView := m.spinner.View()
 	for _, step := range m.steps {
 		lines = append(lines, renderStep(step, m.status[step], spinnerView))

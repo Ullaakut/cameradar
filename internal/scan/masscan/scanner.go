@@ -3,6 +3,7 @@ package masscan
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/netip"
 	"strings"
 
@@ -79,19 +80,20 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 				continue
 			}
 
-			if port.Number <= 0 || port.Number > 65535 {
+			portNumber, ok := toUint16Port(port.Number)
+			if !ok {
 				reporter.Progress(cameradar.StepScan, fmt.Sprintf("Skipping invalid port %d on %s", port.Number, host.Address))
 				continue
 			}
 
-			scheme := ports.InferTunnelScheme(uint16(port.Number), "")
-			if scheme == "" && (port.Number == 322 || port.Number == 8322) {
+			scheme := ports.InferTunnelScheme(portNumber, "")
+			if scheme == "" && (portNumber == 322 || portNumber == 8322) {
 				scheme = "rtsps"
 			}
 
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
-				Port:    uint16(port.Number),
+				Port:    portNumber,
 				Scheme:  scheme,
 			})
 		}
@@ -113,4 +115,13 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 		return
 	}
 	updater.UpdateSummary(streams)
+}
+
+func toUint16Port(value int) (uint16, bool) {
+	if value < 1 || value > math.MaxUint16 {
+		return 0, false
+	}
+
+	// #nosec G115 -- value is range-checked above.
+	return uint16(value), true
 }
