@@ -119,11 +119,7 @@ func formatRTSPURL(stream cameradar.Stream) string {
 		credentials = stream.Username + ":" + stream.Password + "@"
 	}
 
-	scheme := "rtsp"
-	switch strings.ToLower(strings.TrimSpace(stream.Scheme)) {
-	case "rtsps", "https":
-		scheme = "rtsps"
-	}
+	scheme := stream.RTSPScheme()
 
 	return fmt.Sprintf("%s://%s%s:%s%s", scheme, credentials, stream.Address.String(), strconv.FormatUint(uint64(stream.Port), 10), path)
 }
