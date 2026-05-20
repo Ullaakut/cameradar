@@ -267,11 +267,7 @@ func parseIPv4Range(target string) ([]netip.Addr, bool, error) {
 		for second := ranges[1].start; second <= ranges[1].end; second++ {
 			for third := ranges[2].start; third <= ranges[2].end; third++ {
 				for fourth := ranges[3].start; fourth <= ranges[3].end; fourth++ {
-					addr, err := netip.ParseAddr(fmt.Sprintf("%d.%d.%d.%d", first, second, third, fourth))
-					if err != nil {
-						return nil, true, fmt.Errorf("invalid range %q", target)
-					}
-					addrs = append(addrs, addr)
+					addrs = append(addrs, octetsToAddr(first, second, third, fourth))
 				}
 			}
 		}
@@ -340,4 +336,18 @@ func isDigits(value string) bool {
 		}
 	}
 	return value != ""
+}
+
+func octetsToAddr(first, second, third, fourth int) netip.Addr {
+	return netip.AddrFrom4([4]byte{
+		intToByte(first),
+		intToByte(second),
+		intToByte(third),
+		intToByte(fourth),
+	})
+}
+
+func intToByte(value int) byte {
+	// #nosec G115 -- parseOctetValue constrains octets to [0, 255].
+	return byte(value)
 }
