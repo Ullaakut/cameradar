@@ -53,9 +53,6 @@ func buildStreamsFromTargets(ctx context.Context, targets, portSpecs []string) (
 	for _, addr := range resolvedTargets {
 		for _, port := range resolvedPorts {
 			scheme := ports.InferTunnelScheme(port, "")
-			if scheme == "" && (port == 322 || port == 8322) {
-				scheme = "rtsps"
-			}
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
 				Port:    port,

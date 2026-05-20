@@ -87,9 +87,6 @@ func runScan(ctx context.Context, runner Runner, reporter Reporter) ([]cameradar
 			}
 
 			scheme := ports.InferTunnelScheme(portNumber, "")
-			if scheme == "" && (portNumber == 322 || portNumber == 8322) {
-				scheme = "rtsps"
-			}
 
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
