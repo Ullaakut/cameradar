@@ -15,6 +15,8 @@ func InferTunnelScheme(port uint16, serviceName string) string {
 	}
 
 	switch port {
+	case 322, 8322:
+		return "rtsps"
 	case 443, 8443:
 		return "https"
 	case 80, 8080:

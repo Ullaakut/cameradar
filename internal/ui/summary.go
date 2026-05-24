@@ -14,7 +14,7 @@ func FormatSummary(streams []cameradar.Stream, _ error) string {
 	accessible, others := partitionStreams(streams)
 
 	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("Accessible streams: %d\n", len(accessible)))
+	fmt.Fprintf(&builder, "Accessible streams: %d\n", len(accessible))
 	if len(accessible) == 0 {
 		builder.WriteString("• None\n")
 	} else {
@@ -25,7 +25,7 @@ func FormatSummary(streams []cameradar.Stream, _ error) string {
 
 	if len(others) > 0 {
 		builder.WriteString("\n")
-		builder.WriteString(fmt.Sprintf("Other discovered streams: %d\n", len(others)))
+		fmt.Fprintf(&builder, "Other discovered streams: %d\n", len(others))
 		for _, stream := range others {
 			builder.WriteString(formatStream(stream))
 		}
@@ -124,7 +124,9 @@ func formatRTSPURL(stream cameradar.Stream) string {
 		credentials = stream.Username + ":" + stream.Password + "@"
 	}
 
-	return fmt.Sprintf("rtsp://%s%s:%d%s", credentials, stream.Address.String(), stream.Port, path)
+	scheme := stream.RTSPScheme()
+
+	return fmt.Sprintf("%s://%s%s:%d%s", scheme, credentials, stream.Address.String(), stream.Port, path)
 }
 
 func formatAdminPanelURL(stream cameradar.Stream) string {

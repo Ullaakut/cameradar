@@ -161,7 +161,7 @@ Replace `<target>` with an IP, range, host or subnet you are authorized to test.
 
 ## Configuration
 
-The default RTSP ports are `554`, `5554`, `8554`.
+The default ports are `554`, `5554`, `8554`, `http`, `322`, and `8322`.
 If you do not specify ports, Cameradar uses those.
 
 Example of scanning custom ports:
@@ -184,6 +184,42 @@ docker run --rm -t --net=host \
     --custom-credentials /tmp/dictionaries/my_credentials.json \
     --targets 172.19.124.0/24
 ```
+
+### RTSPS and TLS certificates
+
+Use `rtsps://` URLs to access RTSPS streams.
+
+- If the stream certificate is issued by a trusted public CA, no extra setup is needed.
+- If the stream certificate is self-signed or issued by a private CA, the OS trust
+    store may reject it.
+- In that case, point `SSL_CERT_FILE` to the CA certificate (or server cert for a
+    self-signed setup) when running Cameradar.
+
+Example with local binary:
+
+```bash
+SSL_CERT_FILE=/path/to/ca-or-server.crt \
+        cameradar \
+        --targets localhost \
+        --ports 8322 \
+        --skip-scan \
+        --custom-routes routes.txt \
+        --custom-credentials credentials.json
+```
+
+Example with Docker:
+
+```bash
+docker run --rm -t --net=host \
+        -e SSL_CERT_FILE=/tmp/certs/server.crt \
+        -v /path/to/certs:/tmp/certs:ro \
+        ullaakut/cameradar \
+        --targets localhost \
+        --ports 8322
+```
+
+If you prefer not to use `SSL_CERT_FILE`, add your CA certificate to the system trust
+store used by your runtime environment.
 
 ### Skip discovery with `--skip-scan`
 
@@ -255,6 +291,10 @@ Use [VLC Media Player](http://www.videolan.org/vlc/) to connect to a stream:
 
 `rtsp://username:password@address:port/route`
 
+For secure RTSP endpoints, use:
+
+`rtsps://username:password@address:port/route`
+
 ## Input file format
 
 The file can contain IPs, hostnames, IP ranges, and subnets.
@@ -308,7 +348,7 @@ See [Troubleshooting & FAQ](https://github.com/Ullaakut/cameradar/wiki/Troublesh
 
 `docker run --rm -t --net=host -v /tmp:/tmp ullaakut/cameradar --targets /tmp/test.txt --ports 8554`
 
-> Running cameradar on a subnetwork with custom dictionaries, on ports 554, 5554 and 8554
+> Running cameradar on a subnetwork with custom dictionaries, on ports 554, 5554, 8554, 322, and 8322
 
 `docker run --rm -t --net=host -v /tmp:/tmp ullaakut/cameradar --targets 192.168.0.0/24 --custom-credentials "/tmp/dictionaries/credentials.json" --custom-routes "/tmp/dictionaries/routes" --ports 554,5554,8554`
 

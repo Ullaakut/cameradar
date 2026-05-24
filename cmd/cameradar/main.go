@@ -48,7 +48,7 @@ var flags = cmd.Flags{
 		Usage:   "The ports on which to search for RTSP streams",
 		Aliases: []string{"p"},
 		Sources: cli.EnvVars(strcase.ToSNAKE(flagPorts)),
-		Value:   []string{"554", "5554", "8554", "http"},
+		Value:   []string{"554", "5554", "8554", "http", "322", "8322"},
 	},
 	&cli.StringFlag{
 		Name:    flagCustomRoutes,

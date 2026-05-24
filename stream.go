@@ -21,6 +21,13 @@ const (
 	AuthDigest
 )
 
+const (
+	schemeRTSP  = "rtsp"
+	schemeRTSPS = "rtsps"
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+)
+
 // Stream represents a camera's stream, typically accessed over RTSP/RTSPS.
 type Stream struct {
 	Device   string     `json:"device"`
@@ -41,20 +48,30 @@ type Stream struct {
 func (s Stream) resolvedScheme() string {
 	scheme := s.Scheme
 	if scheme == "" {
-		return "rtsp"
+		return schemeRTSP
 	}
 	return scheme
 }
 
 func parseScheme(scheme string) string {
 	switch scheme {
-	case "http":
-		return "rtsp"
-	case "https":
-		return "rtsps"
+	case schemeHTTP:
+		return schemeRTSP
+	case schemeHTTPS:
+		return schemeRTSPS
 	default:
 		return scheme
 	}
+}
+
+// RTSPScheme returns the normalized scheme to use when rendering RTSP URLs.
+// It returns "rtsps" for secure schemes ("rtsps" and "https"), and "rtsp" otherwise.
+func (s Stream) RTSPScheme() string {
+	scheme := parseScheme(strings.ToLower(strings.TrimSpace(s.resolvedScheme())))
+	if scheme == schemeRTSPS {
+		return schemeRTSPS
+	}
+	return schemeRTSP
 }
 
 // Route returns this stream's route if there is one.

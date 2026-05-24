@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/bits"
 	"net/netip"
@@ -130,10 +131,7 @@ func ipv4ToUint32(addr netip.Addr) uint32 {
 }
 
 func uint32ToIPv4(value uint32) netip.Addr {
-	return netip.AddrFrom4([4]byte{
-		byte(value >> 24),
-		byte(value >> 16),
-		byte(value >> 8),
-		byte(value),
-	})
+	var octets [4]byte
+	binary.BigEndian.PutUint32(octets[:], value)
+	return netip.AddrFrom4(octets)
 }

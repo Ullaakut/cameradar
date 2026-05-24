@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/pkg/ports"
 )
 
 // Scanner is a stream scanner that skips discovery and treats every target/port as a stream.
@@ -31,8 +32,8 @@ func (s *Scanner) Scan(ctx context.Context) ([]cameradar.Stream, error) {
 	return buildStreamsFromTargets(ctx, s.targets, s.ports)
 }
 
-func buildStreamsFromTargets(ctx context.Context, targets, ports []string) ([]cameradar.Stream, error) {
-	resolvedPorts, err := parsePorts(ctx, ports)
+func buildStreamsFromTargets(ctx context.Context, targets, portSpecs []string) ([]cameradar.Stream, error) {
+	resolvedPorts, err := parsePorts(ctx, portSpecs)
 	if err != nil {
 		return nil, err
 	}
@@ -51,9 +52,11 @@ func buildStreamsFromTargets(ctx context.Context, targets, ports []string) ([]ca
 	streams := make([]cameradar.Stream, 0, len(resolvedTargets)*len(resolvedPorts))
 	for _, addr := range resolvedTargets {
 		for _, port := range resolvedPorts {
+			scheme := ports.InferTunnelScheme(port, "")
 			streams = append(streams, cameradar.Stream{
 				Address: addr,
 				Port:    port,
+				Scheme:  scheme,
 			})
 		}
 	}
@@ -261,12 +264,7 @@ func parseIPv4Range(target string) ([]netip.Addr, bool, error) {
 		for second := ranges[1].start; second <= ranges[1].end; second++ {
 			for third := ranges[2].start; third <= ranges[2].end; third++ {
 				for fourth := ranges[3].start; fourth <= ranges[3].end; fourth++ {
-					addrs = append(addrs, netip.AddrFrom4([4]byte{
-						byte(first),
-						byte(second),
-						byte(third),
-						byte(fourth),
-					}))
+					addrs = append(addrs, octetsToAddr(first, second, third, fourth))
 				}
 			}
 		}
@@ -335,4 +333,18 @@ func isDigits(value string) bool {
 		}
 	}
 	return value != ""
+}
+
+func octetsToAddr(first, second, third, fourth int) netip.Addr {
+	return netip.AddrFrom4([4]byte{
+		intToByte(first),
+		intToByte(second),
+		intToByte(third),
+		intToByte(fourth),
+	})
+}
+
+func intToByte(value int) byte {
+	// #nosec G115 -- parseOctetValue constrains octets to [0, 255].
+	return byte(value)
 }
