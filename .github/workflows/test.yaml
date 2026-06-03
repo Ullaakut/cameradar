@@ -45,9 +45,7 @@ jobs:
           version: v2.7.2
 
       - name: Setup gotestsum
-        uses: gertd/action-gotestsum@v3.0.0
-        with:
-          gotestsum_version: v1.13.0
+        run: go install gotest.tools/gotestsum@latest
 
       - name: Download nmap
         run: sudo apt-get install -y nmap
