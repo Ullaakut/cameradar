@@ -282,10 +282,8 @@ playback and waiting for an RTP packet.
 Framecheck means:
 
 - Cameradar only accepts `200 OK` when it can confirm frame generation.
-- If no RTP packet arrives, Cameradar treats the result as a false positive and
-    continues attacking.
-- Route checks remain compatible with authentication challenges seen during
-    probing.
+- If no RTP packet arrives, Cameradar treats the result as a false positive and continues attacking.
+- Route checks remain compatible with authentication challenges seen during probing.
 
 `--framecheck` is disabled by default because it adds RTSP requests and can
 significantly increase attack duration.
