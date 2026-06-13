@@ -271,6 +271,44 @@ docker run --rm -t --net=host \
 > [!WARNING]  
 > `--scan-speed` only applies to the `nmap` scanner.
 
+### Reduce false positives with `--framecheck`
+
+Some cameras do not fully follow RTSP behavior and can return `200 OK` even when
+the route or credentials are wrong.
+
+When you enable `--framecheck`, Cameradar validates each `200 OK` by attempting
+playback and waiting for an RTP packet.
+
+Framecheck means:
+
+- Cameradar only accepts `200 OK` when it can confirm frame generation.
+- If no RTP packet arrives, Cameradar treats the result as a false positive and
+    continues attacking.
+- Route checks remain compatible with authentication challenges seen during
+    probing.
+
+`--framecheck` is disabled by default because it adds RTSP requests and can
+significantly increase attack duration.
+
+Example with Docker:
+
+```bash
+docker run --rm -t --net=host \
+        ullaakut/cameradar \
+        --targets 192.168.1.0/24 \
+        --ports "554,8554" \
+        --framecheck
+```
+
+Example with local binary and environment variable:
+
+```bash
+FRAMECHECK=true \
+        cameradar \
+        --targets 192.168.1.0/24 \
+        --ports "554,8554"
+```
+
 ## Security and responsible use
 
 Cameradar is a penetration testing tool.
