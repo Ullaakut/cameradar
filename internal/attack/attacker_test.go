@@ -401,6 +401,76 @@ func TestAttacker_Attack_Framecheck_RechecksCredentialFalsePositives(t *testing.
 	assert.True(t, got[0].Available)
 }
 
+func TestAttacker_Attack_Framecheck_FallsBackToTCPForRouteProbe(t *testing.T) {
+	reporter := &recordingReporter{}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:      "stream",
+		requireAuth:       false,
+		authMethod:        headers.AuthMethodBasic,
+		sendFrames:        true,
+		sendFramesTCPOnly: true,
+	})
+
+	dict := testDictionary{
+		routes: []string{"stream"},
+	}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.Equal(t, []string{"stream"}, got[0].Routes)
+	assert.True(t, got[0].Available)
+	assert.True(t, reporter.HasDebugContaining("Frame probe succeeded"))
+}
+
+func TestAttacker_Attack_Framecheck_FallsBackToTCPForCredentialProbe(t *testing.T) {
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:              "stream",
+		requireAuth:               true,
+		describeAcceptInvalidAuth: true,
+		username:                  "user",
+		password:                  "pass",
+		authMethod:                headers.AuthMethodBasic,
+		sendFrames:                true,
+		sendFramesTCPOnly:         true,
+	})
+
+	dict := testDictionary{
+		routes:    []string{"stream"},
+		usernames: []string{"user"},
+		passwords: []string{"wrong", "pass"},
+	}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.True(t, got[0].CredentialsFound)
+	assert.Equal(t, "user", got[0].Username)
+	assert.Equal(t, "pass", got[0].Password)
+	assert.True(t, got[0].Available)
+}
+
 func TestAttacker_Attack_Framecheck_TreatsNoPacketAsFalsePositive(t *testing.T) {
 	reporter := &recordingReporter{}
 

@@ -34,6 +34,7 @@ type rtspServerConfig struct {
 	setupStatus               base.StatusCode
 	playStatus                base.StatusCode
 	sendFrames                bool
+	sendFramesTCPOnly         bool
 }
 
 type testServerHandler struct {
@@ -51,6 +52,7 @@ type testServerHandler struct {
 	setupStatus               base.StatusCode
 	playStatus                base.StatusCode
 	sendFrames                bool
+	sendFramesTCPOnly         bool
 }
 
 func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
@@ -120,11 +122,30 @@ func (h *testServerHandler) OnPlay(ctx *gortsplib.ServerHandlerOnPlayCtx) (*base
 		status = h.playStatus
 	}
 
-	if status == base.StatusOK && h.sendFrames {
+	if status == base.StatusOK && h.shouldSendFrames(ctx.Session) {
 		h.emitFrame()
 	}
 
 	return &base.Response{StatusCode: status}, nil
+}
+
+func (h *testServerHandler) shouldSendFrames(session *gortsplib.ServerSession) bool {
+	if !h.sendFrames {
+		return false
+	}
+	if !h.sendFramesTCPOnly {
+		return true
+	}
+	if session == nil {
+		return false
+	}
+
+	transport := session.Transport()
+	if transport == nil {
+		return false
+	}
+
+	return transport.Protocol == gortsplib.ProtocolTCP
 }
 
 func (h *testServerHandler) routeAllowed(path string) bool {
@@ -177,6 +198,7 @@ func startRTSPServer(t *testing.T, cfg rtspServerConfig) (netip.Addr, uint16) {
 		setupStatus:               cfg.setupStatus,
 		playStatus:                cfg.playStatus,
 		sendFrames:                cfg.sendFrames,
+		sendFramesTCPOnly:         cfg.sendFramesTCPOnly,
 	}
 
 	if len(cfg.authHeader) > 0 {

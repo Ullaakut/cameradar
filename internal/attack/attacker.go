@@ -339,6 +339,9 @@ func (a Attacker) acceptStatusOK(ctx context.Context, stream cameradar.Stream, s
 		a.reporter.Debug(step, fmt.Sprintf("Keeping RTSP 200 route for %s because frame probe returned RTSP %d", stream, statusCode))
 		return true
 	}
+	if ok {
+		a.reporter.Debug(step, fmt.Sprintf("Frame probe succeeded for %s", stream))
+	}
 	if !ok {
 		a.reporter.Debug(step, fmt.Sprintf("Ignoring RTSP 200 for %s because no RTP packet was received", stream))
 	}
@@ -348,6 +351,18 @@ func (a Attacker) acceptStatusOK(ctx context.Context, stream cameradar.Stream, s
 
 //nolint:cyclop // Splitting this function does not make it clearer.
 func (a Attacker) probeFrameGeneration(ctx context.Context, stream cameradar.Stream) (bool, base.StatusCode, error) {
+	ok, statusCode, err := a.probeFrameGenerationWithProtocol(ctx, stream, nil)
+	if ok || statusCode != 0 || err != nil {
+		return ok, statusCode, err
+	}
+
+	// When UDP packets are blocked or not delivered, retry over interleaved TCP.
+	tcpProtocol := gortsplib.ProtocolTCP
+	return a.probeFrameGenerationWithProtocol(ctx, stream, &tcpProtocol)
+}
+
+//nolint:cyclop // Splitting this function does not make it clearer.
+func (a Attacker) probeFrameGenerationWithProtocol(ctx context.Context, stream cameradar.Stream, protocol *gortsplib.Protocol) (bool, base.StatusCode, error) {
 	if ctx.Err() != nil {
 		return false, 0, ctx.Err()
 	}
@@ -357,6 +372,10 @@ func (a Attacker) probeFrameGeneration(ctx context.Context, stream cameradar.Str
 		return false, 0, fmt.Errorf("starting rtsp client: %w", err)
 	}
 	defer client.Close()
+
+	if protocol != nil {
+		client.Protocol = protocol
+	}
 
 	desc, _, err := a.describeWithRetry(ctx, client, stream)
 	if err != nil {
@@ -370,12 +389,12 @@ func (a Attacker) probeFrameGeneration(ctx context.Context, stream cameradar.Str
 		return false, 0, nil
 	}
 
-	_, err = client.Setup(desc.BaseURL, desc.Medias[0], 0, 0)
+	err = client.SetupAll(desc.BaseURL, desc.Medias)
 	if err != nil {
 		if code, ok := badStatusCode(err); ok {
 			return false, code, nil
 		}
-		return false, 0, fmt.Errorf("performing setup request at %q: %w", stream, err)
+		return false, 0, fmt.Errorf("performing setup requests at %q: %w", stream, err)
 	}
 
 	rtpPacketReceived := make(chan struct{}, 1)
