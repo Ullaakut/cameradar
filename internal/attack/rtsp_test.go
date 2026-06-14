@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/netip"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +20,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const describeNoMediaSDP = "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=No Media\r\nt=0 0\r\n"
+
 type rtspServerConfig struct {
 	allowAll                  bool
 	describeAllowAll          bool
@@ -26,6 +29,9 @@ type rtspServerConfig struct {
 	requireAuth               bool
 	describeIgnoreAuth        bool
 	describeAcceptInvalidAuth bool
+	describeReturnNoStream    bool
+	describeNoMediaCall       int
+	describeStatusSequence    []base.StatusCode
 	username                  string
 	password                  string
 	authMethod                headers.AuthMethod
@@ -45,6 +51,12 @@ type testServerHandler struct {
 	requireAuth               bool
 	describeIgnoreAuth        bool
 	describeAcceptInvalidAuth bool
+	describeReturnNoStream    bool
+	describeNoMediaCall       int
+	describeStatusSequence    []base.StatusCode
+	describeStatusIndex       int
+	describeCallCount         int
+	describeStatusMu          sync.Mutex
 	username                  string
 	password                  string
 	authHeader                base.HeaderValue
@@ -56,6 +68,15 @@ type testServerHandler struct {
 }
 
 func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
+	describeCall, status, ok := h.nextDescribePlan()
+	if ok {
+		if status == base.StatusOK {
+			return h.describeSuccessResponse(describeCall)
+		}
+
+		return &base.Response{StatusCode: status}, nil, nil
+	}
+
 	if !h.describeRouteAllowed(ctx.Path) {
 		return &base.Response{StatusCode: base.StatusNotFound}, nil, nil
 	}
@@ -67,7 +88,7 @@ func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx
 	if h.requireAuth && !ctx.Conn.VerifyCredentials(ctx.Request, h.username, h.password) {
 		authorization := ctx.Request.Header["Authorization"]
 		if h.describeIgnoreAuth || (h.describeAcceptInvalidAuth && len(authorization) > 0) {
-			return &base.Response{StatusCode: base.StatusOK}, h.stream, nil
+			return h.describeSuccessResponse(describeCall)
 		}
 
 		return &base.Response{
@@ -78,7 +99,38 @@ func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx
 		}, nil, liberrors.ErrServerAuth{}
 	}
 
-	return &base.Response{StatusCode: base.StatusOK}, h.stream, nil
+	return h.describeSuccessResponse(describeCall)
+}
+
+func (h *testServerHandler) describeSuccessResponse(describeCall int) (*base.Response, *gortsplib.ServerStream, error) {
+	returnNoStream := h.describeReturnNoStream || (h.describeNoMediaCall > 0 && h.describeNoMediaCall == describeCall)
+	if !returnNoStream {
+		return &base.Response{StatusCode: base.StatusOK}, h.stream, nil
+	}
+
+	return &base.Response{
+		StatusCode: base.StatusOK,
+		Header: base.Header{
+			"Content-Type": base.HeaderValue{"application/sdp"},
+		},
+		Body: []byte(describeNoMediaSDP),
+	}, nil, nil
+}
+
+func (h *testServerHandler) nextDescribePlan() (int, base.StatusCode, bool) {
+	h.describeStatusMu.Lock()
+	defer h.describeStatusMu.Unlock()
+	h.describeCallCount++
+	describeCall := h.describeCallCount
+
+	if h.describeStatusIndex >= len(h.describeStatusSequence) {
+		return describeCall, 0, false
+	}
+
+	status := h.describeStatusSequence[h.describeStatusIndex]
+	h.describeStatusIndex++
+
+	return describeCall, status, true
 }
 
 func (h *testServerHandler) OnSetup(ctx *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
@@ -192,6 +244,9 @@ func startRTSPServer(t *testing.T, cfg rtspServerConfig) (netip.Addr, uint16) {
 		requireAuth:               cfg.requireAuth,
 		describeIgnoreAuth:        cfg.describeIgnoreAuth,
 		describeAcceptInvalidAuth: cfg.describeAcceptInvalidAuth,
+		describeReturnNoStream:    cfg.describeReturnNoStream,
+		describeNoMediaCall:       cfg.describeNoMediaCall,
+		describeStatusSequence:    append([]base.StatusCode(nil), cfg.describeStatusSequence...),
 		username:                  cfg.username,
 		password:                  cfg.password,
 		failOnAuth:                cfg.failOnAuth,

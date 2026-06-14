@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Ullaakut/cameradar/v6"
@@ -17,6 +18,8 @@ import (
 
 // Route that should never be a constructor default.
 const dummyRoute = "0x8b6c42"
+
+var errFrameProbeNoMedias = errors.New("describe succeeded but no media tracks found")
 
 // Dictionary provides dictionaries for routes, usernames and passwords.
 type Dictionary interface {
@@ -330,8 +333,12 @@ func (a Attacker) acceptStatusOK(ctx context.Context, stream cameradar.Stream, s
 		return true
 	}
 
-	ok, statusCode, err := a.probeFrameGeneration(ctx, stream)
+	ok, statusCode, err := a.probeFrameGeneration(ctx, stream, step)
 	if err != nil {
+		if errors.Is(err, errFrameProbeNoMedias) {
+			a.reporter.Debug(step, fmt.Sprintf("Ignoring RTSP 200 for %s because DESCRIBE returned no media tracks", stream))
+			return false
+		}
 		a.reporter.Debug(step, fmt.Sprintf("Frame probe failed for %s: %v", stream, err))
 		return false
 	}
@@ -349,19 +356,24 @@ func (a Attacker) acceptStatusOK(ctx context.Context, stream cameradar.Stream, s
 	return ok
 }
 
-func (a Attacker) probeFrameGeneration(ctx context.Context, stream cameradar.Stream) (bool, base.StatusCode, error) {
-	ok, statusCode, err := a.probeFrameGenerationWithProtocol(ctx, stream, nil)
+func (a Attacker) probeFrameGeneration(ctx context.Context, stream cameradar.Stream, step cameradar.Step) (bool, base.StatusCode, error) {
+	ok, statusCode, err := a.probeFrameGenerationWithProtocol(ctx, stream, nil, step)
 	if ok || statusCode != 0 || err != nil {
 		return ok, statusCode, err
 	}
 
 	// When UDP packets are blocked or not delivered, retry over interleaved TCP.
 	tcpProtocol := gortsplib.ProtocolTCP
-	return a.probeFrameGenerationWithProtocol(ctx, stream, &tcpProtocol)
+	return a.probeFrameGenerationWithProtocol(ctx, stream, &tcpProtocol, step)
 }
 
 //nolint:cyclop // Splitting this function does not make it clearer.
-func (a Attacker) probeFrameGenerationWithProtocol(ctx context.Context, stream cameradar.Stream, protocol *gortsplib.Protocol) (bool, base.StatusCode, error) {
+func (a Attacker) probeFrameGenerationWithProtocol(
+	ctx context.Context,
+	stream cameradar.Stream,
+	protocol *gortsplib.Protocol,
+	step cameradar.Step,
+) (bool, base.StatusCode, error) {
 	if ctx.Err() != nil {
 		return false, 0, ctx.Err()
 	}
@@ -376,8 +388,11 @@ func (a Attacker) probeFrameGenerationWithProtocol(ctx context.Context, stream c
 		client.Protocol = protocol
 	}
 
-	desc, _, err := a.describeWithRetry(ctx, client, stream)
+	desc, _, err := a.describeWithRetry(ctx, client, stream, step)
 	if err != nil {
+		if noMediaSDPError(err) {
+			return false, 0, errFrameProbeNoMedias
+		}
 		if code, ok := badStatusCode(err); ok {
 			return false, code, nil
 		}
@@ -385,7 +400,7 @@ func (a Attacker) probeFrameGenerationWithProtocol(ctx context.Context, stream c
 	}
 
 	if desc == nil || len(desc.Medias) == 0 {
-		return false, 0, nil
+		return false, 0, errFrameProbeNoMedias
 	}
 
 	err = client.SetupAll(desc.BaseURL, desc.Medias)
@@ -434,6 +449,19 @@ func badStatusCode(err error) (base.StatusCode, bool) {
 	return badStatus.Code, true
 }
 
+func noMediaSDPError(err error) bool {
+	var sdpErr liberrors.ErrClientSDPInvalid
+	if !errors.As(err, &sdpErr) {
+		return false
+	}
+
+	if sdpErr.Err == nil {
+		return false
+	}
+
+	return strings.Contains(strings.ToLower(sdpErr.Err.Error()), "no media streams")
+}
+
 func frameProbeTimeout(timeout time.Duration) time.Duration {
 	if timeout > 0 {
 		return timeout
@@ -457,7 +485,7 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	}
 	defer client.Close()
 
-	desc, res, err := a.describeWithRetry(ctx, client, stream)
+	desc, res, err := a.describeWithRetry(ctx, client, stream, cameradar.StepValidateStreams)
 	if err != nil {
 		return a.handleDescribeError(stream, err)
 	}
@@ -481,7 +509,12 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	return stream, nil
 }
 
-func (a Attacker) describeWithRetry(ctx context.Context, client *gortsplib.Client, stream cameradar.Stream) (*description.Session, *base.Response, error) {
+func (a Attacker) describeWithRetry(
+	ctx context.Context,
+	client *gortsplib.Client,
+	stream cameradar.Stream,
+	step cameradar.Step,
+) (*description.Session, *base.Response, error) {
 	u, err := stream.URL()
 	if err != nil {
 		return nil, nil, fmt.Errorf("building rtsp url: %w", err)
@@ -499,7 +532,7 @@ func (a Attacker) describeWithRetry(ctx context.Context, client *gortsplib.Clien
 
 		var badStatus liberrors.ErrClientBadStatusCode
 		if errors.As(err, &badStatus) && badStatus.Code == base.StatusServiceUnavailable {
-			a.reporter.Debug(cameradar.StepValidateStreams, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d (retrying)", stream, badStatus.Code))
+			a.reporter.Debug(step, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d (retrying)", stream, badStatus.Code))
 			select {
 			case <-ctx.Done():
 				return nil, nil, ctx.Err()

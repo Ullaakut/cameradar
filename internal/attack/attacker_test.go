@@ -504,6 +504,76 @@ func TestAttacker_Attack_Framecheck_TreatsNoPacketAsFalsePositive(t *testing.T) 
 	assert.True(t, reporter.HasDebugContaining("no RTP packet was received"))
 }
 
+func TestAttacker_Attack_Framecheck_TreatsNoMediasAsFalsePositive(t *testing.T) {
+	reporter := &recordingReporter{}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:        "stream",
+		requireAuth:         false,
+		authMethod:          headers.AuthMethodBasic,
+		describeNoMediaCall: 2,
+		describeStatusSequence: []base.StatusCode{
+			base.StatusOK,
+			base.StatusOK,
+		},
+	})
+
+	dict := testDictionary{}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "validating streams")
+	require.Len(t, got, 1)
+
+	assert.False(t, got[0].RouteFound)
+	assert.Empty(t, got[0].Routes)
+	assert.False(t, got[0].Available)
+	assert.True(t, reporter.HasDebugContaining("DESCRIBE returned no media tracks"))
+	assert.False(t, reporter.HasDebugContaining("no RTP packet was received"))
+}
+
+func TestAttacker_Attack_Framecheck_LogsDescribeRetryWithCurrentStep(t *testing.T) {
+	reporter := &recordingReporter{}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowAll:   true,
+		authMethod: headers.AuthMethodBasic,
+		sendFrames: true,
+		describeStatusSequence: []base.StatusCode{
+			base.StatusOK,
+			base.StatusServiceUnavailable,
+			base.StatusOK,
+		},
+	})
+
+	dict := testDictionary{}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.True(t, got[0].Available)
+	assert.True(t, reporter.HasDebugForStepContaining(cameradar.StepAttackRoutes, "(retrying)"))
+	assert.False(t, reporter.HasDebugForStepContaining(cameradar.StepValidateStreams, "(retrying)"))
+}
+
 type testDictionary struct {
 	routes    []string
 	usernames []string
@@ -525,6 +595,7 @@ func (d testDictionary) Passwords() []string {
 type recordingReporter struct {
 	mu            sync.Mutex
 	debugMessages []string
+	debugSteps    []cameradar.Step
 }
 
 func (r *recordingReporter) Start(cameradar.Step, string) {}
@@ -533,9 +604,10 @@ func (r *recordingReporter) Done(cameradar.Step, string) {}
 
 func (r *recordingReporter) Progress(cameradar.Step, string) {}
 
-func (r *recordingReporter) Debug(_ cameradar.Step, message string) {
+func (r *recordingReporter) Debug(step cameradar.Step, message string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.debugSteps = append(r.debugSteps, step)
 	r.debugMessages = append(r.debugMessages, message)
 }
 
@@ -553,5 +625,18 @@ func (r *recordingReporter) HasDebugContaining(value string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+func (r *recordingReporter) HasDebugForStepContaining(step cameradar.Step, value string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for idx, message := range r.debugMessages {
+		if r.debugSteps[idx] == step && strings.Contains(message, value) {
+			return true
+		}
+	}
+
 	return false
 }
