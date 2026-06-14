@@ -349,7 +349,6 @@ func (a Attacker) acceptStatusOK(ctx context.Context, stream cameradar.Stream, s
 	return ok
 }
 
-//nolint:cyclop // Splitting this function does not make it clearer.
 func (a Attacker) probeFrameGeneration(ctx context.Context, stream cameradar.Stream) (bool, base.StatusCode, error) {
 	ok, statusCode, err := a.probeFrameGenerationWithProtocol(ctx, stream, nil)
 	if ok || statusCode != 0 || err != nil {
