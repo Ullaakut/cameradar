@@ -1,4 +1,4 @@
-package output
+package output_test
 
 import (
 	"net/netip"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/Ullaakut/cameradar/v6"
+	"github.com/Ullaakut/cameradar/v6/internal/output"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +22,7 @@ func TestBuildM3U_EncodesCredentials(t *testing.T) {
 		CredentialsFound: true,
 	}
 
-	playlist := BuildM3U([]cameradar.Stream{stream})
+	playlist := output.BuildM3U([]cameradar.Stream{stream})
 
 	var rtspLine string
 	for _, line := range strings.Split(playlist, "\n") {
@@ -33,9 +35,9 @@ func TestBuildM3U_EncodesCredentials(t *testing.T) {
 
 	u, err := url.Parse(rtspLine)
 	require.NoError(t, err)
-	require.Equal(t, "admin", u.User.Username())
+	assert.Equal(t, "admin", u.User.Username())
 	pass, _ := u.User.Password()
-	require.Equal(t, "pass/word", pass)
-	require.Equal(t, "192.0.2.10:554", u.Host)
-	require.Equal(t, "/stream", u.Path)
+	assert.Equal(t, "pass/word", pass)
+	assert.Equal(t, "192.0.2.10:554", u.Host)
+	assert.Equal(t, "/stream", u.Path)
 }
