@@ -24,6 +24,7 @@ const (
 	flagScanSpeed         = "scan-speed"
 	flagAttackInterval    = "attack-interval"
 	flagTimeout           = "timeout"
+	flagFrameCheck        = "framecheck"
 	flagSkipScan          = "skip-scan"
 	flagDebug             = "debug"
 	flagUI                = "ui"
@@ -88,6 +89,12 @@ var flags = cmd.Flags{
 		Aliases: []string{"T"},
 		Sources: cli.EnvVars(strcase.ToSNAKE(flagTimeout)),
 		Value:   2000 * time.Millisecond,
+	},
+	&cli.BoolFlag{
+		Name:    flagFrameCheck,
+		Usage:   "When DESCRIBE returns 200 OK, require a frame probe check before accepting routes or credentials (slower)",
+		Sources: cli.EnvVars(strcase.ToSNAKE(flagFrameCheck)),
+		Value:   false,
 	},
 	&cli.BoolFlag{
 		Name:    flagSkipScan,

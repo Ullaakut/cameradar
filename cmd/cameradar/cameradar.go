@@ -83,6 +83,7 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 			cmd.Int16(flagScanSpeed),
 			cmd.Duration(flagAttackInterval),
 			cmd.Duration(flagTimeout),
+			cmd.Bool(flagFrameCheck),
 			cmd.Bool(flagSkipScan),
 			cmd.Bool(flagDebug),
 			resolvedMode,
@@ -108,7 +109,8 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 
 	interval := cmd.Duration(flagAttackInterval)
 	timeout := cmd.Duration(flagTimeout)
-	attacker, err := attack.New(dictionary, interval, timeout, reporter)
+	frameCheck := cmd.Bool(flagFrameCheck)
+	attacker, err := attack.New(dictionary, interval, timeout, frameCheck, reporter)
 	if err != nil {
 		return fmt.Errorf("creating attacker: %w", err)
 	}
@@ -147,6 +149,7 @@ func buildStartupOptions(
 	scanSpeed int16,
 	attackInterval time.Duration,
 	timeout time.Duration,
+	frameCheck bool,
 	skipScan bool,
 	debug bool,
 	mode cameradar.Mode,
@@ -158,6 +161,7 @@ func buildStartupOptions(
 		"custom-credentials: " + fallbackValue(credsPath, "builtin"),
 		"scanner: " + fallbackValue(scanner, "nmap"),
 		"scan-speed: " + strconv.FormatInt(int64(scanSpeed), 10),
+		"frame-check: " + strconv.FormatBool(frameCheck),
 		"skip-scan: " + strconv.FormatBool(skipScan),
 		"attack-interval: " + attackInterval.String(),
 		"timeout: " + timeout.String(),

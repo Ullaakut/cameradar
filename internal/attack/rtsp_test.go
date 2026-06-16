@@ -5,7 +5,9 @@ import (
 	"net"
 	"net/netip"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/bluenviron/gortsplib/v5"
 	"github.com/bluenviron/gortsplib/v5/pkg/auth"
@@ -14,35 +16,68 @@ import (
 	"github.com/bluenviron/gortsplib/v5/pkg/format"
 	"github.com/bluenviron/gortsplib/v5/pkg/headers"
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
+	"github.com/pion/rtp"
 	"github.com/stretchr/testify/require"
 )
 
+const describeNoMediaSDP = "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=No Media\r\nt=0 0\r\n"
+
 type rtspServerConfig struct {
-	allowAll     bool
-	allowedRoute string
-	requireAuth  bool
-	username     string
-	password     string
-	authMethod   headers.AuthMethod
-	authHeader   base.HeaderValue
-	failOnAuth   bool
-	setupStatus  base.StatusCode
+	allowAll                  bool
+	describeAllowAll          bool
+	allowedRoute              string
+	requireAuth               bool
+	describeIgnoreAuth        bool
+	describeAcceptInvalidAuth bool
+	describeReturnNoStream    bool
+	describeNoMediaCall       int
+	describeStatusSequence    []base.StatusCode
+	username                  string
+	password                  string
+	authMethod                headers.AuthMethod
+	authHeader                base.HeaderValue
+	failOnAuth                bool
+	setupStatus               base.StatusCode
+	playStatus                base.StatusCode
+	sendFrames                bool
+	sendFramesTCPOnly         bool
 }
 
 type testServerHandler struct {
-	stream       *gortsplib.ServerStream
-	allowAll     bool
-	allowedRoute string
-	requireAuth  bool
-	username     string
-	password     string
-	authHeader   base.HeaderValue
-	failOnAuth   bool
-	setupStatus  base.StatusCode
+	stream                    *gortsplib.ServerStream
+	allowAll                  bool
+	describeAllowAll          bool
+	allowedRoute              string
+	requireAuth               bool
+	describeIgnoreAuth        bool
+	describeAcceptInvalidAuth bool
+	describeReturnNoStream    bool
+	describeNoMediaCall       int
+	describeStatusSequence    []base.StatusCode
+	describeStatusIndex       int
+	describeCallCount         int
+	describeStatusMu          sync.Mutex
+	username                  string
+	password                  string
+	authHeader                base.HeaderValue
+	failOnAuth                bool
+	setupStatus               base.StatusCode
+	playStatus                base.StatusCode
+	sendFrames                bool
+	sendFramesTCPOnly         bool
 }
 
 func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
-	if !h.routeAllowed(ctx.Path) {
+	describeCall, status, ok := h.nextDescribePlan()
+	if ok {
+		if status == base.StatusOK {
+			return h.describeSuccessResponse(describeCall)
+		}
+
+		return &base.Response{StatusCode: status}, nil, nil
+	}
+
+	if !h.describeRouteAllowed(ctx.Path) {
 		return &base.Response{StatusCode: base.StatusNotFound}, nil, nil
 	}
 
@@ -51,6 +86,11 @@ func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx
 	}
 
 	if h.requireAuth && !ctx.Conn.VerifyCredentials(ctx.Request, h.username, h.password) {
+		authorization := ctx.Request.Header["Authorization"]
+		if h.describeIgnoreAuth || (h.describeAcceptInvalidAuth && len(authorization) > 0) {
+			return h.describeSuccessResponse(describeCall)
+		}
+
 		return &base.Response{
 			StatusCode: base.StatusUnauthorized,
 			Header: base.Header{
@@ -59,7 +99,38 @@ func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx
 		}, nil, liberrors.ErrServerAuth{}
 	}
 
-	return &base.Response{StatusCode: base.StatusOK}, h.stream, nil
+	return h.describeSuccessResponse(describeCall)
+}
+
+func (h *testServerHandler) describeSuccessResponse(describeCall int) (*base.Response, *gortsplib.ServerStream, error) {
+	returnNoStream := h.describeReturnNoStream || (h.describeNoMediaCall > 0 && h.describeNoMediaCall == describeCall)
+	if !returnNoStream {
+		return &base.Response{StatusCode: base.StatusOK}, h.stream, nil
+	}
+
+	return &base.Response{
+		StatusCode: base.StatusOK,
+		Header: base.Header{
+			"Content-Type": base.HeaderValue{"application/sdp"},
+		},
+		Body: []byte(describeNoMediaSDP),
+	}, nil, nil
+}
+
+func (h *testServerHandler) nextDescribePlan() (int, base.StatusCode, bool) {
+	h.describeStatusMu.Lock()
+	defer h.describeStatusMu.Unlock()
+	h.describeCallCount++
+	describeCall := h.describeCallCount
+
+	if h.describeStatusIndex >= len(h.describeStatusSequence) {
+		return describeCall, 0, false
+	}
+
+	status := h.describeStatusSequence[h.describeStatusIndex]
+	h.describeStatusIndex++
+
+	return describeCall, status, true
 }
 
 func (h *testServerHandler) OnSetup(ctx *gortsplib.ServerHandlerOnSetupCtx) (*base.Response, *gortsplib.ServerStream, error) {
@@ -84,22 +155,105 @@ func (h *testServerHandler) OnSetup(ctx *gortsplib.ServerHandlerOnSetupCtx) (*ba
 	return &base.Response{StatusCode: status}, h.stream, nil
 }
 
+func (h *testServerHandler) OnPlay(ctx *gortsplib.ServerHandlerOnPlayCtx) (*base.Response, error) {
+	if !h.routeAllowed(ctx.Path) {
+		return &base.Response{StatusCode: base.StatusNotFound}, nil
+	}
+
+	if h.requireAuth && !ctx.Conn.VerifyCredentials(ctx.Request, h.username, h.password) {
+		return &base.Response{
+			StatusCode: base.StatusUnauthorized,
+			Header: base.Header{
+				"WWW-Authenticate": h.authHeader,
+			},
+		}, liberrors.ErrServerAuth{}
+	}
+
+	status := base.StatusOK
+	if h.playStatus != 0 {
+		status = h.playStatus
+	}
+
+	if status == base.StatusOK && h.shouldSendFrames(ctx.Session) {
+		h.emitFrame()
+	}
+
+	return &base.Response{StatusCode: status}, nil
+}
+
+func (h *testServerHandler) shouldSendFrames(session *gortsplib.ServerSession) bool {
+	if !h.sendFrames {
+		return false
+	}
+	if !h.sendFramesTCPOnly {
+		return true
+	}
+	if session == nil {
+		return false
+	}
+
+	transport := session.Transport()
+	if transport == nil {
+		return false
+	}
+
+	return transport.Protocol == gortsplib.ProtocolTCP
+}
+
 func (h *testServerHandler) routeAllowed(path string) bool {
 	path = strings.TrimLeft(path, "/")
 	return h.allowAll || path == h.allowedRoute
+}
+
+func (h *testServerHandler) describeRouteAllowed(path string) bool {
+	if h.describeAllowAll {
+		return true
+	}
+
+	return h.routeAllowed(path)
+}
+
+func (h *testServerHandler) emitFrame() {
+	if h.stream == nil || h.stream.Desc == nil || len(h.stream.Desc.Medias) == 0 {
+		return
+	}
+
+	media := h.stream.Desc.Medias[0]
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		_ = h.stream.WritePacketRTP(media, &rtp.Packet{
+			Header: rtp.Header{
+				Version:        2,
+				PayloadType:    96,
+				SequenceNumber: 1,
+				Timestamp:      90_000,
+				SSRC:           1,
+			},
+			Payload: []byte{0x05, 0x01},
+		})
+	}()
 }
 
 func startRTSPServer(t *testing.T, cfg rtspServerConfig) (netip.Addr, uint16) {
 	t.Helper()
 
 	handler := &testServerHandler{
-		allowAll:     cfg.allowAll,
-		allowedRoute: cfg.allowedRoute,
-		requireAuth:  cfg.requireAuth,
-		username:     cfg.username,
-		password:     cfg.password,
-		failOnAuth:   cfg.failOnAuth,
-		setupStatus:  cfg.setupStatus,
+		allowAll:                  cfg.allowAll,
+		describeAllowAll:          cfg.describeAllowAll,
+		allowedRoute:              cfg.allowedRoute,
+		requireAuth:               cfg.requireAuth,
+		describeIgnoreAuth:        cfg.describeIgnoreAuth,
+		describeAcceptInvalidAuth: cfg.describeAcceptInvalidAuth,
+		describeReturnNoStream:    cfg.describeReturnNoStream,
+		describeNoMediaCall:       cfg.describeNoMediaCall,
+		describeStatusSequence:    append([]base.StatusCode(nil), cfg.describeStatusSequence...),
+		username:                  cfg.username,
+		password:                  cfg.password,
+		failOnAuth:                cfg.failOnAuth,
+		setupStatus:               cfg.setupStatus,
+		playStatus:                cfg.playStatus,
+		sendFrames:                cfg.sendFrames,
+		sendFramesTCPOnly:         cfg.sendFramesTCPOnly,
 	}
 
 	if len(cfg.authHeader) > 0 {

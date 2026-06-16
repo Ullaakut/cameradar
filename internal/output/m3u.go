@@ -2,6 +2,8 @@ package output
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -114,12 +116,14 @@ func formatStreamLabel(stream cameradar.Stream) string {
 func formatRTSPURL(stream cameradar.Stream) string {
 	path := "/" + strings.TrimLeft(strings.TrimSpace(stream.Route()), "/")
 
-	credentials := ""
+	u := &url.URL{
+		Scheme: stream.RTSPScheme(),
+		Host:   net.JoinHostPort(stream.Address.String(), strconv.FormatUint(uint64(stream.Port), 10)),
+		Path:   path,
+	}
 	if stream.CredentialsFound && (stream.Username != "" || stream.Password != "") {
-		credentials = stream.Username + ":" + stream.Password + "@"
+		u.User = url.UserPassword(stream.Username, stream.Password)
 	}
 
-	scheme := stream.RTSPScheme()
-
-	return fmt.Sprintf("%s://%s%s:%s%s", scheme, credentials, stream.Address.String(), strconv.FormatUint(uint64(stream.Port), 10), path)
+	return u.String()
 }
