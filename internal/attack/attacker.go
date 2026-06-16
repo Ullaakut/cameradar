@@ -4,17 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/bluenviron/gortsplib/v5"
 	"github.com/bluenviron/gortsplib/v5/pkg/base"
 	"github.com/bluenviron/gortsplib/v5/pkg/description"
+	"github.com/bluenviron/gortsplib/v5/pkg/format"
 	"github.com/bluenviron/gortsplib/v5/pkg/liberrors"
+	"github.com/pion/rtp"
 )
 
 // Route that should never be a constructor default.
 const dummyRoute = "0x8b6c42"
+
+var errFrameProbeNoMedias = errors.New("describe succeeded but no media tracks found")
 
 // Dictionary provides dictionaries for routes, usernames and passwords.
 type Dictionary interface {
@@ -38,10 +43,11 @@ type Attacker struct {
 	reporter       Reporter
 	attackInterval time.Duration
 	timeout        time.Duration
+	framecheck     bool
 }
 
 // New builds an Attacker with the provided dependencies.
-func New(dict Dictionary, attackInterval, timeout time.Duration, reporter Reporter) (Attacker, error) {
+func New(dict Dictionary, attackInterval, timeout time.Duration, framecheck bool, reporter Reporter) (Attacker, error) {
 	if dict == nil {
 		return Attacker{}, errors.New("dictionary is required")
 	}
@@ -50,6 +56,7 @@ func New(dict Dictionary, attackInterval, timeout time.Duration, reporter Report
 		dictionary:     dict,
 		attackInterval: attackInterval,
 		timeout:        timeout,
+		framecheck:     framecheck,
 		reporter:       reporter,
 	}, nil
 }
@@ -217,7 +224,7 @@ func (a Attacker) attackCredentialsForStream(ctx context.Context, target camerad
 			}
 
 			a.reporter.Progress(cameradar.StepAttackCredentials, cameradar.ProgressTickMessage())
-			ok, err := a.credAttack(target, username, password)
+			ok, err := a.credAttack(ctx, target, username, password)
 			if err != nil {
 				target.CredentialsFound = false
 
@@ -253,7 +260,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	if emitProgress {
 		a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 	}
-	ok, err := a.routeAttack(target, dummyRoute)
+	ok, err := a.routeAttack(ctx, target, dummyRoute)
 	if err != nil {
 		a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route probe failed for %s:%d: %v", target.Address.String(), target.Port, err))
 		return target, nil
@@ -275,7 +282,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 		if emitProgress {
 			a.reporter.Progress(cameradar.StepAttackRoutes, cameradar.ProgressTickMessage())
 		}
-		ok, err := a.routeAttack(target, route)
+		ok, err := a.routeAttack(ctx, target, route)
 		if err != nil {
 			a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("route attempt failed for %s:%d (%s): %v", target.Address.String(), target.Port, route, err))
 			return target, nil
@@ -290,7 +297,7 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 	return target, nil
 }
 
-func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, error) {
+func (a Attacker) routeAttack(ctx context.Context, stream cameradar.Stream, route string) (bool, error) {
 	stream.Routes = []string{route}
 	code, err := a.describeStatus(stream)
 	if err != nil {
@@ -298,11 +305,14 @@ func (a Attacker) routeAttack(stream cameradar.Stream, route string) (bool, erro
 	}
 
 	a.reporter.Debug(cameradar.StepAttackRoutes, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
-	access := code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden
-	return access, nil
+	if code == base.StatusOK && !a.acceptStatusOK(ctx, stream, cameradar.StepAttackRoutes) {
+		return false, nil
+	}
+
+	return code == base.StatusOK || code == base.StatusUnauthorized || code == base.StatusForbidden, nil
 }
 
-func (a Attacker) credAttack(stream cameradar.Stream, username, password string) (bool, error) {
+func (a Attacker) credAttack(ctx context.Context, stream cameradar.Stream, username, password string) (bool, error) {
 	stream.Username = username
 	stream.Password = password
 	code, err := a.describeStatus(stream)
@@ -311,7 +321,153 @@ func (a Attacker) credAttack(stream cameradar.Stream, username, password string)
 	}
 
 	a.reporter.Debug(cameradar.StepAttackCredentials, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d", stream, code))
+	if code == base.StatusOK && !a.acceptStatusOK(ctx, stream, cameradar.StepAttackCredentials) {
+		return false, nil
+	}
+
 	return code == base.StatusOK || code == base.StatusNotFound, nil
+}
+
+func (a Attacker) acceptStatusOK(ctx context.Context, stream cameradar.Stream, step cameradar.Step) bool {
+	if !a.framecheck {
+		return true
+	}
+
+	ok, statusCode, err := a.probeFrameGeneration(ctx, stream, step)
+	if err != nil {
+		if errors.Is(err, errFrameProbeNoMedias) {
+			a.reporter.Debug(step, fmt.Sprintf("Ignoring RTSP 200 for %s because DESCRIBE returned no media tracks", stream))
+			return false
+		}
+		a.reporter.Debug(step, fmt.Sprintf("Frame probe failed for %s: %v", stream, err))
+		return false
+	}
+	if !ok && step == cameradar.StepAttackRoutes && (statusCode == base.StatusUnauthorized || statusCode == base.StatusForbidden) {
+		a.reporter.Debug(step, fmt.Sprintf("Keeping RTSP 200 route for %s because frame probe returned RTSP %d", stream, statusCode))
+		return true
+	}
+	if ok {
+		a.reporter.Debug(step, fmt.Sprintf("Frame probe succeeded for %s", stream))
+	}
+	if !ok {
+		a.reporter.Debug(step, fmt.Sprintf("Ignoring RTSP 200 for %s because no RTP packet was received", stream))
+	}
+
+	return ok
+}
+
+func (a Attacker) probeFrameGeneration(ctx context.Context, stream cameradar.Stream, step cameradar.Step) (bool, base.StatusCode, error) {
+	ok, statusCode, err := a.probeFrameGenerationWithProtocol(ctx, stream, nil, step)
+	if ok || statusCode != 0 || err != nil {
+		return ok, statusCode, err
+	}
+
+	// When UDP packets are blocked or not delivered, retry over interleaved TCP.
+	tcpProtocol := gortsplib.ProtocolTCP
+	return a.probeFrameGenerationWithProtocol(ctx, stream, &tcpProtocol, step)
+}
+
+//nolint:cyclop // Splitting this function does not make it clearer.
+func (a Attacker) probeFrameGenerationWithProtocol(
+	ctx context.Context,
+	stream cameradar.Stream,
+	protocol *gortsplib.Protocol,
+	step cameradar.Step,
+) (bool, base.StatusCode, error) {
+	if ctx.Err() != nil {
+		return false, 0, ctx.Err()
+	}
+
+	client, err := a.newRTSPClient(stream)
+	if err != nil {
+		return false, 0, fmt.Errorf("starting rtsp client: %w", err)
+	}
+	defer client.Close()
+
+	if protocol != nil {
+		client.Protocol = protocol
+	}
+
+	desc, _, err := a.describeWithRetry(ctx, client, stream, step)
+	if err != nil {
+		if noMediaSDPError(err) {
+			return false, 0, errFrameProbeNoMedias
+		}
+		if code, ok := badStatusCode(err); ok {
+			return false, code, nil
+		}
+		return false, 0, fmt.Errorf("performing describe request at %q: %w", stream, err)
+	}
+
+	if desc == nil || len(desc.Medias) == 0 {
+		return false, 0, errFrameProbeNoMedias
+	}
+
+	err = client.SetupAll(desc.BaseURL, desc.Medias)
+	if err != nil {
+		if code, ok := badStatusCode(err); ok {
+			return false, code, nil
+		}
+		return false, 0, fmt.Errorf("performing setup requests at %q: %w", stream, err)
+	}
+
+	rtpPacketReceived := make(chan struct{}, 1)
+	client.OnPacketRTPAny(func(_ *description.Media, _ format.Format, _ *rtp.Packet) {
+		select {
+		case rtpPacketReceived <- struct{}{}:
+		default:
+		}
+	})
+
+	_, err = client.Play(nil)
+	if err != nil {
+		if code, ok := badStatusCode(err); ok {
+			return false, code, nil
+		}
+		return false, 0, fmt.Errorf("performing play request at %q: %w", stream, err)
+	}
+
+	timer := time.NewTimer(frameProbeTimeout(a.timeout))
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return false, 0, ctx.Err()
+	case <-timer.C:
+		return false, 0, nil
+	case <-rtpPacketReceived:
+		return true, 0, nil
+	}
+}
+
+func badStatusCode(err error) (base.StatusCode, bool) {
+	var badStatus liberrors.ErrClientBadStatusCode
+	if !errors.As(err, &badStatus) {
+		return 0, false
+	}
+
+	return badStatus.Code, true
+}
+
+func noMediaSDPError(err error) bool {
+	var sdpErr liberrors.ErrClientSDPInvalid
+	if !errors.As(err, &sdpErr) {
+		return false
+	}
+
+	if sdpErr.Err == nil {
+		return false
+	}
+
+	return strings.Contains(strings.ToLower(sdpErr.Err.Error()), "no media streams")
+}
+
+func frameProbeTimeout(timeout time.Duration) time.Duration {
+	if timeout > 0 {
+		return timeout
+	}
+
+	return 2 * time.Second
 }
 
 func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, emitProgress bool) (cameradar.Stream, error) {
@@ -329,7 +485,7 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	}
 	defer client.Close()
 
-	desc, res, err := a.describeWithRetry(ctx, client, stream)
+	desc, res, err := a.describeWithRetry(ctx, client, stream, cameradar.StepValidateStreams)
 	if err != nil {
 		return a.handleDescribeError(stream, err)
 	}
@@ -353,7 +509,12 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 	return stream, nil
 }
 
-func (a Attacker) describeWithRetry(ctx context.Context, client *gortsplib.Client, stream cameradar.Stream) (*description.Session, *base.Response, error) {
+func (a Attacker) describeWithRetry(
+	ctx context.Context,
+	client *gortsplib.Client,
+	stream cameradar.Stream,
+	step cameradar.Step,
+) (*description.Session, *base.Response, error) {
 	u, err := stream.URL()
 	if err != nil {
 		return nil, nil, fmt.Errorf("building rtsp url: %w", err)
@@ -371,7 +532,7 @@ func (a Attacker) describeWithRetry(ctx context.Context, client *gortsplib.Clien
 
 		var badStatus liberrors.ErrClientBadStatusCode
 		if errors.As(err, &badStatus) && badStatus.Code == base.StatusServiceUnavailable {
-			a.reporter.Debug(cameradar.StepValidateStreams, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d (retrying)", stream, badStatus.Code))
+			a.reporter.Debug(step, fmt.Sprintf("DESCRIBE %s RTSP/1.0 > %d (retrying)", stream, badStatus.Code))
 			select {
 			case <-ctx.Done():
 				return nil, nil, ctx.Err()

@@ -39,7 +39,7 @@ func TestNew(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			attacker, err := attack.New(test.dict, 10*time.Millisecond, time.Second, ui.NopReporter{})
+			attacker, err := attack.New(test.dict, 10*time.Millisecond, time.Second, false, ui.NopReporter{})
 			test.wantErr(t, err)
 			if err != nil {
 				assert.NotNil(t, attacker)
@@ -65,7 +65,7 @@ func TestAttacker_Attack_BasicAuth(t *testing.T) {
 
 	testInterval := time.Millisecond
 	testRequestTimeout := time.Second
-	attacker, err := attack.New(dict, testInterval, testRequestTimeout, ui.NopReporter{})
+	attacker, err := attack.New(dict, testInterval, testRequestTimeout, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -140,7 +140,7 @@ func TestAttacker_Attack_AuthVariants(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			addr, port := startRTSPServer(t, test.config)
 
-			attacker, err := attack.New(test.dict, 0, time.Second, ui.NopReporter{})
+			attacker, err := attack.New(test.dict, 0, time.Second, false, ui.NopReporter{})
 			require.NoError(t, err)
 
 			streams := []cameradar.Stream{{
@@ -165,7 +165,7 @@ func TestAttacker_Attack_AuthVariants(t *testing.T) {
 }
 
 func TestAttacker_Attack_ValidationErrors(t *testing.T) {
-	attacker, err := attack.New(testDictionary{routes: []string{"stream"}}, 0, time.Second, ui.NopReporter{})
+	attacker, err := attack.New(testDictionary{routes: []string{"stream"}}, 0, time.Second, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -204,7 +204,7 @@ func TestAttacker_Attack_ReturnsErrorWhenRouteMissing(t *testing.T) {
 		passwords: []string{"pass"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -234,7 +234,7 @@ func TestAttacker_Attack_ReturnsErrorWhenCredentialsMissing(t *testing.T) {
 		passwords: []string{"wrong"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -268,7 +268,7 @@ func TestAttacker_Attack_CredentialAttemptFails(t *testing.T) {
 		passwords: []string{"pass"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, reporter)
+	attacker, err := attack.New(dict, 0, time.Second, false, reporter)
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -292,7 +292,7 @@ func TestAttacker_Attack_AllowsDummyRoute(t *testing.T) {
 
 	dict := testDictionary{}
 
-	attacker, err := attack.New(dict, 0, time.Second, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -320,7 +320,7 @@ func TestAttacker_Attack_ValidationFailsWhenSetupErrors(t *testing.T) {
 		routes: []string{"stream"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -333,6 +333,245 @@ func TestAttacker_Attack_ValidationFailsWhenSetupErrors(t *testing.T) {
 	require.Len(t, got, 1)
 	assert.False(t, got[0].Available)
 	assert.True(t, got[0].RouteFound)
+}
+
+func TestAttacker_Attack_Framecheck_RechecksRouteFalsePositives(t *testing.T) {
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:     "stream",
+		describeAllowAll: true,
+		requireAuth:      false,
+		authMethod:       headers.AuthMethodBasic,
+		sendFrames:       true,
+	})
+
+	dict := testDictionary{
+		routes: []string{"stream"},
+	}
+
+	attacker, err := attack.New(dict, 0, 500*time.Millisecond, true, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.Equal(t, []string{"stream"}, got[0].Routes)
+	assert.True(t, got[0].Available)
+}
+
+func TestAttacker_Attack_Framecheck_RechecksCredentialFalsePositives(t *testing.T) {
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:              "stream",
+		requireAuth:               true,
+		describeAcceptInvalidAuth: true,
+		username:                  "user",
+		password:                  "pass",
+		authMethod:                headers.AuthMethodBasic,
+		sendFrames:                true,
+	})
+
+	dict := testDictionary{
+		routes:    []string{"stream"},
+		usernames: []string{"user"},
+		passwords: []string{"wrong", "pass"},
+	}
+
+	attacker, err := attack.New(dict, 0, 500*time.Millisecond, true, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.True(t, got[0].CredentialsFound)
+	assert.Equal(t, "user", got[0].Username)
+	assert.Equal(t, "pass", got[0].Password)
+	assert.True(t, got[0].Available)
+}
+
+func TestAttacker_Attack_Framecheck_FallsBackToTCPForRouteProbe(t *testing.T) {
+	reporter := &recordingReporter{}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:      "stream",
+		requireAuth:       false,
+		authMethod:        headers.AuthMethodBasic,
+		sendFrames:        true,
+		sendFramesTCPOnly: true,
+	})
+
+	dict := testDictionary{
+		routes: []string{"stream"},
+	}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.Equal(t, []string{"stream"}, got[0].Routes)
+	assert.True(t, got[0].Available)
+	assert.True(t, reporter.HasDebugContaining("Frame probe succeeded"))
+}
+
+func TestAttacker_Attack_Framecheck_FallsBackToTCPForCredentialProbe(t *testing.T) {
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:              "stream",
+		requireAuth:               true,
+		describeAcceptInvalidAuth: true,
+		username:                  "user",
+		password:                  "pass",
+		authMethod:                headers.AuthMethodBasic,
+		sendFrames:                true,
+		sendFramesTCPOnly:         true,
+	})
+
+	dict := testDictionary{
+		routes:    []string{"stream"},
+		usernames: []string{"user"},
+		passwords: []string{"wrong", "pass"},
+	}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.True(t, got[0].CredentialsFound)
+	assert.Equal(t, "user", got[0].Username)
+	assert.Equal(t, "pass", got[0].Password)
+	assert.True(t, got[0].Available)
+}
+
+func TestAttacker_Attack_Framecheck_TreatsNoPacketAsFalsePositive(t *testing.T) {
+	reporter := &recordingReporter{}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:     "stream",
+		describeAllowAll: true,
+		requireAuth:      false,
+		authMethod:       headers.AuthMethodBasic,
+		sendFrames:       false,
+	})
+
+	dict := testDictionary{
+		routes: []string{"stream"},
+	}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.False(t, got[0].RouteFound)
+	assert.Empty(t, got[0].Routes)
+	assert.False(t, got[0].Available)
+	assert.True(t, reporter.HasDebugContaining("no RTP packet was received"))
+}
+
+func TestAttacker_Attack_Framecheck_TreatsNoMediasAsFalsePositive(t *testing.T) {
+	reporter := &recordingReporter{}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:        "stream",
+		requireAuth:         false,
+		authMethod:          headers.AuthMethodBasic,
+		describeNoMediaCall: 2,
+		describeStatusSequence: []base.StatusCode{
+			base.StatusOK,
+			base.StatusOK,
+		},
+	})
+
+	dict := testDictionary{}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "validating streams")
+	require.Len(t, got, 1)
+
+	assert.False(t, got[0].RouteFound)
+	assert.Empty(t, got[0].Routes)
+	assert.False(t, got[0].Available)
+	assert.True(t, reporter.HasDebugContaining("DESCRIBE returned no media tracks"))
+	assert.False(t, reporter.HasDebugContaining("no RTP packet was received"))
+}
+
+func TestAttacker_Attack_Framecheck_LogsDescribeRetryWithCurrentStep(t *testing.T) {
+	reporter := &recordingReporter{}
+
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowAll:   true,
+		authMethod: headers.AuthMethodBasic,
+		sendFrames: true,
+		describeStatusSequence: []base.StatusCode{
+			base.StatusOK,
+			base.StatusServiceUnavailable,
+			base.StatusOK,
+		},
+	})
+
+	dict := testDictionary{}
+
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.True(t, got[0].Available)
+	assert.True(t, reporter.HasDebugForStepContaining(cameradar.StepAttackRoutes, "(retrying)"))
+	assert.False(t, reporter.HasDebugForStepContaining(cameradar.StepValidateStreams, "(retrying)"))
 }
 
 type testDictionary struct {
@@ -356,6 +595,7 @@ func (d testDictionary) Passwords() []string {
 type recordingReporter struct {
 	mu            sync.Mutex
 	debugMessages []string
+	debugSteps    []cameradar.Step
 }
 
 func (r *recordingReporter) Start(cameradar.Step, string) {}
@@ -364,9 +604,10 @@ func (r *recordingReporter) Done(cameradar.Step, string) {}
 
 func (r *recordingReporter) Progress(cameradar.Step, string) {}
 
-func (r *recordingReporter) Debug(_ cameradar.Step, message string) {
+func (r *recordingReporter) Debug(step cameradar.Step, message string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.debugSteps = append(r.debugSteps, step)
 	r.debugMessages = append(r.debugMessages, message)
 }
 
@@ -384,5 +625,18 @@ func (r *recordingReporter) HasDebugContaining(value string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+func (r *recordingReporter) HasDebugForStepContaining(step cameradar.Step, value string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for idx, message := range r.debugMessages {
+		if r.debugSteps[idx] == step && strings.Contains(message, value) {
+			return true
+		}
+	}
+
 	return false
 }
