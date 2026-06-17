@@ -3,12 +3,14 @@ package ui_test
 import (
 	"errors"
 	"net/netip"
+	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/Ullaakut/cameradar/v6/internal/ui"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormatSummaryIPv6BracketsHost(t *testing.T) {
@@ -149,4 +151,38 @@ func TestFormatSummary(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFormatSummaryEncodesCredentials(t *testing.T) {
+	// The default credentials dictionary ships passwords with characters that
+	// are not URL-safe (for example "admin pass"). The summary RTSP URL must
+	// percent-encode them so it stays parseable.
+	streams := []cameradar.Stream{
+		{
+			Address:            netip.MustParseAddr("10.0.0.1"),
+			Port:               554,
+			Available:          true,
+			RouteFound:         true,
+			Routes:             []string{"stream"},
+			CredentialsFound:   true,
+			Username:           "ad@min",
+			Password:           "p@ss word",
+			AuthenticationType: cameradar.AuthBasic,
+		},
+	}
+
+	got := ui.FormatSummary(streams, nil)
+
+	const prefix = "RTSP URL: "
+	idx := strings.Index(got, prefix)
+	require.GreaterOrEqual(t, idx, 0, "summary missing RTSP URL line:\n%s", got)
+	rest := got[idx+len(prefix):]
+	rawURL := strings.TrimSpace(rest[:strings.IndexByte(rest, '\n')])
+
+	u, err := url.Parse(rawURL)
+	require.NoError(t, err, "RTSP URL is not parseable: %q", rawURL)
+	require.NotNil(t, u.User, "RTSP URL has no userinfo: %q", rawURL)
+	pw, _ := u.User.Password()
+	assert.Equal(t, "ad@min", u.User.Username())
+	assert.Equal(t, "p@ss word", pw)
 }
