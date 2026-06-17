@@ -10,6 +10,7 @@ import (
 	"github.com/Ullaakut/cameradar/v6"
 	"github.com/Ullaakut/cameradar/v6/internal/ui"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormatSummaryIPv6BracketsHost(t *testing.T) {
@@ -174,19 +175,13 @@ func TestFormatSummaryEncodesCredentials(t *testing.T) {
 
 	const prefix = "RTSP URL: "
 	idx := strings.Index(got, prefix)
-	if idx < 0 {
-		t.Fatalf("summary missing RTSP URL line:\n%s", got)
-	}
+	require.GreaterOrEqual(t, idx, 0, "summary missing RTSP URL line:\n%s", got)
 	rest := got[idx+len(prefix):]
 	rawURL := strings.TrimSpace(rest[:strings.IndexByte(rest, '\n')])
 
 	u, err := url.Parse(rawURL)
-	if err != nil {
-		t.Fatalf("RTSP URL is not parseable: %q: %v", rawURL, err)
-	}
-	if u.User == nil {
-		t.Fatalf("RTSP URL has no userinfo: %q", rawURL)
-	}
+	require.NoError(t, err, "RTSP URL is not parseable: %q", rawURL)
+	require.NotNil(t, u.User, "RTSP URL has no userinfo: %q", rawURL)
 	pw, _ := u.User.Password()
 	assert.Equal(t, "ad@min", u.User.Username())
 	assert.Equal(t, "p@ss word", pw)

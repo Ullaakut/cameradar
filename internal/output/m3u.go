@@ -2,8 +2,6 @@ package output
 
 import (
 	"fmt"
-	"net"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -92,7 +90,7 @@ func BuildM3U(streams []cameradar.Stream) string {
 	var builder strings.Builder
 	builder.WriteString("#EXTM3U\n")
 	for _, stream := range streams {
-		url := formatRTSPURL(stream)
+		url := stream.String()
 		if url == "" {
 			continue
 		}
@@ -111,19 +109,4 @@ func formatStreamLabel(stream cameradar.Stream) string {
 		return label
 	}
 	return label + " (" + stream.Device + ")"
-}
-
-func formatRTSPURL(stream cameradar.Stream) string {
-	path := "/" + strings.TrimLeft(strings.TrimSpace(stream.Route()), "/")
-
-	u := &url.URL{
-		Scheme: stream.RTSPScheme(),
-		Host:   net.JoinHostPort(stream.Address.String(), strconv.FormatUint(uint64(stream.Port), 10)),
-		Path:   path,
-	}
-	if stream.CredentialsFound && (stream.Username != "" || stream.Password != "") {
-		u.User = url.UserPassword(stream.Username, stream.Password)
-	}
-
-	return u.String()
 }
