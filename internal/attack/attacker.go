@@ -69,12 +69,12 @@ func (a Attacker) Attack(ctx context.Context, targets []cameradar.Stream) ([]cam
 
 	// Each phase processes every target even when one camera errors, so a
 	// single unreachable host cannot drop results for the rest of the batch.
-	// The first non-cancellation error is remembered and surfaced after all
-	// phases have run, while healthy cameras still progress to validation.
-	var firstErr error
+	// Every non-cancellation error is aggregated and surfaced after all phases
+	// have run, while healthy cameras still progress to validation.
+	var errs error
 	record := func(err error) {
-		if err != nil && firstErr == nil {
-			firstErr = err
+		if err != nil {
+			errs = errors.Join(errs, err)
 		}
 	}
 
@@ -109,7 +109,7 @@ func (a Attacker) Attack(ctx context.Context, targets []cameradar.Stream) ([]cam
 		record(err)
 	}
 
-	return streams, firstErr
+	return streams, errs
 }
 
 func (a Attacker) attackRoutesPhase(ctx context.Context, targets []cameradar.Stream) ([]cameradar.Stream, error) {

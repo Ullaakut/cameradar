@@ -324,6 +324,47 @@ func TestAttacker_Attack_UnreachableHostDoesNotDropOthers(t *testing.T) {
 	assert.True(t, healthy.Available, "healthy camera should still be available despite an unreachable peer")
 }
 
+func TestAttacker_Attack_AggregatesErrorsFromMultipleHosts(t *testing.T) {
+	healthyAddr, healthyPort := startRTSPServer(t, rtspServerConfig{
+		allowedRoute: "stream",
+		requireAuth:  false,
+		authMethod:   headers.AuthMethodBasic,
+	})
+
+	firstDeadAddr, firstDeadPort := closedPort(t)
+	secondDeadAddr, secondDeadPort := closedPort(t)
+
+	dict := testDictionary{
+		routes: []string{"stream"},
+	}
+
+	attacker, err := attack.New(dict, 0, 200*time.Millisecond, false, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{
+		{Address: firstDeadAddr, Port: firstDeadPort},
+		{Address: healthyAddr, Port: healthyPort},
+		{Address: secondDeadAddr, Port: secondDeadPort},
+	}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	require.Error(t, err)
+	require.Len(t, got, 3)
+
+	// The joined error must mention both unreachable hosts, not just the first.
+	assert.ErrorContains(t, err, firstDeadAddr.String())
+	assert.ErrorContains(t, err, secondDeadAddr.String())
+
+	var healthy *cameradar.Stream
+	for i := range got {
+		if got[i].Address == healthyAddr && got[i].Port == healthyPort {
+			healthy = &got[i]
+		}
+	}
+	require.NotNil(t, healthy, "healthy camera missing from results")
+	assert.True(t, healthy.Available, "healthy camera should stay available despite unreachable peers")
+}
+
 func closedPort(t *testing.T) (netip.Addr, uint16) {
 	t.Helper()
 

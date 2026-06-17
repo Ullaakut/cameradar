@@ -2,6 +2,8 @@ package attack
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 
@@ -20,7 +22,7 @@ func runParallel(ctx context.Context, targets []cameradar.Stream, fn attackFn) (
 		return targets, nil
 	}
 
-	errCh := make(chan error, 1)
+	errCh := make(chan error, workerCount)
 	jobs := make(chan attackJob)
 
 	updated := make([]cameradar.Stream, len(targets))
@@ -32,7 +34,7 @@ func runParallel(ctx context.Context, targets []cameradar.Stream, fn attackFn) (
 	var wg sync.WaitGroup
 	for range workerCount {
 		wg.Go(func() {
-			runWorker(ctx, jobs, fn, updated, errCh)
+			errCh <- runWorker(ctx, jobs, fn, updated)
 		})
 	}
 
@@ -40,14 +42,18 @@ func runParallel(ctx context.Context, targets []cameradar.Stream, fn attackFn) (
 	close(jobs)
 
 	wg.Wait()
+	close(errCh)
 
-	select {
-	case err := <-errCh:
-		return updated, err
-	default:
+	// Aggregate every worker's errors instead of surfacing only the first one.
+	// A failure on one camera (e.g. a host that masscan flagged but is now
+	// unreachable) must not drop results for every other camera in the batch,
+	// and all failures are returned together so callers can inspect each.
+	var errs error
+	for err := range errCh {
+		errs = errors.Join(errs, err)
 	}
 
-	return updated, nil
+	return updated, errs
 }
 
 type attackJob struct {
@@ -65,33 +71,26 @@ func queueJobs(ctx context.Context, jobs chan<- attackJob, targets []cameradar.S
 	}
 }
 
-func runWorker(ctx context.Context, jobs <-chan attackJob, fn attackFn, updated []cameradar.Stream, errCh chan error) {
+func runWorker(ctx context.Context, jobs <-chan attackJob, fn attackFn, updated []cameradar.Stream) error {
+	var errs error
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return errs
 		case job, ok := <-jobs:
 			if !ok {
-				return
+				return errs
 			}
 
 			stream, err := fn(ctx, job.stream)
+			updated[job.index] = stream
 			if err != nil {
-				// Record the first error but keep processing the remaining
-				// targets. A failure on one camera (e.g. a host that masscan
-				// flagged but is now unreachable) must not drop results for
+				// Aggregate the error but keep processing the remaining
+				// targets. A failure on one camera must not drop results for
 				// every other camera in the batch. Cancellation is reserved
 				// for a genuine ctx.Done().
-				select {
-				case errCh <- err:
-				default:
-				}
-
-				updated[job.index] = stream
-				continue
+				errs = errors.Join(errs, fmt.Errorf("attacking %s: %w", stream, err))
 			}
-
-			updated[job.index] = stream
 		}
 	}
 }
