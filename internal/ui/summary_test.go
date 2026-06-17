@@ -11,6 +11,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFormatSummaryIPv6BracketsHost(t *testing.T) {
+	streams := []cameradar.Stream{
+		{
+			Address:            netip.MustParseAddr("fe80::1"),
+			Port:               554,
+			Available:          true,
+			RouteFound:         true,
+			Routes:             []string{"stream"},
+			CredentialsFound:   true,
+			Username:           "user",
+			Password:           "pass",
+			AuthenticationType: cameradar.AuthBasic,
+		},
+	}
+
+	got := ui.FormatSummary(streams, nil)
+
+	// IPv6 hosts must be bracketed to form valid URLs.
+	assert.Contains(t, got, "RTSP URL: rtsp://user:pass@[fe80::1]:554/stream")
+	assert.Contains(t, got, "Admin panel: http://[fe80::1]/")
+}
+
 func TestFormatSummary(t *testing.T) {
 	tests := []struct {
 		name            string
