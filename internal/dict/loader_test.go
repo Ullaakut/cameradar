@@ -198,6 +198,47 @@ func TestNew_RoutesSanitization(t *testing.T) {
 	}
 }
 
+func TestNew_CredentialsSanitization(t *testing.T) {
+	tempDir := t.TempDir()
+	routesPath := writeTempFile(t, tempDir, "routes", "stream\n")
+
+	tests := []struct {
+		name    string
+		content string
+		wantErr bool
+	}{
+		{
+			name:    "valid credentials parse successfully",
+			content: `{"usernames":["alice"],"passwords":["secret"]}`,
+			wantErr: false,
+		},
+		{
+			name:    "rejects CRLF in username",
+			content: `{"usernames":["admin\r\nInjected: header"],"passwords":["secret"]}`,
+			wantErr: true,
+		},
+		{
+			name:    "rejects control character in password",
+			content: `{"usernames":["alice"],"passwords":["sec\u0001ret"]}`,
+			wantErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			credsPath := writeTempFile(t, tempDir, "creds-"+test.name+".json", test.content)
+
+			_, err := dict.New(credsPath, routesPath)
+			if test.wantErr {
+				require.Error(t, err)
+				assert.ErrorContains(t, err, "control characters are not allowed")
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func writeTempFile(t *testing.T, dir, name, content string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)

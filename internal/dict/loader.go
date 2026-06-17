@@ -118,6 +118,21 @@ func parseCredentials(content []byte) (credentials, error) {
 		return credentials{}, fmt.Errorf("reading dictionary contents: %w", err)
 	}
 
+	hasControlChar := func(s string) bool {
+		return strings.ContainsFunc(s, func(r rune) bool { return r < 0x20 || r == 0x7f })
+	}
+
+	for _, username := range creds.Usernames {
+		if hasControlChar(username) {
+			return credentials{}, fmt.Errorf("invalid credential: control characters are not allowed")
+		}
+	}
+	for _, password := range creds.Passwords {
+		if hasControlChar(password) {
+			return credentials{}, fmt.Errorf("invalid credential: control characters are not allowed")
+		}
+	}
+
 	return creds, nil
 }
 
