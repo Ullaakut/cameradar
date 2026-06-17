@@ -1,7 +1,6 @@
 package ui_test
 
 import (
-	"errors"
 	"net/netip"
 	"net/url"
 	"strings"
@@ -28,7 +27,7 @@ func TestFormatSummaryIPv6BracketsHost(t *testing.T) {
 		},
 	}
 
-	got := ui.FormatSummary(streams, nil)
+	got := ui.FormatSummary(streams)
 
 	// IPv6 hosts must be bracketed to form valid URLs.
 	assert.Contains(t, got, "RTSP URL: rtsp://user:pass@[fe80::1]:554/stream")
@@ -39,7 +38,6 @@ func TestFormatSummary(t *testing.T) {
 	tests := []struct {
 		name            string
 		streams         []cameradar.Stream
-		err             error
 		wantContains    []string
 		wantNotContains []string
 		orderedPairs    [][2]string
@@ -57,7 +55,7 @@ func TestFormatSummary(t *testing.T) {
 			},
 		},
 		{
-			name: "mixed streams with error",
+			name: "mixed streams",
 			streams: []cameradar.Stream{
 				{
 					Device:             "Model B",
@@ -85,7 +83,6 @@ func TestFormatSummary(t *testing.T) {
 					AuthenticationType: cameradar.AuthDigest,
 				},
 			},
-			err: errors.New("boom"),
 			wantContains: []string{
 				"Accessible streams: 2",
 				"Other discovered streams: 1",
@@ -136,7 +133,7 @@ func TestFormatSummary(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := ui.FormatSummary(test.streams, test.err)
+			got := ui.FormatSummary(test.streams)
 
 			for _, expected := range test.wantContains {
 				assert.Contains(t, got, expected)
@@ -171,7 +168,7 @@ func TestFormatSummaryEncodesCredentials(t *testing.T) {
 		},
 	}
 
-	got := ui.FormatSummary(streams, nil)
+	got := ui.FormatSummary(streams)
 
 	const prefix = "RTSP URL: "
 	idx := strings.Index(got, prefix)

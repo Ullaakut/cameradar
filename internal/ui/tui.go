@@ -56,6 +56,7 @@ type closeMsg struct{}
 type summaryMsg struct {
 	streams []cameradar.Stream
 	final   bool
+	err     error
 }
 
 type summaryTable struct {
@@ -181,10 +182,10 @@ func (r *TUIReporter) Error(step cameradar.Step, err error) {
 }
 
 // Summary implements Reporter.
-func (r *TUIReporter) Summary(streams []cameradar.Stream, _ error) {
+func (r *TUIReporter) Summary(streams []cameradar.Stream, err error) {
 	cloned := copyStreams(streams)
 	r.recordSummary(cloned)
-	r.send(summaryMsg{streams: cloned, final: true})
+	r.send(summaryMsg{streams: cloned, final: true, err: err})
 }
 
 // UpdateSummary updates the summary section with partial results.

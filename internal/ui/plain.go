@@ -73,7 +73,10 @@ func (r *PlainReporter) Error(step cameradar.Step, err error) {
 func (r *PlainReporter) Summary(streams []cameradar.Stream, err error) {
 	_, _ = fmt.Fprintln(r.out, "Summary")
 	_, _ = fmt.Fprintln(r.out, "-------")
-	_, _ = fmt.Fprintln(r.out, FormatSummary(streams, err))
+	_, _ = fmt.Fprintln(r.out, FormatSummary(streams))
+	if err != nil {
+		r.Error(cameradar.StepSummary, err)
+	}
 }
 
 // Close is a no-op for the plain reporter.

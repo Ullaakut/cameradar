@@ -67,37 +67,42 @@ func (a Attacker) Attack(ctx context.Context, targets []cameradar.Stream) ([]cam
 		return nil, errors.New("no stream found")
 	}
 
+	// Each phase processes every target even when one camera errors, so a
+	// single unreachable host cannot drop results for the rest of the batch.
+	// Every phase error is aggregated and surfaced after all phases have run,
+	// while healthy cameras still progress to validation.
+	var errs error
+
 	streams, err := a.attackRoutesPhase(ctx, targets)
 	if err != nil {
-		return streams, err
+		errs = errors.Join(errs, err)
 	}
 
 	streams, err = a.detectAuthPhase(ctx, streams)
 	if err != nil {
-		return streams, err
+		errs = errors.Join(errs, err)
 	}
 
 	streams, err = a.attackCredentialsPhase(ctx, streams)
 	if err != nil {
-		return streams, err
+		errs = errors.Join(errs, err)
 	}
 
 	streams, err = a.validateStreamsPhase(ctx, streams)
 	if err != nil {
-		return streams, err
+		errs = errors.Join(errs, err)
 	}
 
 	// Some cameras run an inaccurate version of the RTSP protocol which prioritizes 401 over 404.
 	// For these cameras, running another route attack solves the problem.
-	if !needsReattack(streams) {
-		return streams, nil
-	}
-	streams, err = a.reattackRoutes(ctx, streams)
-	if err != nil {
-		return streams, err
+	if needsReattack(streams) {
+		streams, err = a.reattackRoutes(ctx, streams)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
 	}
 
-	return streams, nil
+	return streams, errs
 }
 
 func (a Attacker) attackRoutesPhase(ctx context.Context, targets []cameradar.Stream) ([]cameradar.Stream, error) {

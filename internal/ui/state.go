@@ -17,6 +17,7 @@ type modelState struct {
 	logs            []logMsg
 	summaryStreams  []cameradar.Stream
 	summaryFinal    bool
+	summaryErr      error
 	buildInfo       BuildInfo
 	cancel          context.CancelFunc
 	debug           bool
@@ -92,6 +93,7 @@ func (m *modelState) handleLogMsg(msg logMsg) {
 func (m *modelState) handleSummaryMsg(msg summaryMsg) {
 	m.summaryStreams = msg.streams
 	m.summaryFinal = msg.final
+	m.summaryErr = msg.err
 	if msg.final {
 		m.status[cameradar.StepSummary] = stateDone
 		markStepComplete(m, cameradar.StepSummary)
@@ -202,6 +204,10 @@ func (m *modelState) FinalView() string {
 	builder.WriteString(sectionStyle.Render(summaryTitle))
 	builder.WriteString("\n")
 	builder.WriteString(renderSummaryTablePlain(columns, rows))
+	if m.summaryErr != nil {
+		builder.WriteString("\n")
+		builder.WriteString(errorStyle.Render("Error: " + m.summaryErr.Error()))
+	}
 	return builder.String()
 }
 
