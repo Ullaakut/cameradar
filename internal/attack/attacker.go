@@ -69,44 +69,37 @@ func (a Attacker) Attack(ctx context.Context, targets []cameradar.Stream) ([]cam
 
 	// Each phase processes every target even when one camera errors, so a
 	// single unreachable host cannot drop results for the rest of the batch.
-	// Every non-cancellation error is aggregated and surfaced after all phases
-	// have run, while healthy cameras still progress to validation.
+	// Every phase error is aggregated and surfaced after all phases have run,
+	// while healthy cameras still progress to validation.
 	var errs error
-	record := func(err error) {
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-	}
 
 	streams, err := a.attackRoutesPhase(ctx, targets)
-	record(err)
-	if ctx.Err() != nil {
-		return streams, ctx.Err()
+	if err != nil {
+		errs = errors.Join(errs, err)
 	}
 
 	streams, err = a.detectAuthPhase(ctx, streams)
-	record(err)
-	if ctx.Err() != nil {
-		return streams, ctx.Err()
+	if err != nil {
+		errs = errors.Join(errs, err)
 	}
 
 	streams, err = a.attackCredentialsPhase(ctx, streams)
-	record(err)
-	if ctx.Err() != nil {
-		return streams, ctx.Err()
+	if err != nil {
+		errs = errors.Join(errs, err)
 	}
 
 	streams, err = a.validateStreamsPhase(ctx, streams)
-	record(err)
-	if ctx.Err() != nil {
-		return streams, ctx.Err()
+	if err != nil {
+		errs = errors.Join(errs, err)
 	}
 
 	// Some cameras run an inaccurate version of the RTSP protocol which prioritizes 401 over 404.
 	// For these cameras, running another route attack solves the problem.
 	if needsReattack(streams) {
 		streams, err = a.reattackRoutes(ctx, streams)
-		record(err)
+		if err != nil {
+			errs = errors.Join(errs, err)
+		}
 	}
 
 	return streams, errs

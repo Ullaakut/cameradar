@@ -309,8 +309,7 @@ func TestAttacker_Attack_UnreachableHostDoesNotDropOthers(t *testing.T) {
 		{Address: addr, Port: port},
 	}
 
-	got, err := attacker.Attack(t.Context(), streams)
-	_ = err // a dead host may surface an error; the batch must still complete.
+	got, _ := attacker.Attack(t.Context(), streams) // A dead host may surface an error, but the attack must still complete.
 	require.Len(t, got, 2)
 
 	var healthy *cameradar.Stream
