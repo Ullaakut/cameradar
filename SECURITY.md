@@ -13,7 +13,7 @@ Users are encouraged to upgrade to the latest version as soon as possible when s
 
 ## Reporting a Vulnerability
 
-If you believe you have discovered a security vulnerability in Cameradar, please use GitHub's **Private Vulnerability Reporting** feature to submit your report.
+If you believe you have discovered a security vulnerability in Cameradar, please use GitHub's **Private Vulnerability Reporting** feature (Security tab → "Report a vulnerability") to submit your report.
 
 Please include as much information as possible, including:
 
