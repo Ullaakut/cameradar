@@ -1,6 +1,8 @@
 package attack_test
 
 import (
+	"net"
+	"net/netip"
 	"strings"
 	"sync"
 	"testing"
@@ -281,6 +283,63 @@ func TestAttacker_Attack_CredentialAttemptFails(t *testing.T) {
 	assert.ErrorContains(t, err, "validating streams")
 	require.Len(t, got, 1)
 	assert.False(t, got[0].CredentialsFound)
+}
+
+func TestAttacker_Attack_UnreachableHostDoesNotDropOthers(t *testing.T) {
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute: "stream",
+		requireAuth:  false,
+		authMethod:   headers.AuthMethodBasic,
+	})
+
+	deadAddr, deadPort := closedPort(t)
+
+	dict := testDictionary{
+		routes: []string{"stream"},
+	}
+
+	attacker, err := attack.New(dict, 0, 200*time.Millisecond, false, ui.NopReporter{})
+	require.NoError(t, err)
+
+	// The unreachable host is listed first so that, before the fix, its
+	// connection failure would cancel the shared context and abort the
+	// healthy camera too.
+	streams := []cameradar.Stream{
+		{Address: deadAddr, Port: deadPort},
+		{Address: addr, Port: port},
+	}
+
+	got, err := attacker.Attack(t.Context(), streams)
+	_ = err // a dead host may surface an error; the batch must still complete.
+	require.Len(t, got, 2)
+
+	var healthy *cameradar.Stream
+	for i := range got {
+		if got[i].Address == addr && got[i].Port == port {
+			healthy = &got[i]
+		}
+	}
+	require.NotNil(t, healthy, "healthy camera missing from results")
+	assert.True(t, healthy.RouteFound, "healthy camera should still find its route")
+	assert.True(t, healthy.Available, "healthy camera should still be available despite an unreachable peer")
+}
+
+func closedPort(t *testing.T) (netip.Addr, uint16) {
+	t.Helper()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
+	require.True(t, ok)
+
+	addr, ok := netip.AddrFromSlice(tcpAddr.IP.To4())
+	require.True(t, ok)
+
+	port := uint16(tcpAddr.Port)
+	require.NoError(t, listener.Close())
+
+	return addr, port
 }
 
 func TestAttacker_Attack_AllowsDummyRoute(t *testing.T) {

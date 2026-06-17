@@ -32,7 +32,7 @@ func runParallel(ctx context.Context, targets []cameradar.Stream, fn attackFn) (
 	var wg sync.WaitGroup
 	for range workerCount {
 		wg.Go(func() {
-			runWorker(ctx, jobs, cancel, fn, updated, errCh)
+			runWorker(ctx, jobs, fn, updated, errCh)
 		})
 	}
 
@@ -65,7 +65,7 @@ func queueJobs(ctx context.Context, jobs chan<- attackJob, targets []cameradar.S
 	}
 }
 
-func runWorker(ctx context.Context, jobs <-chan attackJob, cancelFn func(), fn attackFn, updated []cameradar.Stream, errCh chan error) {
+func runWorker(ctx context.Context, jobs <-chan attackJob, fn attackFn, updated []cameradar.Stream, errCh chan error) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -77,13 +77,18 @@ func runWorker(ctx context.Context, jobs <-chan attackJob, cancelFn func(), fn a
 
 			stream, err := fn(ctx, job.stream)
 			if err != nil {
+				// Record the first error but keep processing the remaining
+				// targets. A failure on one camera (e.g. a host that masscan
+				// flagged but is now unreachable) must not drop results for
+				// every other camera in the batch. Cancellation is reserved
+				// for a genuine ctx.Done().
 				select {
 				case errCh <- err:
 				default:
 				}
 
-				cancelFn()
-				return
+				updated[job.index] = stream
+				continue
 			}
 
 			updated[job.index] = stream
