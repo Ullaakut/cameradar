@@ -110,7 +110,8 @@ func formatStreamLabel(stream cameradar.Stream) string {
 	if stream.Device == "" {
 		return label
 	}
-	return label + " (" + stream.Device + ")"
+	device := strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ").Replace(stream.Device)
+	return label + " (" + device + ")"
 }
 
 func formatRTSPURL(stream cameradar.Stream) string {
