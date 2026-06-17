@@ -7,17 +7,52 @@ import (
 	"time"
 
 	"github.com/bluenviron/gortsplib/v5/pkg/base"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
+func TestProbeDescribeHeadersTimeoutZeroDoesNotFailInstantly(t *testing.T) {
+	addr := listenAcceptNoReply(t)
+
+	a := Attacker{timeout: 0}
+	u := &base.URL{Scheme: schemeRTSP, Host: addr, Path: "/"}
+
+	start := time.Now()
+	_, _, err := a.probeDescribeHeaders(context.Background(), u)
+	elapsed := time.Since(start)
+
+	require.Error(t, err, "expected an error from the unresponsive server")
+
+	// With the fix, timeout==0 is clamped to the default (2s). Before the fix the
+	// deadline was set to time.Now() and the probe failed in ~225µs.
+	assert.Greater(t, elapsed, time.Second, "probe with timeout=0 failed too fast; expected to block ~2s on real deadline")
+	assert.Less(t, elapsed, 5*time.Second, "probe with timeout=0 took too long")
+}
+
+func TestProbeDescribeHeadersTimeoutHonored(t *testing.T) {
+	addr := listenAcceptNoReply(t)
+
+	a := Attacker{timeout: 300 * time.Millisecond}
+	u := &base.URL{Scheme: schemeRTSP, Host: addr, Path: "/"}
+
+	start := time.Now()
+	_, _, err := a.probeDescribeHeaders(context.Background(), u)
+	elapsed := time.Since(start)
+
+	require.Error(t, err, "expected an error from the unresponsive server")
+
+	assert.Greater(t, elapsed, 150*time.Millisecond, "probe failed too fast; expected ~300ms")
+	assert.Less(t, elapsed, time.Second, "probe took too long; expected ~300ms")
+}
+
 // listenAcceptNoReply starts a loopback TCP server that accepts connections but
-// never sends any reply, so a DESCRIBE probe blocks until its deadline fires.
-func listenAcceptNoReply(t *testing.T) (string, func()) {
+// never sends any reply, so a DESCRIBE probe blocks until its deadline fires. It
+// returns the server address and registers cleanup via t.Cleanup.
+func listenAcceptNoReply(t *testing.T) string {
 	t.Helper()
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("listen: %v", err)
-	}
+	require.NoError(t, err, "listen")
 
 	done := make(chan struct{})
 	go func() {
@@ -34,56 +69,10 @@ func listenAcceptNoReply(t *testing.T) (string, func()) {
 		}
 	}()
 
-	return ln.Addr().String(), func() {
+	t.Cleanup(func() {
 		close(done)
 		_ = ln.Close()
-	}
-}
+	})
 
-func TestProbeDescribeHeadersTimeoutZeroDoesNotFailInstantly(t *testing.T) {
-	addr, cleanup := listenAcceptNoReply(t)
-	defer cleanup()
-
-	a := Attacker{timeout: 0}
-	u := &base.URL{Scheme: schemeRTSP, Host: addr, Path: "/"}
-
-	start := time.Now()
-	_, _, err := a.probeDescribeHeaders(context.Background(), u)
-	elapsed := time.Since(start)
-
-	if err == nil {
-		t.Fatal("expected an error from the unresponsive server, got nil")
-	}
-
-	// With the fix, timeout==0 is clamped to the default (2s). Before the fix the
-	// deadline was set to time.Now() and the probe failed in ~225µs.
-	if elapsed < time.Second {
-		t.Fatalf("probe with timeout=0 failed too fast (%v); expected to block ~2s on real deadline", elapsed)
-	}
-	if elapsed > 5*time.Second {
-		t.Fatalf("probe with timeout=0 took too long (%v)", elapsed)
-	}
-}
-
-func TestProbeDescribeHeadersTimeoutHonored(t *testing.T) {
-	addr, cleanup := listenAcceptNoReply(t)
-	defer cleanup()
-
-	a := Attacker{timeout: 300 * time.Millisecond}
-	u := &base.URL{Scheme: schemeRTSP, Host: addr, Path: "/"}
-
-	start := time.Now()
-	_, _, err := a.probeDescribeHeaders(context.Background(), u)
-	elapsed := time.Since(start)
-
-	if err == nil {
-		t.Fatal("expected an error from the unresponsive server, got nil")
-	}
-
-	if elapsed < 150*time.Millisecond {
-		t.Fatalf("probe failed too fast (%v); expected ~300ms", elapsed)
-	}
-	if elapsed > time.Second {
-		t.Fatalf("probe took too long (%v); expected ~300ms", elapsed)
-	}
+	return ln.Addr().String()
 }
