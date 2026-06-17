@@ -26,6 +26,10 @@ func expandTargetsForScan(targets []string) ([]string, error) {
 			continue
 		}
 
+		if strings.HasPrefix(value, "-") {
+			return nil, fmt.Errorf("invalid target %q: targets must not start with '-'", value)
+		}
+
 		expanded = append(expanded, value)
 	}
 
