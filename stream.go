@@ -87,12 +87,19 @@ func (s Stream) String() string {
 	scheme := s.resolvedScheme()
 
 	host := net.JoinHostPort(s.Address.String(), strconv.Itoa(int(s.Port)))
-	path := "/" + strings.TrimLeft(strings.TrimSpace(s.Route()), "/")
+	route := strings.TrimLeft(strings.TrimSpace(s.Route()), "/")
+	pathPart := "/" + route
+	rawQuery := ""
+	if i := strings.IndexByte(route, '?'); i >= 0 {
+		pathPart = "/" + route[:i]
+		rawQuery = route[i+1:]
+	}
 
 	u := &url.URL{
-		Scheme: scheme,
-		Host:   host,
-		Path:   path,
+		Scheme:   scheme,
+		Host:     host,
+		Path:     pathPart,
+		RawQuery: rawQuery,
 	}
 	if s.Username != "" || s.Password != "" {
 		u.User = url.UserPassword(s.Username, s.Password)
