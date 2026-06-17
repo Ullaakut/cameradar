@@ -112,9 +112,9 @@ func parsePortValue(ctx context.Context, value string) ([]uint16, error) {
 			return nil, fmt.Errorf("invalid port range %q", value)
 		}
 
-		ports := make([]uint16, 0, end-start+1)
-		for port := start; port <= end; port++ {
-			ports = append(ports, port)
+		ports := make([]uint16, 0, int(end)-int(start)+1)
+		for p := int(start); p <= int(end); p++ {
+			ports = append(ports, uint16(p)) // #nosec G115 -- p is bounded to [1, 65535] by parsePortNumber
 		}
 		return ports, nil
 	}
