@@ -112,3 +112,44 @@ func TestNew_ReturnsErrorOnHostnameLookupFailure(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "resolving hostname")
 }
+
+func TestNew_ExpandsPrefixesWithinBounds(t *testing.T) {
+	tests := []struct {
+		name      string
+		target    string
+		wantAddrs int
+		wantErr   string
+	}{
+		{
+			name:      "bounded ipv6 /120 expands to 256 addresses",
+			target:    "2001:db8::/120",
+			wantAddrs: 256,
+		},
+		{
+			name:    "oversized ipv6 /64 returns an error",
+			target:  "2001:db8::/64",
+			wantErr: "too large to expand",
+		},
+		{
+			name:      "ipv4 /24 expands to 256 addresses",
+			target:    "192.0.2.0/24",
+			wantAddrs: 256,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			scanner := skip.New([]string{test.target}, []string{"554"})
+
+			streams, err := scanner.Scan(t.Context())
+			if test.wantErr != "" {
+				require.Error(t, err)
+				assert.ErrorContains(t, err, test.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Len(t, streams, test.wantAddrs)
+		})
+	}
+}
