@@ -11,7 +11,7 @@ import (
 )
 
 // FormatSummary builds a human-readable summary of discovered streams.
-func FormatSummary(streams []cameradar.Stream, _ error) string {
+func FormatSummary(streams []cameradar.Stream) string {
 	accessible, others := partitionStreams(streams)
 
 	var builder strings.Builder

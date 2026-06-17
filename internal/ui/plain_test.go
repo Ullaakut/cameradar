@@ -32,6 +32,29 @@ func TestPlainReporter_Outputs(t *testing.T) {
 		assert.Contains(t, content, "Summary\n-------\nAccessible streams: 0")
 	})
 
+	t.Run("surfaces summary error", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		reporter := ui.NewPlainReporter(out, false)
+
+		reporter.Summary([]cameradar.Stream{}, errors.New("boom"))
+
+		content := out.String()
+		assert.Contains(t, content, "Summary\n-------\nAccessible streams: 0")
+		assert.Contains(t, content, " [EROR] ")
+		assert.Contains(t, content, "boom")
+	})
+
+	t.Run("omits error line when summary error is nil", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		reporter := ui.NewPlainReporter(out, false)
+
+		reporter.Summary([]cameradar.Stream{}, nil)
+
+		content := out.String()
+		assert.Contains(t, content, "Accessible streams: 0")
+		assert.NotContains(t, content, " [EROR] ")
+	})
+
 	t.Run("respects debug flag and empty input", func(t *testing.T) {
 		out := &bytes.Buffer{}
 		reporter := ui.NewPlainReporter(out, false)

@@ -92,7 +92,7 @@ func TestApp_Run(t *testing.T) {
 			wantErrContains: "discovering devices",
 			wantErrorCalls:  1,
 			wantSummary:     streams,
-			wantSummaryErr:  "discovering devices",
+			wantSummaryErr:  "",
 		},
 		{
 			name: "attack error",
