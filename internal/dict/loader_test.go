@@ -155,6 +155,49 @@ func TestNew_Errors(t *testing.T) {
 	}
 }
 
+func TestNew_RoutesSanitization(t *testing.T) {
+	tempDir := t.TempDir()
+	credsPath := writeTempFile(t, tempDir, "creds.json", `{"usernames":["alice"],"passwords":["secret"]}`)
+
+	tests := []struct {
+		name    string
+		content string
+		want    []string
+	}{
+		{
+			name:    "strips BOM from first route",
+			content: "\ufeffstream\nother\n",
+			want:    []string{"stream", "other"},
+		},
+		{
+			name:    "skips leading, trailing and whitespace-only lines",
+			content: "\n\nstream\n   \nother\n\n",
+			want:    []string{"stream", "other"},
+		},
+		{
+			name:    "trims surrounding whitespace per line",
+			content: "  stream  \n\tother\t\n",
+			want:    []string{"stream", "other"},
+		},
+		{
+			name:    "handles CRLF line endings",
+			content: "stream\r\nother\r\n",
+			want:    []string{"stream", "other"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			routesPath := writeTempFile(t, tempDir, "routes-"+test.name, test.content)
+
+			got, err := dict.New(credsPath, routesPath)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.want, got.Routes())
+		})
+	}
+}
+
 func writeTempFile(t *testing.T, dir, name, content string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)
