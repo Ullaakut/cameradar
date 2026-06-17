@@ -54,15 +54,15 @@ func TestExpandTargetsForScan_ReturnsErrorOnInvalidRange(t *testing.T) {
 	})
 
 	t.Run("starts with dash", func(t *testing.T) {
-		tgts, err := expandTargetsForScan([]string{"-a"})
-		require.NoError(t, err)
-		assert.Equal(t, []string{"-a"}, tgts)
+		_, err := expandTargetsForScan([]string{"-a"})
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "invalid target")
 	})
 
 	t.Run("only a dash", func(t *testing.T) {
-		tgts, err := expandTargetsForScan([]string{"-"})
-		require.NoError(t, err)
-		assert.Equal(t, []string{"-"}, tgts)
+		_, err := expandTargetsForScan([]string{"-"})
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "invalid target")
 	})
 
 	t.Run("nmap format", func(t *testing.T) {
@@ -70,4 +70,33 @@ func TestExpandTargetsForScan_ReturnsErrorOnInvalidRange(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []string{"192.168.1.10-255"}, tgts)
 	})
+}
+
+func TestExpandTargetsForScan_RejectsFlagLikeTokens(t *testing.T) {
+	rejected := []string{
+		"-oN",
+		"--script=x",
+		"-iL/etc/passwd",
+		"--datadir=/tmp",
+	}
+	for _, target := range rejected {
+		t.Run(target, func(t *testing.T) {
+			_, err := expandTargetsForScan([]string{target})
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "invalid target")
+		})
+	}
+
+	accepted := []string{
+		"192.0.2.1",
+		"192.0.2.0/24",
+		"10.0.0.1-10.0.0.5",
+		"host.example",
+	}
+	for _, target := range accepted {
+		t.Run(target, func(t *testing.T) {
+			_, err := expandTargetsForScan([]string{target})
+			require.NoError(t, err)
+		})
+	}
 }

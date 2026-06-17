@@ -556,7 +556,7 @@ func buildSummaryRows(streams []cameradar.Stream, visibility summaryVisibilitySt
 
 		rtspURL := emptyEntry
 		if visibility.showCredentials && stream.RouteFound && stream.CredentialsFound {
-			rtspURL = formatRTSPURL(stream)
+			rtspURL = stream.String()
 		}
 
 		authType := emptyEntry

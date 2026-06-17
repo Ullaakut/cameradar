@@ -178,7 +178,7 @@ func expandTargets(ctx context.Context, targets []string) ([]netip.Addr, error) 
 func parseTargetAddrs(ctx context.Context, target string) ([]netip.Addr, error) {
 	prefix, err := netip.ParsePrefix(target)
 	if err == nil { // Return early.
-		return expandPrefix(prefix), nil
+		return expandPrefix(prefix)
 	}
 
 	if strings.Contains(target, "-") {
@@ -214,9 +214,20 @@ func parseTargetAddrs(ctx context.Context, target string) ([]netip.Addr, error) 
 	return addrs, nil
 }
 
-func expandPrefix(prefix netip.Prefix) []netip.Addr {
+// maxPrefixHostBits bounds how many host bits a prefix may expand. Expanding a
+// prefix materializes one address per host, so an unbounded prefix (such as an
+// IPv6 /64) would try to enumerate 2^64 addresses and never return. Capping at
+// 16 host bits limits expansion to 65536 addresses.
+const maxPrefixHostBits = 16
+
+func expandPrefix(prefix netip.Prefix) ([]netip.Addr, error) {
 	if !prefix.IsValid() {
-		return nil
+		return nil, fmt.Errorf("invalid prefix %q", prefix)
+	}
+
+	hostBits := prefix.Addr().BitLen() - prefix.Bits()
+	if hostBits > maxPrefixHostBits {
+		return nil, fmt.Errorf("prefix %q is too large to expand: %d host bits exceeds limit of %d", prefix, hostBits, maxPrefixHostBits)
 	}
 
 	prefix = prefix.Masked()
@@ -232,7 +243,7 @@ func expandPrefix(prefix netip.Prefix) []netip.Addr {
 		current = next
 	}
 
-	return addrs
+	return addrs, nil
 }
 
 type octetRange struct {

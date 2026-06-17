@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -106,7 +105,7 @@ func formatStream(stream cameradar.Stream) string {
 
 	if stream.RouteFound && (stream.CredentialsFound || stream.AuthenticationType == cameradar.AuthNone) {
 		builder.WriteString("  RTSP URL: ")
-		builder.WriteString(formatRTSPURL(stream))
+		builder.WriteString(stream.String())
 		builder.WriteString("\n")
 	}
 
@@ -115,20 +114,6 @@ func formatStream(stream cameradar.Stream) string {
 	builder.WriteString("\n")
 
 	return builder.String()
-}
-
-func formatRTSPURL(stream cameradar.Stream) string {
-	path := "/" + strings.TrimLeft(strings.TrimSpace(stream.Route()), "/")
-
-	credentials := ""
-	if stream.Username != "" || stream.Password != "" {
-		credentials = stream.Username + ":" + stream.Password + "@"
-	}
-
-	scheme := stream.RTSPScheme()
-	host := net.JoinHostPort(stream.Address.String(), strconv.FormatUint(uint64(stream.Port), 10))
-
-	return fmt.Sprintf("%s://%s%s%s", scheme, credentials, host, path)
 }
 
 func formatAdminPanelURL(stream cameradar.Stream) string {

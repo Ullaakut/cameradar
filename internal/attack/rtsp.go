@@ -98,7 +98,8 @@ func (a Attacker) describeStatus(stream cameradar.Stream) (base.StatusCode, erro
 // NOTE: We do not use gortsplib here because it does not expose response headers when the status code is 401 Unauthorized,
 // which is exactly what we need in order to detect authentication methods.
 func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.StatusCode, base.Header, error) {
-	dialer := &net.Dialer{Timeout: a.timeout}
+	timeout := frameProbeTimeout(a.timeout)
+	dialer := &net.Dialer{Timeout: timeout}
 
 	var (
 		conn net.Conn
@@ -123,7 +124,7 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.S
 
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		deadline = time.Now().Add(a.timeout)
+		deadline = time.Now().Add(timeout)
 	}
 
 	err = conn.SetDeadline(deadline)
