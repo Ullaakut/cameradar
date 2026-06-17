@@ -74,13 +74,19 @@ func runScan(ctx context.Context, nmap Runner, reporter Reporter) ([]cameradar.S
 			}
 
 			for _, address := range host.Addresses {
-				addr, err := netip.ParseAddr(address.Addr)
-				if err != nil {
-					reporter.Progress(cameradar.StepScan, fmt.Sprintf("Skipping invalid address %q: %v", address.Addr, err))
+				addrType := strings.ToLower(strings.TrimSpace(address.AddrType))
+				if addrType != "" && addrType != "ipv4" && addrType != "ipv6" {
 					continue
 				}
 
-				scheme := ports.InferTunnelScheme(port.ID, port.Service.Name)
+				addr, err := netip.ParseAddr(address.Addr)
+				if err != nil {
+					reporter.Debug(cameradar.StepScan, fmt.Sprintf("Skipping invalid address %q: %v", address.Addr, err))
+					continue
+				}
+
+				scheme := resolveScheme(port.ID, port.Service.Name, port.Service.Tunnel)
+
 				streams = append(streams, cameradar.Stream{
 					Device:  port.Service.Product,
 					Address: addr,
@@ -107,6 +113,23 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 		return
 	}
 	updater.UpdateSummary(streams)
+}
+
+// resolveScheme returns the tunnel scheme for a port, upgrading to the TLS
+// variant when nmap reports tunnel="ssl".
+func resolveScheme(port uint16, serviceName, tunnel string) string {
+	scheme := ports.InferTunnelScheme(port, serviceName)
+	if !strings.EqualFold(strings.TrimSpace(tunnel), "ssl") {
+		return scheme
+	}
+	switch scheme {
+	case "", "rtsp":
+		return "rtsps"
+	case "http":
+		return "https"
+	default:
+		return scheme
+	}
 }
 
 // Extracting the classifying logic to an external function to avoid nesting if loops.

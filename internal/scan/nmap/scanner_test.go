@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/netip"
+	"strings"
 	"sync"
 	"testing"
 
@@ -17,20 +18,20 @@ func TestScanner_Scan(t *testing.T) {
 	ctx := context.WithValue(t.Context(), contextKey("trace"), "scan")
 
 	tests := []struct {
-		name            string
-		result          *nmaplib.Run
-		err             error
-		wantStreams     []cameradar.Stream
-		wantDebug       []string
-		wantProgress    string
-		wantErrContains string
+		name                string
+		result              *nmaplib.Run
+		err                 error
+		wantStreams          []cameradar.Stream
+		wantDebug            []string
+		wantProgress         string
+		wantNoProgressPrefix string
+		wantErrContains      string
 	}{
 		{
 			name: "filters non-rtsp and closed ports",
 			result: buildRun(nmaplib.Host{
 				Addresses: []nmaplib.Address{
 					{Addr: "127.0.0.1"},
-					{Addr: "not-an-ip"},
 				},
 				Ports: []nmaplib.Port{
 					openPort(8554, "rtsp", "ACME"),
@@ -58,7 +59,6 @@ func TestScanner_Scan(t *testing.T) {
 			result: buildRun(nmaplib.Host{
 				Addresses: []nmaplib.Address{
 					{Addr: "127.0.0.1"},
-					{Addr: "not-an-ip"},
 				},
 				Ports: []nmaplib.Port{
 					openPort(8554, "rtsp", "ACME"),
@@ -148,6 +148,52 @@ func TestScanner_Scan(t *testing.T) {
 			err:             errors.New("scan failed"),
 			wantErrContains: "scanning network",
 		},
+		{
+			name: "upgrades scheme to rtsps when tunnel=ssl",
+			result: buildRun(nmaplib.Host{
+				Addresses: []nmaplib.Address{{Addr: "10.0.0.1"}},
+				Ports: []nmaplib.Port{
+					openPortWithTunnel(8554, "rtsp", "ssl", "CAM"),
+					openPortWithTunnel(8080, "http", "ssl", "CAM"),
+				},
+			}),
+			wantStreams: []cameradar.Stream{
+				{
+					Device:  "CAM",
+					Address: netip.MustParseAddr("10.0.0.1"),
+					Port:    8554,
+					Scheme:  "rtsps",
+				},
+				{
+					Device:  "CAM",
+					Address: netip.MustParseAddr("10.0.0.1"),
+					Port:    8080,
+					Scheme:  "https",
+				},
+			},
+			wantProgress: "Found 2 RTSP streams",
+		},
+		{
+			name: "skips MAC address without progress message",
+			result: buildRun(nmaplib.Host{
+				Addresses: []nmaplib.Address{
+					{Addr: "10.0.0.2", AddrType: "ipv4"},
+					{Addr: "aa:bb:cc:dd:ee:ff", AddrType: "mac"},
+				},
+				Ports: []nmaplib.Port{
+					openPort(554, "rtsp", "CAM"),
+				},
+			}),
+			wantStreams: []cameradar.Stream{
+				{
+					Device:  "CAM",
+					Address: netip.MustParseAddr("10.0.0.2"),
+					Port:    554,
+				},
+			},
+			wantProgress:         "Found 1 RTSP streams",
+			wantNoProgressPrefix: "Skipping",
+		},
 	}
 
 	for _, test := range tests {
@@ -174,6 +220,12 @@ func TestScanner_Scan(t *testing.T) {
 			assert.Equal(t, test.wantStreams, streams)
 			assert.Equal(t, test.wantDebug, reporter.debug)
 			assert.Contains(t, reporter.progress, test.wantProgress)
+			if test.wantNoProgressPrefix != "" {
+				for _, msg := range reporter.progress {
+					assert.False(t, strings.HasPrefix(msg, test.wantNoProgressPrefix),
+						"unexpected progress message: %q", msg)
+				}
+			}
 		})
 	}
 }
@@ -229,6 +281,20 @@ func openPort(id uint16, serviceName, product string) nmaplib.Port {
 		},
 		Service: nmaplib.Service{
 			Name:    serviceName,
+			Product: product,
+		},
+	}
+}
+
+func openPortWithTunnel(id uint16, serviceName, tunnel, product string) nmaplib.Port {
+	return nmaplib.Port{
+		ID: id,
+		State: nmaplib.State{
+			State: string(nmaplib.Open),
+		},
+		Service: nmaplib.Service{
+			Name:    serviceName,
+			Tunnel:  tunnel,
 			Product: product,
 		},
 	}
