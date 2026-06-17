@@ -127,7 +127,12 @@ func parseRoutes(reader io.ReadCloser) (routes, error) {
 	var routes routes
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		routes = append(routes, scanner.Text())
+		line := strings.TrimPrefix(scanner.Text(), "\ufeff")
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		routes = append(routes, line)
 	}
 
 	return routes, scanner.Err()
