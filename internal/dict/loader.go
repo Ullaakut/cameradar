@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -116,6 +117,14 @@ func parseCredentials(content []byte) (credentials, error) {
 	err := json.Unmarshal(content, &creds)
 	if err != nil {
 		return credentials{}, fmt.Errorf("reading dictionary contents: %w", err)
+	}
+
+	hasControlChar := func(s string) bool {
+		return strings.ContainsFunc(s, func(r rune) bool { return r < 0x20 || r == 0x7f })
+	}
+
+	if slices.ContainsFunc(creds.Usernames, hasControlChar) || slices.ContainsFunc(creds.Passwords, hasControlChar) {
+		return credentials{}, errors.New("invalid credential: control characters are not allowed")
 	}
 
 	return creds, nil
