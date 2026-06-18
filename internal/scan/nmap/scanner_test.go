@@ -269,6 +269,68 @@ func (r *recordingReporter) Summary([]cameradar.Stream, error) {}
 
 func (r *recordingReporter) Close() {}
 
+func TestStreamCandidate_WellKnownRTSPPorts(t *testing.T) {
+	// Well-known RTSP ports (554, 5554, 8554) must be treated as candidates
+	// even when nmap cannot fingerprint the service and reports a generic name
+	// like "tcpwrapped" or "unknown". Previously, streamCandidate relied solely
+	// on the service name containing "rtsp" or InferTunnelScheme returning a
+	// non-empty value; since 554/5554/8554 are not in InferTunnelScheme's port
+	// table, any service-detection failure silently dropped the stream.
+	tests := []struct {
+		serviceName string
+		port        uint16
+		want        bool
+	}{
+		{serviceName: "tcpwrapped", port: 554, want: true},
+		{serviceName: "unknown", port: 554, want: true},
+		{serviceName: "", port: 554, want: true},
+		{serviceName: "tcpwrapped", port: 5554, want: true},
+		{serviceName: "unknown", port: 5554, want: true},
+		{serviceName: "tcpwrapped", port: 8554, want: true},
+		{serviceName: "unknown", port: 8554, want: true},
+		// Ports that are NOT well-known RTSP ports with no service match should not be candidates.
+		{serviceName: "unknown", port: 9999, want: false},
+		{serviceName: "tcpwrapped", port: 8080, want: true}, // http port - still candidate via InferTunnelScheme
+	}
+	for _, tc := range tests {
+		got := streamCandidate(tc.serviceName, tc.port)
+		if got != tc.want {
+			t.Errorf("streamCandidate(%q, %d) = %v, want %v", tc.serviceName, tc.port, got, tc.want)
+		}
+	}
+}
+
+func TestRunScan_WellKnownRTSPPortWithUnknownService(t *testing.T) {
+	// When nmap reports port 554 (or 8554 / 5554) as open but cannot identify
+	// the service (e.g. "tcpwrapped"), runScan must still emit a stream for it.
+	reporter := &recordingReporter{}
+	runner := fakeRunner{
+		result: buildRun(nmaplib.Host{
+			Addresses: []nmaplib.Address{{Addr: "192.0.2.5", AddrType: "ipv4"}},
+			Ports: []nmaplib.Port{
+				openPort(554, "tcpwrapped", ""),
+				openPort(5554, "unknown", ""),
+				openPort(8554, "", ""),
+			},
+		}),
+	}
+
+	streams, err := runScan(t.Context(), runner, reporter)
+	if err != nil {
+		t.Fatalf("runScan returned unexpected error: %v", err)
+	}
+
+	want := []cameradar.Stream{
+		{Address: netip.MustParseAddr("192.0.2.5"), Port: 554},
+		{Address: netip.MustParseAddr("192.0.2.5"), Port: 5554},
+		{Address: netip.MustParseAddr("192.0.2.5"), Port: 8554},
+	}
+	if len(streams) != len(want) {
+		t.Fatalf("got %d streams, want %d; streams: %v", len(streams), len(want), streams)
+	}
+	assert.Equal(t, want, streams)
+}
+
 func buildRun(hosts ...nmaplib.Host) *nmaplib.Run {
 	return &nmaplib.Run{Hosts: hosts}
 }
