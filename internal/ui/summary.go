@@ -62,6 +62,17 @@ func partitionStreams(streams []cameradar.Stream) ([]cameradar.Stream, []camerad
 	return accessible, others
 }
 
+// sanitizeDevice removes ASCII control characters (bytes < 0x20 and 0x7F)
+// from a device banner string to prevent terminal escape sequence injection.
+func sanitizeDevice(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7F {
+			return -1
+		}
+		return r
+	}, s)
+}
+
 func formatStream(stream cameradar.Stream) string {
 	var builder strings.Builder
 	builder.WriteString("• ")
@@ -71,7 +82,7 @@ func formatStream(stream cameradar.Stream) string {
 
 	if stream.Device != "" {
 		builder.WriteString(" (")
-		builder.WriteString(stream.Device)
+		builder.WriteString(sanitizeDevice(stream.Device))
 		builder.WriteString(")")
 	}
 	builder.WriteString("\n")

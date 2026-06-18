@@ -107,6 +107,25 @@ func TestFormatSummary(t *testing.T) {
 			},
 		},
 		{
+			name: "control characters in device label are stripped",
+			streams: []cameradar.Stream{
+				{
+					Device:             "ACME\x1b\x0d Cam",
+					Address:            netip.MustParseAddr("10.0.0.5"),
+					Port:               554,
+					Available:          true,
+					AuthenticationType: cameradar.AuthNone,
+				},
+			},
+			wantContains: []string{
+				"• 10.0.0.5:554 (ACME Cam)",
+			},
+			wantNotContains: []string{
+				"\x1b",
+				"\x0d",
+			},
+		},
+		{
 			name: "empty discovered credentials render as none",
 			streams: []cameradar.Stream{
 				{
