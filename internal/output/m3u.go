@@ -90,15 +90,33 @@ func BuildM3U(streams []cameradar.Stream) string {
 	var builder strings.Builder
 	builder.WriteString("#EXTM3U\n")
 	for _, stream := range streams {
-		url := stream.String()
-		if url == "" {
+		routes := stream.Routes
+		if len(routes) == 0 {
+			// No routes recorded; let String() append "/" as the default path.
+			url := stream.String()
+			if url == "" {
+				continue
+			}
+			builder.WriteString("#EXTINF:-1,")
+			builder.WriteString(formatStreamLabel(stream))
+			builder.WriteString("\n")
+			builder.WriteString(url)
+			builder.WriteString("\n")
 			continue
 		}
-		builder.WriteString("#EXTINF:-1,")
-		builder.WriteString(formatStreamLabel(stream))
-		builder.WriteString("\n")
-		builder.WriteString(url)
-		builder.WriteString("\n")
+		for _, route := range routes {
+			entry := stream
+			entry.Routes = []string{route}
+			url := entry.String()
+			if url == "" {
+				continue
+			}
+			builder.WriteString("#EXTINF:-1,")
+			builder.WriteString(formatStreamLabel(stream))
+			builder.WriteString("\n")
+			builder.WriteString(url)
+			builder.WriteString("\n")
+		}
 	}
 	return builder.String()
 }
@@ -108,6 +126,6 @@ func formatStreamLabel(stream cameradar.Stream) string {
 	if stream.Device == "" {
 		return label
 	}
-	device := strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ").Replace(stream.Device)
+	device := strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ", "\t", " ").Replace(stream.Device)
 	return label + " (" + device + ")"
 }

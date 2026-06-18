@@ -78,3 +78,37 @@ func TestBuildM3U_RendersNormalDeviceLabel(t *testing.T) {
 
 	assert.Contains(t, playlist, "192.0.2.30:554 (Hikvision DS-2CD)")
 }
+
+func TestBuildM3U_EmitsOneEntryPerRoute(t *testing.T) {
+	stream := cameradar.Stream{
+		Address: netip.MustParseAddr("192.0.2.40"),
+		Port:    554,
+		Routes:  []string{"live/ch0", "live/ch1"},
+	}
+
+	playlist := output.BuildM3U([]cameradar.Stream{stream})
+
+	assert.Contains(t, playlist, "rtsp://192.0.2.40:554/live/ch0")
+	assert.Contains(t, playlist, "rtsp://192.0.2.40:554/live/ch1")
+
+	extinfCount := 0
+	for _, line := range strings.Split(playlist, "\n") {
+		if strings.HasPrefix(line, "#EXTINF") {
+			extinfCount++
+		}
+	}
+	assert.Equal(t, 2, extinfCount, "one #EXTINF entry per route")
+}
+
+func TestBuildM3U_SanitizesDeviceLabelTab(t *testing.T) {
+	stream := cameradar.Stream{
+		Address: netip.MustParseAddr("192.0.2.50"),
+		Port:    554,
+		Routes:  []string{"stream"},
+		Device:  "Cam\tModel",
+	}
+
+	playlist := output.BuildM3U([]cameradar.Stream{stream})
+
+	assert.Contains(t, playlist, "192.0.2.50:554 (Cam Model)")
+}
