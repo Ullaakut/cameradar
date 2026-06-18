@@ -182,9 +182,13 @@ func authTypeFromHeaders(values base.HeaderValue) cameradar.AuthType {
 		var authHeader headers.Authenticate
 		err := authHeader.Unmarshal(base.HeaderValue{value})
 		if err != nil {
+			// Extract only the scheme token (first word) to avoid false matches
+			// when realm or other parameters contain "basic" or "digest" as a
+			// substring (e.g. Basic realm="digest-cam").
 			lower := strings.ToLower(value)
-			hasDigest = hasDigest || strings.Contains(lower, "digest")
-			hasBasic = hasBasic || strings.Contains(lower, "basic")
+			scheme, _, _ := strings.Cut(lower, " ")
+			hasDigest = hasDigest || scheme == "digest"
+			hasBasic = hasBasic || scheme == "basic"
 			continue
 		}
 

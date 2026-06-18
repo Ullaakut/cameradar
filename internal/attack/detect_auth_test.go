@@ -75,6 +75,20 @@ func TestAuthTypeFromHeaders(t *testing.T) {
 			values: base.HeaderValue{"Bearer abc"},
 			want:   cameradar.AuthUnknown,
 		},
+		{
+			// Unmarshal rejects a lower-case scheme ("basic" vs "Basic"), so the
+			// code falls back to a substring search on the raw header value.
+			// The realm contains "digest", which must NOT override the Basic scheme.
+			name:   "lowercase basic with digest in realm is still basic",
+			values: base.HeaderValue{`basic realm="digest-realm"`},
+			want:   cameradar.AuthBasic,
+		},
+		{
+			// Same as above for a lower-case "digest" scheme with "basic" in the realm.
+			name:   "lowercase digest with basic in realm is still digest",
+			values: base.HeaderValue{`digest realm="basic-realm", nonce="abc123"`},
+			want:   cameradar.AuthDigest,
+		},
 	}
 
 	for _, test := range tests {
