@@ -61,7 +61,7 @@ func (a *App) Run(ctx context.Context) error {
 	if err != nil {
 		wrapped := fmt.Errorf("discovering devices: %w", err)
 		a.reporter.Error(StepScan, wrapped)
-		a.reporter.Summary(streams, nil)
+		a.reporter.Summary(streams, wrapped)
 		return wrapped
 	}
 	a.reporter.Done(StepScan, "Scan complete")
