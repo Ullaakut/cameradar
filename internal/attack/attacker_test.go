@@ -221,6 +221,38 @@ func TestAttacker_Attack_ReturnsErrorWhenRouteMissing(t *testing.T) {
 	assert.False(t, got[0].RouteFound)
 }
 
+func TestAttacker_Attack_DoesNotSetCredentialsFoundWhenRouteNotFound(t *testing.T) {
+	// The server only accepts route "stream"; neither the dummy probe nor "missing"
+	// will match, so RouteFound stays false.  The credential phase must not mark
+	// CredentialsFound=true just because the server returns 404 (route not found)
+	// for the root path used when Routes is empty — 404 is not evidence of valid
+	// credentials when no route has been discovered.
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute: "stream",
+		requireAuth:  false,
+		authMethod:   headers.AuthMethodBasic,
+	})
+
+	dict := testDictionary{
+		routes:    []string{"missing"},
+		usernames: []string{"user"},
+		passwords: []string{"pass"},
+	}
+
+	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
+	require.NoError(t, err)
+
+	streams := []cameradar.Stream{{
+		Address: addr,
+		Port:    port,
+	}}
+
+	got, _ := attacker.Attack(t.Context(), streams)
+	require.Len(t, got, 1)
+	assert.False(t, got[0].RouteFound)
+	assert.False(t, got[0].CredentialsFound, "credential attack must not run when no route was found")
+}
+
 func TestAttacker_Attack_ReturnsErrorWhenCredentialsMissing(t *testing.T) {
 	addr, port := startRTSPServer(t, rtspServerConfig{
 		allowedRoute: "stream",
