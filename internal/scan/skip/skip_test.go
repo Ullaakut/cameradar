@@ -97,6 +97,17 @@ func TestNew_ResolvesServicePorts(t *testing.T) {
 	assert.Equal(t, uint16(80), streams[0].Port)
 }
 
+func TestNew_ResolvesHyphenatedServicePortNames(t *testing.T) {
+	// Service names that contain a hyphen (e.g. "http-alt") must be resolved via
+	// LookupPort rather than rejected as malformed numeric ranges.
+	scanner := skip.New([]string{"127.0.0.1"}, []string{"http-alt"})
+
+	streams, err := scanner.Scan(t.Context())
+	require.NoError(t, err)
+	require.Len(t, streams, 1)
+	assert.Equal(t, uint16(8080), streams[0].Port)
+}
+
 func TestNew_ReturnsErrorOnUnknownServicePort(t *testing.T) {
 	scanner := skip.New([]string{"127.0.0.1"}, []string{"not-a-service"})
 
