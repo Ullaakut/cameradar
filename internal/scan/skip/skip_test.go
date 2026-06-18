@@ -56,6 +56,20 @@ func TestNew_ExpandsTargetsAndPorts(t *testing.T) {
 	assert.ElementsMatch(t, want, got)
 }
 
+func TestNew_ExpandsPortRangeEndingAt65535(t *testing.T) {
+	scanner := skip.New([]string{"192.0.2.1"}, []string{"65534-65535"})
+
+	streams, err := scanner.Scan(t.Context())
+	require.NoError(t, err)
+	require.Len(t, streams, 2)
+
+	var got []uint16
+	for _, stream := range streams {
+		got = append(got, stream.Port)
+	}
+	assert.ElementsMatch(t, []uint16{65534, 65535}, got)
+}
+
 func TestNew_ReturnsErrorOnInvalidPortRange(t *testing.T) {
 	scanner := skip.New([]string{"192.0.2.1"}, []string{"8555-8554"})
 
