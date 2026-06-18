@@ -38,7 +38,7 @@ func runParallel(ctx context.Context, targets []cameradar.Stream, fn attackFn) (
 		})
 	}
 
-	queueJobs(ctx, jobs, targets)
+	queued := queueJobs(ctx, jobs, targets)
 	close(jobs)
 
 	wg.Wait()
@@ -53,6 +53,13 @@ func runParallel(ctx context.Context, targets []cameradar.Stream, fn attackFn) (
 		errs = errors.Join(errs, err)
 	}
 
+	// When the context is cancelled before all jobs are queued, the unqueued
+	// targets never run and their slots in updated hold stale pre-attack data.
+	// Surface the cancellation so callers know the results are incomplete.
+	if queued < len(targets) {
+		errs = errors.Join(errs, fmt.Errorf("attack cancelled after %d/%d targets: %w", queued, len(targets), ctx.Err()))
+	}
+
 	return updated, errs
 }
 
@@ -61,14 +68,15 @@ type attackJob struct {
 	stream cameradar.Stream
 }
 
-func queueJobs(ctx context.Context, jobs chan<- attackJob, targets []cameradar.Stream) {
+func queueJobs(ctx context.Context, jobs chan<- attackJob, targets []cameradar.Stream) int {
 	for i, stream := range targets {
 		select {
 		case <-ctx.Done():
-			return
+			return i
 		case jobs <- attackJob{index: i, stream: stream}:
 		}
 	}
+	return len(targets)
 }
 
 func runWorker(ctx context.Context, jobs <-chan attackJob, fn attackFn, updated []cameradar.Stream) error {
