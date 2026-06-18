@@ -2,6 +2,7 @@ package dict
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -109,6 +110,10 @@ func loadRoutes(routesPath string) (routes, error) {
 }
 
 func parseCredentials(content []byte) (credentials, error) {
+	// Strip a UTF-8 BOM written by some editors (e.g. Windows Notepad) so that
+	// json.Unmarshal does not fail with "invalid character" on an otherwise valid file.
+	content = bytes.TrimPrefix(content, []byte{0xEF, 0xBB, 0xBF})
+
 	if len(content) == 0 {
 		return credentials{}, errors.New("credentials dictionary is empty")
 	}
