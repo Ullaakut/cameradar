@@ -151,6 +151,9 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.S
 	if len(fields) < 2 {
 		return 0, nil, fmt.Errorf("invalid RTSP status line: %q", statusLine)
 	}
+	if fields[0] != "RTSP/1.0" {
+		return 0, nil, fmt.Errorf("invalid RTSP status line: expected RTSP/1.0, got %q", statusLine)
+	}
 
 	code, err := strconv.Atoi(fields[1])
 	if err != nil {
