@@ -240,6 +240,26 @@ func TestNew_CredentialsSanitization(t *testing.T) {
 	}
 }
 
+func TestNew_CredentialsBOMStripped(t *testing.T) {
+	// A UTF-8 BOM (0xEF 0xBB 0xBF) at the start of a credentials JSON file must be
+	// silently stripped before parsing, the same way parseRoutes strips BOM from the
+	// first route line.  Without the fix, json.Unmarshal sees a non-JSON prefix and
+	// returns "invalid character" — a confusing error for a valid file saved by
+	// Windows tools that write a BOM.
+	tempDir := t.TempDir()
+	routesPath := writeTempFile(t, tempDir, "routes", "stream\n")
+
+	bom := []byte{0xEF, 0xBB, 0xBF}
+	jsonBody := []byte(`{"usernames":["alice"],"passwords":["secret"]}`)
+	credsPath := filepath.Join(tempDir, "creds-bom.json")
+	require.NoError(t, os.WriteFile(credsPath, append(bom, jsonBody...), 0o600))
+
+	got, err := dict.New(credsPath, routesPath)
+	require.NoError(t, err, "credentials file with UTF-8 BOM should be accepted")
+	assert.Equal(t, []string{"alice"}, got.Usernames())
+	assert.Equal(t, []string{"secret"}, got.Passwords())
+}
+
 func writeTempFile(t *testing.T, dir, name, content string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)
