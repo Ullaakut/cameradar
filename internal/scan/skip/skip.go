@@ -98,8 +98,7 @@ func parsePortValue(ctx context.Context, value string) ([]uint16, error) {
 		return r, err
 	}
 
-	port, err := parsePortNumber(value)
-	if err == nil {
+	if port, ok := parsePortNumber(value); ok {
 		return []uint16{port}, nil
 	}
 
@@ -122,8 +121,8 @@ func tryParsePortRange(value string) ([]uint16, bool, error) {
 		return nil, false, nil
 	}
 	parts := strings.SplitN(value, "-", 2)
-	start, ok1 := tryParsePortNumber(strings.TrimSpace(parts[0]))
-	end, ok2 := tryParsePortNumber(strings.TrimSpace(parts[1]))
+	start, ok1 := parsePortNumber(strings.TrimSpace(parts[0]))
+	end, ok2 := parsePortNumber(strings.TrimSpace(parts[1]))
 	if !ok1 || !ok2 {
 		return nil, false, nil
 	}
@@ -137,21 +136,14 @@ func tryParsePortRange(value string) ([]uint16, bool, error) {
 	return ports, true, nil
 }
 
-// tryParsePortNumber is like parsePortNumber but reports success via a bool instead of an error.
-func tryParsePortNumber(value string) (uint16, bool) {
-	port, err := parsePortNumber(value)
-	return port, err == nil
-}
-
-func parsePortNumber(value string) (uint16, error) {
+// parsePortNumber parses value as a TCP port number in [1, 65535],
+// reporting success via a bool rather than an error.
+func parsePortNumber(value string) (uint16, bool) {
 	port, err := strconv.Atoi(value)
-	if err != nil {
-		return 0, err
+	if err != nil || port < 1 || port > 65535 {
+		return 0, false
 	}
-	if port < 1 || port > 65535 {
-		return 0, fmt.Errorf("port %d out of range", port)
-	}
-	return uint16(port), nil
+	return uint16(port), true
 }
 
 func expandTargets(ctx context.Context, targets []string) ([]netip.Addr, error) {
