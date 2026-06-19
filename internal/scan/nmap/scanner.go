@@ -134,10 +134,10 @@ func resolveScheme(port uint16, serviceName, tunnel string) string {
 
 // wellKnownRTSPPorts lists port numbers that are commonly used for RTSP even
 // when nmap cannot fingerprint the service (e.g. "tcpwrapped", "unknown").
-var wellKnownRTSPPorts = map[uint16]bool{
-	554:  true,
-	5554: true,
-	8554: true,
+var wellKnownRTSPPorts = map[uint16]struct{}{
+	554:  {},
+	5554: {},
+	8554: {},
 }
 
 // Extracting the classifying logic to an external function to avoid nesting if loops.
@@ -154,5 +154,6 @@ func streamCandidate(serviceName string, port uint16) bool {
 	// Fall back to well-known RTSP port numbers when service detection fails.
 	// nmap may report "tcpwrapped" or "unknown" for firewalled or slow hosts
 	// even on standard RTSP ports like 554 and 8554.
-	return wellKnownRTSPPorts[port]
+	_, ok := wellKnownRTSPPorts[port]
+	return ok
 }
