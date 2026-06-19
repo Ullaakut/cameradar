@@ -94,3 +94,44 @@ func TestProbeDescribeHeaders_NonRTSPStatusLine(t *testing.T) {
 		})
 	}
 }
+
+// TestProbeDescribeHeaders_AcceptsNonRFCRTSPVersion verifies that a status line
+// whose protocol token is an RTSP version other than the exact "RTSP/1.0"
+// spelling (e.g. RTSP/1.1) is still accepted. Many real cameras do not follow
+// the RFC to the letter, so matching the RTSP/ family rather than a fixed
+// version avoids false negatives while still rejecting non-RTSP protocols.
+func TestProbeDescribeHeaders_AcceptsNonRFCRTSPVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		response string
+		wantCode base.StatusCode
+	}{
+		{
+			name: "RTSP/1.1 401 accepted",
+			response: "RTSP/1.1 401 Unauthorized\r\n" +
+				"WWW-Authenticate: Digest realm=\"cam\",nonce=\"abc\"\r\n" +
+				"Content-Length: 0\r\n\r\n",
+			wantCode: 401,
+		},
+		{
+			name: "RTSP/2.0 200 accepted",
+			response: "RTSP/2.0 200 OK\r\n" +
+				"Content-Length: 0\r\n\r\n",
+			wantCode: 200,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			addr := serveFakeRTSP(t, tt.response)
+
+			a := Attacker{timeout: time.Second}
+			u := &base.URL{Scheme: schemeRTSP, Host: addr, Path: "/"}
+
+			statusCode, _, err := a.probeDescribeHeaders(context.Background(), u)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantCode, statusCode)
+		})
+	}
+}
