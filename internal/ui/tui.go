@@ -603,7 +603,9 @@ func summaryColumns(width int, rows []table.Row) []table.Column {
 }
 
 func clampColumns(columns []table.Column, maxWidth int) []table.Column {
-	padding := 2 * len(columns)
+	// Each column renders as " " + value + " │" (3 chars overhead) plus the
+	// leading "│" for the whole row — so total overhead is 3*n+1, not 2*n.
+	padding := 3*len(columns) + 1
 	contentWidth := 0
 	for _, col := range columns {
 		contentWidth += col.Width
@@ -618,7 +620,7 @@ func clampColumns(columns []table.Column, maxWidth int) []table.Column {
 	minWidths := map[int]int{
 		7: 10,
 		3: 10,
-		4: 10,
+		4: 11, // "Credentials" title is 11 chars; never shrink below it
 		1: 10,
 	}
 	for over > 0 {
