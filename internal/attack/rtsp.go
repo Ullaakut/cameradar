@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/textproto"
 	"strconv"
@@ -24,6 +25,10 @@ const (
 	schemeRTSPS = "rtsps"
 	schemeHTTP  = "http"
 	schemeHTTPS = "https"
+
+	// maxResponseBytes caps the DESCRIBE response size to guard against memory
+	// exhaustion from a malicious or misbehaving peer.
+	maxResponseBytes = 64 * 1024
 )
 
 func (a Attacker) newRTSPClient(stream cameradar.Stream) (*gortsplib.Client, error) {
@@ -142,7 +147,7 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.S
 		return 0, nil, err
 	}
 
-	reader := textproto.NewReader(bufio.NewReader(conn))
+	reader := textproto.NewReader(bufio.NewReader(io.LimitReader(conn, maxResponseBytes)))
 	statusLine, err := reader.ReadLine()
 	if err != nil {
 		return 0, nil, err
@@ -158,7 +163,7 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.S
 	}
 
 	mimeHeader, err := reader.ReadMIMEHeader()
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return 0, nil, err
 	}
 
