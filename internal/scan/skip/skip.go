@@ -94,33 +94,11 @@ func parsePorts(ctx context.Context, ports []string) ([]uint16, error) {
 }
 
 func parsePortValue(ctx context.Context, value string) ([]uint16, error) {
-	if strings.Contains(value, "-") {
-		parts := strings.SplitN(value, "-", 2)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid port range %q", value)
-		}
-
-		start, err := parsePortNumber(strings.TrimSpace(parts[0]))
-		if err != nil {
-			return nil, fmt.Errorf("invalid port range %q: %w", value, err)
-		}
-		end, err := parsePortNumber(strings.TrimSpace(parts[1]))
-		if err != nil {
-			return nil, fmt.Errorf("invalid port range %q: %w", value, err)
-		}
-		if start > end {
-			return nil, fmt.Errorf("invalid port range %q", value)
-		}
-
-		ports := make([]uint16, 0, int(end)-int(start)+1)
-		for p := int(start); p <= int(end); p++ {
-			ports = append(ports, uint16(p)) // #nosec G115 -- p is bounded to [1, 65535] by parsePortNumber
-		}
-		return ports, nil
+	if r, ok, err := tryParsePortRange(value); ok {
+		return r, err
 	}
 
-	port, err := parsePortNumber(value)
-	if err == nil {
+	if port, ok := parsePortNumber(value); ok {
 		return []uint16{port}, nil
 	}
 
@@ -134,15 +112,38 @@ func parsePortValue(ctx context.Context, value string) ([]uint16, error) {
 	return []uint16{uint16(servicePort)}, nil
 }
 
-func parsePortNumber(value string) (uint16, error) {
+// tryParsePortRange attempts to parse value as a "start-end" numeric port range.
+// Returns (ports, true, err) when both sides look like port numbers; (nil, false, nil) otherwise.
+// When either side is not a valid port number the value is not a range (e.g. a
+// hyphenated service name like "http-alt"), so the caller falls through to LookupPort.
+func tryParsePortRange(value string) ([]uint16, bool, error) {
+	if !strings.Contains(value, "-") {
+		return nil, false, nil
+	}
+	parts := strings.SplitN(value, "-", 2)
+	start, ok1 := parsePortNumber(strings.TrimSpace(parts[0]))
+	end, ok2 := parsePortNumber(strings.TrimSpace(parts[1]))
+	if !ok1 || !ok2 {
+		return nil, false, nil
+	}
+	if start > end {
+		return nil, true, fmt.Errorf("invalid port range %q", value)
+	}
+	ports := make([]uint16, 0, int(end)-int(start)+1)
+	for p := int(start); p <= int(end); p++ {
+		ports = append(ports, uint16(p)) // #nosec G115 -- p is bounded to [1, 65535] by parsePortNumber
+	}
+	return ports, true, nil
+}
+
+// parsePortNumber parses value as a TCP port number in [1, 65535],
+// reporting success via a bool rather than an error.
+func parsePortNumber(value string) (uint16, bool) {
 	port, err := strconv.Atoi(value)
-	if err != nil {
-		return 0, err
+	if err != nil || port < 1 || port > 65535 {
+		return 0, false
 	}
-	if port < 1 || port > 65535 {
-		return 0, fmt.Errorf("port %d out of range", port)
-	}
-	return uint16(port), nil
+	return uint16(port), true
 }
 
 func expandTargets(ctx context.Context, targets []string) ([]netip.Addr, error) {
