@@ -292,10 +292,10 @@ func TestStreamCandidate_WellKnownRTSPPorts(t *testing.T) {
 		{serviceName: "unknown", port: 9999, want: false},
 		{serviceName: "tcpwrapped", port: 8080, want: true}, // http port - still candidate via InferTunnelScheme
 	}
-	for _, tc := range tests {
-		got := streamCandidate(tc.serviceName, tc.port)
-		if got != tc.want {
-			t.Errorf("streamCandidate(%q, %d) = %v, want %v", tc.serviceName, tc.port, got, tc.want)
+	for _, test := range tests {
+		got := streamCandidate(test.serviceName, test.port)
+		if got != test.want {
+			t.Errorf("streamCandidate(%q, %d) = %v, want %v", test.serviceName, test.port, got, test.want)
 		}
 	}
 }
@@ -316,18 +316,14 @@ func TestRunScan_WellKnownRTSPPortWithUnknownService(t *testing.T) {
 	}
 
 	streams, err := runScan(t.Context(), runner, reporter)
-	if err != nil {
-		t.Fatalf("runScan returned unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	want := []cameradar.Stream{
 		{Address: netip.MustParseAddr("192.0.2.5"), Port: 554},
 		{Address: netip.MustParseAddr("192.0.2.5"), Port: 5554},
 		{Address: netip.MustParseAddr("192.0.2.5"), Port: 8554},
 	}
-	if len(streams) != len(want) {
-		t.Fatalf("got %d streams, want %d; streams: %v", len(streams), len(want), streams)
-	}
+	assert.Len(t, streams, len(want))
 	assert.Equal(t, want, streams)
 }
 
