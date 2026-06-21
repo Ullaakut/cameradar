@@ -51,9 +51,10 @@ func serveFakeRTSP(t *testing.T, response string) string {
 
 // TestProbeDescribeHeaders_NonRTSPStatusLine verifies that
 // probeDescribeHeaders rejects a response whose status-line protocol token
-// is not "RTSP/1.0".  Before the fix, the parser used fields[1] as the
-// status code and ignored fields[0] entirely, so an HTTP/1.1 401 response
-// would be silently accepted and trigger false-positive auth detection.
+// does not belong to the RTSP family (e.g. HTTP or SIP).  Before the fix, the
+// parser used fields[1] as the status code and ignored fields[0] entirely, so
+// an HTTP/1.1 401 response would be silently accepted and trigger
+// false-positive auth detection.
 func TestProbeDescribeHeaders_NonRTSPStatusLine(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -78,9 +79,9 @@ func TestProbeDescribeHeaders_NonRTSPStatusLine(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			addr := serveFakeRTSP(t, tt.response)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			addr := serveFakeRTSP(t, test.response)
 
 			a := Attacker{timeout: time.Second}
 			u := &base.URL{Scheme: schemeRTSP, Host: addr, Path: "/"}
@@ -121,9 +122,9 @@ func TestProbeDescribeHeaders_AcceptsNonRFCRTSPVersion(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			addr := serveFakeRTSP(t, tt.response)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			addr := serveFakeRTSP(t, test.response)
 
 			a := Attacker{timeout: time.Second}
 			u := &base.URL{Scheme: schemeRTSP, Host: addr, Path: "/"}
@@ -131,7 +132,7 @@ func TestProbeDescribeHeaders_AcceptsNonRFCRTSPVersion(t *testing.T) {
 			statusCode, _, err := a.probeDescribeHeaders(context.Background(), u)
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantCode, statusCode)
+			assert.Equal(t, test.wantCode, statusCode)
 		})
 	}
 }
