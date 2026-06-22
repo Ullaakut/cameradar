@@ -14,7 +14,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Go Test looks at `mtime` for caching. `git clone` messes with this. Set it consistently to last commit time.
       - name: Restore file modification time
