@@ -156,6 +156,13 @@ func (a Attacker) probeDescribeHeaders(ctx context.Context, u *base.URL) (base.S
 	if len(fields) < 2 {
 		return 0, nil, fmt.Errorf("invalid RTSP status line: %q", statusLine)
 	}
+	// Match the RTSP/ protocol family rather than an exact "RTSP/1.0" so that
+	// cameras advertising another RTSP version (e.g. RTSP/1.1) are still probed,
+	// while non-RTSP responses (HTTP/SIP) that would otherwise be misread as a
+	// valid status code are rejected.
+	if !strings.HasPrefix(fields[0], "RTSP/") {
+		return 0, nil, fmt.Errorf("invalid RTSP status line: expected RTSP protocol, got %q", statusLine)
+	}
 
 	code, err := strconv.Atoi(fields[1])
 	if err != nil {
