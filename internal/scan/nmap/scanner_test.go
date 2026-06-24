@@ -294,9 +294,7 @@ func TestStreamCandidate_WellKnownRTSPPorts(t *testing.T) {
 	}
 	for _, test := range tests {
 		got := streamCandidate(test.serviceName, test.port)
-		if got != test.want {
-			t.Errorf("streamCandidate(%q, %d) = %v, want %v", test.serviceName, test.port, got, test.want)
-		}
+		assert.Equal(t, test.want, got, "streamCandidate(%q, %d)", test.serviceName, test.port)
 	}
 }
 
