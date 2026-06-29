@@ -27,7 +27,7 @@ jobs:
 
       - name: Cache Go mod
         id: gomod
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
@@ -35,7 +35,7 @@ jobs:
             ${{ runner.os }}-go-mod-
 
       - name: Cache Go build
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-build-${{ github.ref_name }}
