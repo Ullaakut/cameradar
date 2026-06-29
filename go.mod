@@ -5,14 +5,15 @@ go 1.25.10
 require (
 	github.com/Ullaakut/masscan v1.0.0
 	github.com/Ullaakut/nmap/v4 v4.0.0
-	github.com/bluenviron/gortsplib/v5 v5.6.0
+	github.com/bluenviron/gortsplib/v5 v5.6.1
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/ettle/strcase v0.2.0
 	github.com/hamba/cmd/v3 v3.1.2
+	github.com/pion/rtp v1.10.2
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli/v3 v3.10.0
+	github.com/urfave/cli/v3 v3.10.1
 	golang.org/x/term v0.44.0
 )
 
@@ -20,7 +21,7 @@ require (
 	github.com/VictoriaMetrics/metrics v1.42.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bluenviron/mediacommon/v2 v2.9.0 // indirect
+	github.com/bluenviron/mediacommon/v2 v2.9.1 // indirect
 	github.com/cactus/go-statsd-client/v5 v5.1.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -57,9 +58,8 @@ require (
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
 	github.com/pion/rtcp v1.2.16 // indirect
-	github.com/pion/rtp v1.10.2 // indirect
-	github.com/pion/sdp/v3 v3.0.18 // indirect
-	github.com/pion/srtp/v3 v3.0.11 // indirect
+	github.com/pion/sdp/v3 v3.0.19 // indirect
+	github.com/pion/srtp/v3 v3.0.12 // indirect
 	github.com/pion/transport/v4 v4.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
