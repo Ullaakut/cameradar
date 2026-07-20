@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/ettle/strcase v0.2.0
 	github.com/hamba/cmd/v3 v3.1.2
-	github.com/pion/rtp v1.10.3
+	github.com/pion/rtp v1.10.4
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.10.1
 	golang.org/x/term v0.45.0
