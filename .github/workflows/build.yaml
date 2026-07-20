@@ -20,7 +20,7 @@ jobs:
 
       - name: Install Go
         id: install-go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
           cache: false
