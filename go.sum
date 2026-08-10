@@ -18,8 +18,8 @@ github.com/aymanbagabas/go-udiff v0.3.1 h1:LV+qyBQ2pqe0u42ZsUEtPiCaUoqgA9gYRDs3v
 github.com/aymanbagabas/go-udiff v0.3.1/go.mod h1:G0fsKmG+P6ylD0r6N/KgQD/nWzgfnl8ZBcNLgcbrw8E=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/bluenviron/gortsplib/v5 v5.6.2 h1:Zb0fU6TPDkw7hW2IE79QUeV59PntwftPMt2/rR7lR44=
-github.com/bluenviron/gortsplib/v5 v5.6.2/go.mod h1:kzHgUtvl8NWNsQ5Vsez6Vuugk6ItFT4ByCPm8J/kbSQ=
+github.com/bluenviron/gortsplib/v5 v5.6.3 h1:OXvHthQZ9fZbLh6r3Go2wuF4XQ4/QW4WTIM2f4bv/W4=
+github.com/bluenviron/gortsplib/v5 v5.6.3/go.mod h1:kzHgUtvl8NWNsQ5Vsez6Vuugk6ItFT4ByCPm8J/kbSQ=
 github.com/bluenviron/mediacommon/v2 v2.9.2 h1:jvYeBjvhHKFOBRMTMm4hvrSjyOlCelkOkx6708DidQM=
 github.com/bluenviron/mediacommon/v2 v2.9.2/go.mod h1:jMf/OJDaJl02xRgkLM2zbidUHnDYqLnO1dMMveCmyyU=
 github.com/cactus/go-statsd-client/v5 v5.1.0 h1:sbbdfIl9PgisjEoXzvXI1lwUKWElngsjJKaZeC021P4=

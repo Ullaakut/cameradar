@@ -5,7 +5,7 @@ go 1.25.10
 require (
 	github.com/Ullaakut/masscan v1.0.0
 	github.com/Ullaakut/nmap/v4 v4.0.1
-	github.com/bluenviron/gortsplib/v5 v5.6.2
+	github.com/bluenviron/gortsplib/v5 v5.6.3
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
