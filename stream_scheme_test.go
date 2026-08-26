@@ -9,6 +9,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestStreamURL_SchemeNormalization(t *testing.T) {
+	addr := netip.MustParseAddr("192.168.0.10")
+	tests := []struct {
+		name            string
+		scheme          string
+		wantParsedScheme string
+	}{
+		{name: "lowercase http maps to rtsp", scheme: "http", wantParsedScheme: "rtsp"},
+		{name: "lowercase https maps to rtsps", scheme: "https", wantParsedScheme: "rtsps"},
+		{name: "uppercase HTTP maps to rtsp", scheme: "HTTP", wantParsedScheme: "rtsp"},
+		{name: "uppercase HTTPS maps to rtsps", scheme: "HTTPS", wantParsedScheme: "rtsps"},
+		{name: "mixed-case Http maps to rtsp", scheme: "Http", wantParsedScheme: "rtsp"},
+		{name: "mixed-case Https maps to rtsps", scheme: "Https", wantParsedScheme: "rtsps"},
+		{name: "lowercase rtsp stays rtsp", scheme: "rtsp", wantParsedScheme: "rtsp"},
+		{name: "uppercase RTSP stays rtsp", scheme: "RTSP", wantParsedScheme: "rtsp"},
+		{name: "lowercase rtsps stays rtsps", scheme: "rtsps", wantParsedScheme: "rtsps"},
+		{name: "uppercase RTSPS stays rtsps", scheme: "RTSPS", wantParsedScheme: "rtsps"},
+		{name: "empty defaults to rtsp", scheme: "", wantParsedScheme: "rtsp"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := cameradar.Stream{
+				Address: addr,
+				Port:    554,
+				Routes:  []string{"stream"},
+				Scheme:  test.scheme,
+			}
+			u, err := s.URL()
+			require.NoError(t, err)
+			require.Equal(t, test.wantParsedScheme, u.Scheme)
+		})
+	}
+}
+
 func TestStreamString_QueryRoute(t *testing.T) {
 	addr := netip.MustParseAddr("192.168.1.1")
 	tests := []struct {

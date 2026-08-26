@@ -109,7 +109,10 @@ func (s Stream) String() string {
 }
 
 // URL parses the stream URL into a *base.URL, normalizing http/https to rtsp/rtsps.
+// The scheme is case-folded before normalization so that "HTTP" and "HTTPS" are
+// treated identically to their lowercase equivalents, matching the behavior of
+// RTSPScheme.
 func (s Stream) URL() (*base.URL, error) {
-	s.Scheme = parseScheme(s.resolvedScheme())
+	s.Scheme = parseScheme(strings.ToLower(strings.TrimSpace(s.resolvedScheme())))
 	return base.ParseURL(s.String())
 }
