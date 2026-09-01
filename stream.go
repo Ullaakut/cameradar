@@ -90,9 +90,9 @@ func (s Stream) String() string {
 	route := strings.TrimLeft(strings.TrimSpace(s.Route()), "/")
 	pathPart := "/" + route
 	rawQuery := ""
-	if i := strings.IndexByte(route, '?'); i >= 0 {
-		pathPart = "/" + route[:i]
-		rawQuery = route[i+1:]
+	if before, after, ok := strings.Cut(route, "?"); ok {
+		pathPart = "/" + before
+		rawQuery = after
 	}
 
 	u := &url.URL{
