@@ -42,7 +42,7 @@ jobs:
       - name: Run Linter
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7.2
+          version: v2.12.2
 
       - name: Setup gotestsum
         run: go install gotest.tools/gotestsum@v1.13.0
