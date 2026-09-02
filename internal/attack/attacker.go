@@ -222,6 +222,10 @@ func updateSummary(reporter Reporter, streams []cameradar.Stream) {
 }
 
 func (a Attacker) attackCredentialsForStream(ctx context.Context, target cameradar.Stream) (cameradar.Stream, error) {
+	if !target.RouteFound {
+		return target, nil
+	}
+
 	for _, username := range a.dictionary.Usernames() {
 		for _, password := range a.dictionary.Passwords() {
 			if ctx.Err() != nil {
