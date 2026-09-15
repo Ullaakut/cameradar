@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -54,7 +55,7 @@ jobs:
         env:
           TEST_DIR: ${{ inputs.TEST_DIR }}
         run: |
-          GOTESTSUM_FLAGS="--junitfile tests.xml --format pkgname -- -cover -race"
+          GOTESTSUM_FLAGS="--junitfile tests.xml --format pkgname -- -cover -coverprofile=coverage.out -covermode=atomic -race"
           if [ -z "$TEST_DIR" ]; then
             gotestsum $GOTESTSUM_FLAGS ./...
           else
@@ -66,3 +67,50 @@ jobs:
         with:
           paths: "tests.xml"
         if: always()
+
+      - name: Checkout base branch for coverage comparison
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.base_ref }}
+          path: .base-coverage
+          persist-credentials: false
+
+      - name: Compute base branch coverage
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        working-directory: .base-coverage
+        run: go test -coverprofile="${{ github.workspace }}/coverage-base.out" -covermode=atomic -race ./...
+
+      - name: Report coverage
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f coverage.out ]; then
+            echo "No coverage profile produced; skipping coverage report"
+            exit 0
+          fi
+          extra=()
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            extra+=(--base-ref "${{ github.base_ref }}")
+            extra+=(--head-sha "${{ github.event.pull_request.head.sha }}")
+            extra+=(--repo "${{ github.repository }}")
+            extra+=(--pr "${{ github.event.pull_request.number }}")
+            extra+=(--post-comment)
+            if [ -f coverage-base.out ]; then
+              extra+=(--base-profile coverage-base.out)
+            fi
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+              extra+=(--fork)
+            fi
+          else
+            extra+=(--base-ref "${{ github.ref_name }}")
+            extra+=(--head-sha "${{ github.sha }}")
+          fi
+          python3 -B .github/scripts/coverage_report.py \
+            --head-profile coverage.out \
+            --summary-file "${GITHUB_STEP_SUMMARY}" \
+            "${extra[@]}"
