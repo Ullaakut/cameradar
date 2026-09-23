@@ -88,6 +88,33 @@ func TestAttacker_Attack_BasicAuth(t *testing.T) {
 	assert.Contains(t, got[0].Routes, "stream")
 }
 
+func TestAttacker_Attack_ReattacksRoutesAfterCredentialsFor401Before404Camera(t *testing.T) {
+	addr, port := startRTSPServer(t, rtspServerConfig{
+		allowedRoute:                 "stream",
+		requireAuth:                  true,
+		describeAuthBeforeRouteCheck: true,
+		username:                     "user",
+		password:                     "pass",
+		authMethod:                   headers.AuthMethodBasic,
+	})
+
+	attacker, err := attack.New(testDictionary{
+		routes:    []string{"stream"},
+		usernames: []string{"user"},
+		passwords: []string{"pass"},
+	}, 0, time.Second, false, ui.NopReporter{})
+	require.NoError(t, err)
+
+	got, err := attacker.Attack(t.Context(), []cameradar.Stream{{Address: addr, Port: port}})
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.True(t, got[0].RouteFound)
+	assert.Equal(t, []string{"stream"}, got[0].Routes)
+	assert.True(t, got[0].CredentialsFound)
+	assert.True(t, got[0].Available)
+}
+
 func TestAttacker_Attack_AuthVariants(t *testing.T) {
 	tests := []struct {
 		name         string

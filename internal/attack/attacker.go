@@ -179,6 +179,14 @@ func (a Attacker) validateStreamsPhase(ctx context.Context, streams []cameradar.
 func (a Attacker) reattackRoutes(ctx context.Context, streams []cameradar.Stream) ([]cameradar.Stream, error) {
 	a.reporter.Progress(cameradar.StepAttackRoutes, "Re-attacking routes for partial results")
 	updated, err := runParallel(ctx, streams, func(ctx context.Context, target cameradar.Stream) (cameradar.Stream, error) {
+		// A 401 can be returned for an invalid path before a camera checks the
+		// route. Once valid credentials are known, discard that provisional route
+		// so the retry can check the dictionary against authenticated responses.
+		if target.RouteFound && target.CredentialsFound && !target.Available {
+			target.RouteFound = false
+			target.Routes = nil
+		}
+
 		return a.attackRoutesForStream(ctx, target, false)
 	})
 	if err != nil {
@@ -492,6 +500,13 @@ func (a Attacker) validateStream(ctx context.Context, stream cameradar.Stream, e
 
 	desc, res, err := a.describeWithRetry(ctx, client, stream, cameradar.StepValidateStreams)
 	if err != nil {
+		if statusCode, ok := badStatusCode(err); ok &&
+			statusCode == base.StatusNotFound && stream.RouteFound && stream.CredentialsFound {
+			a.reporter.Debug(cameradar.StepValidateStreams, fmt.Sprintf("RTSP 404 for provisional route %s; retrying route discovery", stream))
+			stream.Available = false
+			return stream, nil
+		}
+
 		return a.handleDescribeError(stream, err)
 	}
 	a.logDescribeResponse(stream.String(), res)
