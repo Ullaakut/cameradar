@@ -49,7 +49,12 @@ func buildStreamsFromTargets(ctx context.Context, targets, portSpecs []string) (
 		return nil, errors.New("no valid target addresses resolved")
 	}
 
-	streams := make([]cameradar.Stream, 0, len(resolvedTargets)*len(resolvedPorts))
+	capacity, err := streamCapacity(len(resolvedTargets), len(resolvedPorts))
+	if err != nil {
+		return nil, err
+	}
+
+	streams := make([]cameradar.Stream, 0, capacity)
 	for _, addr := range resolvedTargets {
 		for _, port := range resolvedPorts {
 			scheme := ports.InferTunnelScheme(port, "")
@@ -168,6 +173,9 @@ func expandTargets(ctx context.Context, targets []string) ([]netip.Addr, error) 
 			if _, exists := seen[addr]; exists {
 				continue
 			}
+			if len(resolved) >= maxExpandedTargets {
+				return nil, fmt.Errorf("target list expands to more than %d addresses", maxExpandedTargets)
+			}
 			seen[addr] = struct{}{}
 			resolved = append(resolved, addr)
 		}
@@ -221,6 +229,23 @@ func parseTargetAddrs(ctx context.Context, target string) ([]netip.Addr, error) 
 // 16 host bits limits expansion to 65536 addresses.
 const maxPrefixHostBits = 16
 
+const (
+	// maxExpandedTargets keeps combined prefixes, ranges, and hostnames bounded.
+	maxExpandedTargets = 1 << maxPrefixHostBits
+	// maxExpandedStreams limits the in-memory target/port combinations.
+	maxExpandedStreams = 1_000_000
+)
+
+func streamCapacity(targetCount, portCount int) (int, error) {
+	if portCount <= 0 || targetCount < 0 {
+		return 0, errors.New("invalid target and port counts")
+	}
+	if targetCount > maxExpandedStreams/portCount {
+		return 0, fmt.Errorf("target and port ranges exceed the limit of %d stream candidates", maxExpandedStreams)
+	}
+	return targetCount * portCount, nil
+}
+
 func expandPrefix(prefix netip.Prefix) ([]netip.Addr, error) {
 	if !prefix.IsValid() {
 		return nil, fmt.Errorf("invalid prefix %q", prefix)
@@ -271,7 +296,16 @@ func parseIPv4Range(target string) ([]netip.Addr, bool, error) {
 		ranges[i] = parsed
 	}
 
-	addrs := make([]netip.Addr, 0, 16)
+	addressCount := 1
+	for _, current := range ranges {
+		rangeSize := current.end - current.start + 1
+		if addressCount > maxExpandedTargets/rangeSize {
+			return nil, true, fmt.Errorf("IPv4 range %q is too large to expand: exceeds limit of %d addresses", target, maxExpandedTargets)
+		}
+		addressCount *= rangeSize
+	}
+
+	addrs := make([]netip.Addr, 0, addressCount)
 	for first := ranges[0].start; first <= ranges[0].end; first++ {
 		for second := ranges[1].start; second <= ranges[1].end; second++ {
 			for third := ranges[2].start; third <= ranges[2].end; third++ {
