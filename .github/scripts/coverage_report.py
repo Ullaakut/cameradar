@@ -106,6 +106,25 @@ def find_comment(comments: Sequence[Mapping[str, Any]], marker: str) -> Mapping[
     return None
 
 
+def flatten_comment_pages(parsed: Any) -> list[dict[str, Any]]:
+    """Flatten `gh api --paginate --slurp` output into a list of comments."""
+    if parsed is None:
+        return []
+    if isinstance(parsed, dict):
+        return [parsed]
+    if not isinstance(parsed, list):
+        return []
+    comments: list[dict[str, Any]] = []
+    for item in parsed:
+        if isinstance(item, list):
+            for comment in item:
+                if isinstance(comment, dict):
+                    comments.append(comment)
+        elif isinstance(item, dict):
+            comments.append(item)
+    return comments
+
+
 class GhClient:
     """Thin wrapper around `gh api` for issue comments."""
 
@@ -132,13 +151,10 @@ class GhClient:
         return completed.stdout or ""
 
     def list_comments(self, repo: str, pr: int) -> list[dict[str, Any]]:
-        raw = self._api(["--paginate", f"repos/{repo}/issues/{pr}/comments"])
+        raw = self._api(["--paginate", "--slurp", f"repos/{repo}/issues/{pr}/comments"])
         if not raw.strip():
             return []
-        parsed = json.loads(raw)
-        if isinstance(parsed, list):
-            return parsed
-        return [parsed]
+        return flatten_comment_pages(json.loads(raw))
 
     def create_comment(self, repo: str, pr: int, body: str) -> None:
         payload = json.dumps({"body": body})

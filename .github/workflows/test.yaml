@@ -12,10 +12,11 @@ jobs:
     permissions:
       contents: read
       id-token: write
-      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       # Go Test looks at `mtime` for caching. `git clone` messes with this. Set it consistently to last commit time.
       - name: Restore file modification time
@@ -86,8 +87,6 @@ jobs:
       - name: Report coverage
         if: always()
         continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ ! -f coverage.out ]; then
             echo "No coverage profile produced; skipping coverage report"
@@ -97,9 +96,7 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             extra+=(--base-ref "${{ github.base_ref }}")
             extra+=(--head-sha "${{ github.event.pull_request.head.sha }}")
-            extra+=(--repo "${{ github.repository }}")
-            extra+=(--pr "${{ github.event.pull_request.number }}")
-            extra+=(--post-comment)
+            extra+=(--output-file comment.md)
             if [ -f coverage-base.out ]; then
               extra+=(--base-profile coverage-base.out)
             fi
@@ -114,3 +111,65 @@ jobs:
             --head-profile coverage.out \
             --summary-file "${GITHUB_STEP_SUMMARY}" \
             "${extra[@]}"
+
+      - name: Upload coverage comment
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-comment
+          path: comment.md
+          if-no-files-found: ignore
+          retention-days: 1
+
+  coverage-comment:
+    if: ${{ always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    concurrency:
+      group: coverage-comment-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Download coverage comment
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-comment
+          path: coverage-comment
+
+      - name: Upsert sticky coverage comment
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MARKER: "<!-- cameradar-coverage-comment -->"
+        run: |
+          set -euo pipefail
+          body_file="coverage-comment/comment.md"
+          if [ ! -f "$body_file" ]; then
+            echo "No coverage comment artifact; skipping sticky PR comment"
+            exit 0
+          fi
+          pages="$(gh api --paginate --slurp "repos/${REPO}/issues/${PR_NUMBER}/comments")"
+          comment_id=""
+          if [ -n "$pages" ]; then
+            comment_id="$(printf '%s' "$pages" | jq -r --arg marker "$MARKER" '
+              (if type == "array" then . else [.] end)
+              | map(if type == "array" then .[] else . end)
+              | map(select((.body // "") | contains($marker)))
+              | first
+              | .id // empty
+            ')"
+          fi
+          payload="$(jq -n --rawfile body "$body_file" '{body: $body}')"
+          if [ -n "$comment_id" ]; then
+            printf '%s' "$payload" | gh api --method PATCH "repos/${REPO}/issues/comments/${comment_id}" --input -
+            echo "Sticky PR coverage comment updated."
+          else
+            printf '%s' "$payload" | gh api --method POST "repos/${REPO}/issues/${PR_NUMBER}/comments" --input -
+            echo "Sticky PR coverage comment created."
+          fi

@@ -140,7 +140,10 @@ class GhClientTest(unittest.TestCase):
             client.list_comments("org/repo", 1)
 
     def test_list_comments_parses_json_array(self) -> None:
-        def run(*_args, **_kwargs):
+        captured: list[list[str]] = []
+
+        def run(cmd, *_args, **_kwargs):
+            captured.append(cmd)
             return subprocess.CompletedProcess(
                 args=["gh"],
                 returncode=0,
@@ -150,6 +153,41 @@ class GhClientTest(unittest.TestCase):
 
         client = coverage_report.GhClient(run=run)
         self.assertEqual(client.list_comments("org/repo", 1), [{"id": 1, "body": "hi"}])
+        self.assertIn("--paginate", captured[0])
+        self.assertIn("--slurp", captured[0])
+
+    def test_list_comments_flattens_slurped_pages(self) -> None:
+        pages = [
+            [{"id": 1, "body": "page-one"}],
+            [{"id": 2, "body": "page-two"}],
+        ]
+
+        def run(*_args, **_kwargs):
+            return subprocess.CompletedProcess(
+                args=["gh"],
+                returncode=0,
+                stdout=json.dumps(pages),
+                stderr="",
+            )
+
+        client = coverage_report.GhClient(run=run)
+        self.assertEqual(
+            client.list_comments("org/repo", 1),
+            [{"id": 1, "body": "page-one"}, {"id": 2, "body": "page-two"}],
+        )
+
+    def test_flatten_comment_pages_handles_mixed_shapes(self) -> None:
+        self.assertEqual(coverage_report.flatten_comment_pages(None), [])
+        self.assertEqual(
+            coverage_report.flatten_comment_pages({"id": 3, "body": "one"}),
+            [{"id": 3, "body": "one"}],
+        )
+        self.assertEqual(
+            coverage_report.flatten_comment_pages(
+                [{"id": 4, "body": "a"}, [{"id": 5, "body": "b"}]]
+            ),
+            [{"id": 4, "body": "a"}, {"id": 5, "body": "b"}],
+        )
 
 
 class MainTest(unittest.TestCase):
