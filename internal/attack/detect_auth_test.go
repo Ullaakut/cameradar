@@ -190,7 +190,7 @@ func TestDetectAuthMethod(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			addr, port := startRTSPProbeServer(t, test.statusCode, test.headers)
 
-			attacker, err := New(testDictionary{}, 0, time.Second, false, ui.NopReporter{})
+			attacker, err := New(testDictionary{}, 0, time.Second, false, false, ui.NopReporter{})
 			require.NoError(t, err)
 
 			stream := cameradar.Stream{
@@ -216,7 +216,7 @@ func TestDetectAuthMethod_HTTPTunnel_NonFatal(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			attacker, err := New(testDictionary{}, 0, time.Second, false, ui.NopReporter{})
+			attacker, err := New(testDictionary{}, 0, time.Second, false, false, ui.NopReporter{})
 			require.NoError(t, err)
 
 			stream := cameradar.Stream{
@@ -237,7 +237,7 @@ func TestDetectAuthMethod_RTSPS(t *testing.T) {
 		"WWW-Authenticate": headers.Authenticate{Method: headers.AuthMethodBasic, Realm: "cam"}.Marshal(),
 	})
 
-	attacker, err := New(testDictionary{}, 0, time.Second, false, ui.NopReporter{})
+	attacker, err := New(testDictionary{}, 0, time.Second, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	stream := cameradar.Stream{

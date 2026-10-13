@@ -25,6 +25,7 @@ const (
 	flagAttackInterval    = "attack-interval"
 	flagTimeout           = "timeout"
 	flagFrameCheck        = "framecheck"
+	flagAttackAllRoutes   = "attack-all-routes"
 	flagSkipScan          = "skip-scan"
 	flagDebug             = "debug"
 	flagUI                = "ui"
@@ -94,6 +95,12 @@ var flags = cmd.Flags{
 		Name:    flagFrameCheck,
 		Usage:   "When DESCRIBE returns 200 OK, require a frame probe check before accepting routes or credentials (slower)",
 		Sources: cli.EnvVars(strcase.ToSNAKE(flagFrameCheck)),
+		Value:   false,
+	},
+	&cli.BoolFlag{
+		Name:    flagAttackAllRoutes,
+		Usage:   "Keep attacking every route in the dictionary instead of stopping once a camera accepts the default route (useful with a custom routes dictionary)",
+		Sources: cli.EnvVars(strcase.ToSNAKE(flagAttackAllRoutes)),
 		Value:   false,
 	},
 	&cli.BoolFlag{

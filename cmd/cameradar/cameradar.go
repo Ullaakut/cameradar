@@ -84,6 +84,7 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 			cmd.Duration(flagAttackInterval),
 			cmd.Duration(flagTimeout),
 			cmd.Bool(flagFrameCheck),
+			cmd.Bool(flagAttackAllRoutes),
 			cmd.Bool(flagSkipScan),
 			cmd.Bool(flagDebug),
 			resolvedMode,
@@ -110,7 +111,8 @@ func runCameradar(ctx context.Context, cmd *cli.Command) error {
 	interval := cmd.Duration(flagAttackInterval)
 	timeout := cmd.Duration(flagTimeout)
 	frameCheck := cmd.Bool(flagFrameCheck)
-	attacker, err := attack.New(dictionary, interval, timeout, frameCheck, reporter)
+	attackAllRoutes := cmd.Bool(flagAttackAllRoutes)
+	attacker, err := attack.New(dictionary, interval, timeout, frameCheck, attackAllRoutes, reporter)
 	if err != nil {
 		return fmt.Errorf("creating attacker: %w", err)
 	}
@@ -150,6 +152,7 @@ func buildStartupOptions(
 	attackInterval time.Duration,
 	timeout time.Duration,
 	frameCheck bool,
+	attackAllRoutes bool,
 	skipScan bool,
 	debug bool,
 	mode cameradar.Mode,
@@ -162,6 +165,7 @@ func buildStartupOptions(
 		"scanner: " + fallbackValue(scanner, "nmap"),
 		"scan-speed: " + strconv.FormatInt(int64(scanSpeed), 10),
 		"frame-check: " + strconv.FormatBool(frameCheck),
+		"attack-all-routes: " + strconv.FormatBool(attackAllRoutes),
 		"skip-scan: " + strconv.FormatBool(skipScan),
 		"attack-interval: " + attackInterval.String(),
 		"timeout: " + timeout.String(),
