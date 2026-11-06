@@ -318,3 +318,22 @@ func authMethods(method headers.AuthMethod) []auth.VerifyMethod {
 		return nil
 	}
 }
+
+// startAllRoutesServer starts an RTSP server that accepts any route. On an
+// unauthenticated DESCRIBE (the route-probing phase) it answers 401 rather than
+// 404 for unknown routes, like a camera that does not 404 on non-existent
+// routes; once valid credentials are supplied it returns 200. This makes the
+// probe route look valid, so Cameradar would normally stop before trying the
+// dictionary.
+func startAllRoutesServer(t *testing.T) (netip.Addr, uint16) {
+	t.Helper()
+
+	return startRTSPServer(t, rtspServerConfig{
+		allowAll:    true,
+		requireAuth: true,
+		username:    "user",
+		password:    "pass",
+		authMethod:  headers.AuthMethodDigest,
+		sendFrames:  true,
+	})
+}

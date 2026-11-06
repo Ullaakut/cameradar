@@ -39,25 +39,27 @@ type Reporter interface {
 
 // Attacker attempts to discover routes and credentials for RTSP streams.
 type Attacker struct {
-	dictionary     Dictionary
-	reporter       Reporter
-	attackInterval time.Duration
-	timeout        time.Duration
-	framecheck     bool
+	dictionary      Dictionary
+	reporter        Reporter
+	attackInterval  time.Duration
+	timeout         time.Duration
+	framecheck      bool
+	attackAllRoutes bool
 }
 
 // New builds an Attacker with the provided dependencies.
-func New(dict Dictionary, attackInterval, timeout time.Duration, framecheck bool, reporter Reporter) (Attacker, error) {
+func New(dict Dictionary, attackInterval, timeout time.Duration, framecheck, attackAllRoutes bool, reporter Reporter) (Attacker, error) {
 	if dict == nil {
 		return Attacker{}, errors.New("dictionary is required")
 	}
 
 	return Attacker{
-		dictionary:     dict,
-		attackInterval: attackInterval,
-		timeout:        timeout,
-		framecheck:     framecheck,
-		reporter:       reporter,
+		dictionary:      dict,
+		attackInterval:  attackInterval,
+		timeout:         timeout,
+		framecheck:      framecheck,
+		attackAllRoutes: attackAllRoutes,
+		reporter:        reporter,
 	}, nil
 }
 
@@ -274,7 +276,13 @@ func (a Attacker) attackRoutesForStream(ctx context.Context, target cameradar.St
 		target.RouteFound = true
 		target.Routes = append(target.Routes, "") // Add empty route for default.
 		a.reporter.Progress(cameradar.StepAttackRoutes, fmt.Sprintf("Default route accepted for %s:%d", target.Address.String(), target.Port))
-		return target, nil
+		// A camera that answers the probe route with 401 or 403 instead of 404
+		// looks like it accepts any route, so we normally stop here. When
+		// attackAllRoutes is set we treat that as a partial result and keep
+		// probing the dictionary, which matters with a custom routes list.
+		if !a.attackAllRoutes {
+			return target, nil
+		}
 	}
 
 	for _, route := range a.dictionary.Routes() {
