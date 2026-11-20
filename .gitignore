@@ -4,3 +4,11 @@
 
 # Builds
 dist/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Local coverage profiles
+coverage.out
+coverage-*.out
