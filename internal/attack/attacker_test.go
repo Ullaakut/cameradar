@@ -41,7 +41,7 @@ func TestNew(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			attacker, err := attack.New(test.dict, 10*time.Millisecond, time.Second, false, ui.NopReporter{})
+			attacker, err := attack.New(test.dict, 10*time.Millisecond, time.Second, false, false, ui.NopReporter{})
 			test.wantErr(t, err)
 			if err != nil {
 				assert.NotNil(t, attacker)
@@ -67,7 +67,7 @@ func TestAttacker_Attack_BasicAuth(t *testing.T) {
 
 	testInterval := time.Millisecond
 	testRequestTimeout := time.Second
-	attacker, err := attack.New(dict, testInterval, testRequestTimeout, false, ui.NopReporter{})
+	attacker, err := attack.New(dict, testInterval, testRequestTimeout, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -86,6 +86,42 @@ func TestAttacker_Attack_BasicAuth(t *testing.T) {
 	assert.Equal(t, "user", got[0].Username)
 	assert.Equal(t, "pass", got[0].Password)
 	assert.Contains(t, got[0].Routes, "stream")
+}
+
+func TestAttacker_Attack_AttackAllRoutes(t *testing.T) {
+	dict := testDictionary{
+		routes:    []string{"stream"},
+		usernames: []string{"user"},
+		passwords: []string{"pass"},
+	}
+
+	t.Run("disabled stops at the default route", func(t *testing.T) {
+		addr, port := startAllRoutesServer(t)
+
+		attacker, err := attack.New(dict, 0, time.Second, false, false, ui.NopReporter{})
+		require.NoError(t, err)
+
+		got, err := attacker.Attack(t.Context(), []cameradar.Stream{{Address: addr, Port: port}})
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+
+		assert.True(t, got[0].RouteFound)
+		assert.NotContains(t, got[0].Routes, "stream")
+	})
+
+	t.Run("enabled keeps attacking the dictionary", func(t *testing.T) {
+		addr, port := startAllRoutesServer(t)
+
+		attacker, err := attack.New(dict, 0, time.Second, false, true, ui.NopReporter{})
+		require.NoError(t, err)
+
+		got, err := attacker.Attack(t.Context(), []cameradar.Stream{{Address: addr, Port: port}})
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+
+		assert.True(t, got[0].RouteFound)
+		assert.Contains(t, got[0].Routes, "stream")
+	})
 }
 
 func TestAttacker_Attack_AuthVariants(t *testing.T) {
@@ -142,7 +178,7 @@ func TestAttacker_Attack_AuthVariants(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			addr, port := startRTSPServer(t, test.config)
 
-			attacker, err := attack.New(test.dict, 0, time.Second, false, ui.NopReporter{})
+			attacker, err := attack.New(test.dict, 0, time.Second, false, false, ui.NopReporter{})
 			require.NoError(t, err)
 
 			streams := []cameradar.Stream{{
@@ -167,7 +203,7 @@ func TestAttacker_Attack_AuthVariants(t *testing.T) {
 }
 
 func TestAttacker_Attack_ValidationErrors(t *testing.T) {
-	attacker, err := attack.New(testDictionary{routes: []string{"stream"}}, 0, time.Second, false, ui.NopReporter{})
+	attacker, err := attack.New(testDictionary{routes: []string{"stream"}}, 0, time.Second, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -206,7 +242,7 @@ func TestAttacker_Attack_ReturnsErrorWhenRouteMissing(t *testing.T) {
 		passwords: []string{"pass"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -236,7 +272,7 @@ func TestAttacker_Attack_ReturnsErrorWhenCredentialsMissing(t *testing.T) {
 		passwords: []string{"wrong"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -270,7 +306,7 @@ func TestAttacker_Attack_CredentialAttemptFails(t *testing.T) {
 		passwords: []string{"pass"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, false, reporter)
+	attacker, err := attack.New(dict, 0, time.Second, false, false, reporter)
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -298,7 +334,7 @@ func TestAttacker_Attack_UnreachableHostDoesNotDropOthers(t *testing.T) {
 		routes: []string{"stream"},
 	}
 
-	attacker, err := attack.New(dict, 0, 200*time.Millisecond, false, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, 200*time.Millisecond, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	// The unreachable host is listed first so that, before the fix, its
@@ -337,7 +373,7 @@ func TestAttacker_Attack_AggregatesErrorsFromMultipleHosts(t *testing.T) {
 		routes: []string{"stream"},
 	}
 
-	attacker, err := attack.New(dict, 0, 200*time.Millisecond, false, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, 200*time.Millisecond, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{
@@ -391,7 +427,7 @@ func TestAttacker_Attack_AllowsDummyRoute(t *testing.T) {
 
 	dict := testDictionary{}
 
-	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -419,7 +455,7 @@ func TestAttacker_Attack_ValidationFailsWhenSetupErrors(t *testing.T) {
 		routes: []string{"stream"},
 	}
 
-	attacker, err := attack.New(dict, 0, time.Second, false, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, time.Second, false, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -447,7 +483,7 @@ func TestAttacker_Attack_Framecheck_RechecksRouteFalsePositives(t *testing.T) {
 		routes: []string{"stream"},
 	}
 
-	attacker, err := attack.New(dict, 0, 500*time.Millisecond, true, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, 500*time.Millisecond, true, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -481,7 +517,7 @@ func TestAttacker_Attack_Framecheck_RechecksCredentialFalsePositives(t *testing.
 		passwords: []string{"wrong", "pass"},
 	}
 
-	attacker, err := attack.New(dict, 0, 500*time.Millisecond, true, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, 500*time.Millisecond, true, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -515,7 +551,7 @@ func TestAttacker_Attack_Framecheck_FallsBackToTCPForRouteProbe(t *testing.T) {
 		routes: []string{"stream"},
 	}
 
-	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, false, reporter)
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -551,7 +587,7 @@ func TestAttacker_Attack_Framecheck_FallsBackToTCPForCredentialProbe(t *testing.
 		passwords: []string{"wrong", "pass"},
 	}
 
-	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, ui.NopReporter{})
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, false, ui.NopReporter{})
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -585,7 +621,7 @@ func TestAttacker_Attack_Framecheck_TreatsNoPacketAsFalsePositive(t *testing.T) 
 		routes: []string{"stream"},
 	}
 
-	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, false, reporter)
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -619,7 +655,7 @@ func TestAttacker_Attack_Framecheck_TreatsNoMediasAsFalsePositive(t *testing.T) 
 
 	dict := testDictionary{}
 
-	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, false, reporter)
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{
@@ -655,7 +691,7 @@ func TestAttacker_Attack_Framecheck_LogsDescribeRetryWithCurrentStep(t *testing.
 
 	dict := testDictionary{}
 
-	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, reporter)
+	attacker, err := attack.New(dict, 0, 100*time.Millisecond, true, false, reporter)
 	require.NoError(t, err)
 
 	streams := []cameradar.Stream{{

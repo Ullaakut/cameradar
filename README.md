@@ -307,6 +307,44 @@ FRAMECHECK=true \
         --ports "554,8554"
 ```
 
+### Try every route with `--attack-all-routes`
+
+Some cameras answer a request for a non-existent route with `401` or `403`
+instead of `404`. Cameradar reads that as "this device accepts any route", marks
+the default route as found, and stops before trying the rest of the dictionary.
+
+When you enable `--attack-all-routes`, Cameradar treats that default acceptance
+as a partial result and keeps attacking every route in the dictionary. This is
+mostly useful when you pass a custom routes list with `--custom-routes` and want
+each entry attempted regardless of how the camera answered the probe.
+
+`--attack-all-routes` is disabled by default because it adds RTSP requests and
+can increase attack duration.
+
+Example with Docker:
+
+Mount your custom routes list into the container and point `--custom-routes` at
+the in-container path:
+
+```bash
+docker run --rm -t --net=host \
+        -v /path/to/dictionaries:/tmp/dictionaries \
+        ullaakut/cameradar \
+        --targets 192.168.1.0/24 \
+        --ports "554,8554" \
+        --custom-routes /tmp/dictionaries/my_routes \
+        --attack-all-routes
+```
+
+Example with local binary and environment variable:
+
+```bash
+ATTACK_ALL_ROUTES=true \
+        cameradar \
+        --targets 192.168.1.0/24 \
+        --ports "554,8554"
+```
+
 ## Security and responsible use
 
 Cameradar is a penetration testing tool.
