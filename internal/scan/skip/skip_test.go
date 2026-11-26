@@ -178,3 +178,13 @@ func TestNew_ExpandsPrefixesWithinBounds(t *testing.T) {
 		})
 	}
 }
+
+func TestNew_RejectsTargetListOverExpansionLimit(t *testing.T) {
+	scanner := skip.New(
+		[]string{"192.0.0.0/16", "192.1.0.0/16"},
+		[]string{"554"},
+	)
+
+	_, err := scanner.Scan(t.Context())
+	require.ErrorContains(t, err, "target list expands to more than 65536 addresses")
+}
