@@ -23,48 +23,50 @@ import (
 const describeNoMediaSDP = "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=No Media\r\nt=0 0\r\n"
 
 type rtspServerConfig struct {
-	allowAll                  bool
-	describeAllowAll          bool
-	allowedRoute              string
-	requireAuth               bool
-	describeIgnoreAuth        bool
-	describeAcceptInvalidAuth bool
-	describeReturnNoStream    bool
-	describeNoMediaCall       int
-	describeStatusSequence    []base.StatusCode
-	username                  string
-	password                  string
-	authMethod                headers.AuthMethod
-	authHeader                base.HeaderValue
-	failOnAuth                bool
-	setupStatus               base.StatusCode
-	playStatus                base.StatusCode
-	sendFrames                bool
-	sendFramesTCPOnly         bool
+	allowAll                     bool
+	describeAllowAll             bool
+	describeAuthBeforeRouteCheck bool
+	allowedRoute                 string
+	requireAuth                  bool
+	describeIgnoreAuth           bool
+	describeAcceptInvalidAuth    bool
+	describeReturnNoStream       bool
+	describeNoMediaCall          int
+	describeStatusSequence       []base.StatusCode
+	username                     string
+	password                     string
+	authMethod                   headers.AuthMethod
+	authHeader                   base.HeaderValue
+	failOnAuth                   bool
+	setupStatus                  base.StatusCode
+	playStatus                   base.StatusCode
+	sendFrames                   bool
+	sendFramesTCPOnly            bool
 }
 
 type testServerHandler struct {
-	stream                    *gortsplib.ServerStream
-	allowAll                  bool
-	describeAllowAll          bool
-	allowedRoute              string
-	requireAuth               bool
-	describeIgnoreAuth        bool
-	describeAcceptInvalidAuth bool
-	describeReturnNoStream    bool
-	describeNoMediaCall       int
-	describeStatusSequence    []base.StatusCode
-	describeStatusIndex       int
-	describeCallCount         int
-	describeStatusMu          sync.Mutex
-	username                  string
-	password                  string
-	authHeader                base.HeaderValue
-	failOnAuth                bool
-	setupStatus               base.StatusCode
-	playStatus                base.StatusCode
-	sendFrames                bool
-	sendFramesTCPOnly         bool
+	stream                       *gortsplib.ServerStream
+	allowAll                     bool
+	describeAllowAll             bool
+	describeAuthBeforeRouteCheck bool
+	allowedRoute                 string
+	requireAuth                  bool
+	describeIgnoreAuth           bool
+	describeAcceptInvalidAuth    bool
+	describeReturnNoStream       bool
+	describeNoMediaCall          int
+	describeStatusSequence       []base.StatusCode
+	describeStatusIndex          int
+	describeCallCount            int
+	describeStatusMu             sync.Mutex
+	username                     string
+	password                     string
+	authHeader                   base.HeaderValue
+	failOnAuth                   bool
+	setupStatus                  base.StatusCode
+	playStatus                   base.StatusCode
+	sendFrames                   bool
+	sendFramesTCPOnly            bool
 }
 
 func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
@@ -77,6 +79,15 @@ func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx
 		return &base.Response{StatusCode: status}, nil, nil
 	}
 
+	if h.describeAuthBeforeRouteCheck && h.requireAuth && !ctx.Conn.VerifyCredentials(ctx.Request, h.username, h.password) {
+		return &base.Response{
+			StatusCode: base.StatusUnauthorized,
+			Header: base.Header{
+				"WWW-Authenticate": h.authHeader,
+			},
+		}, nil, liberrors.ErrServerAuth{}
+	}
+
 	if !h.describeRouteAllowed(ctx.Path) {
 		return &base.Response{StatusCode: base.StatusNotFound}, nil, nil
 	}
@@ -85,7 +96,7 @@ func (h *testServerHandler) OnDescribe(ctx *gortsplib.ServerHandlerOnDescribeCtx
 		return &base.Response{StatusCode: base.StatusBadRequest}, nil, errors.New("forced auth failure")
 	}
 
-	if h.requireAuth && !ctx.Conn.VerifyCredentials(ctx.Request, h.username, h.password) {
+	if !h.describeAuthBeforeRouteCheck && h.requireAuth && !ctx.Conn.VerifyCredentials(ctx.Request, h.username, h.password) {
 		authorization := ctx.Request.Header["Authorization"]
 		if h.describeIgnoreAuth || (h.describeAcceptInvalidAuth && len(authorization) > 0) {
 			return h.describeSuccessResponse(describeCall)
@@ -238,22 +249,23 @@ func startRTSPServer(t *testing.T, cfg rtspServerConfig) (netip.Addr, uint16) {
 	t.Helper()
 
 	handler := &testServerHandler{
-		allowAll:                  cfg.allowAll,
-		describeAllowAll:          cfg.describeAllowAll,
-		allowedRoute:              cfg.allowedRoute,
-		requireAuth:               cfg.requireAuth,
-		describeIgnoreAuth:        cfg.describeIgnoreAuth,
-		describeAcceptInvalidAuth: cfg.describeAcceptInvalidAuth,
-		describeReturnNoStream:    cfg.describeReturnNoStream,
-		describeNoMediaCall:       cfg.describeNoMediaCall,
-		describeStatusSequence:    append([]base.StatusCode(nil), cfg.describeStatusSequence...),
-		username:                  cfg.username,
-		password:                  cfg.password,
-		failOnAuth:                cfg.failOnAuth,
-		setupStatus:               cfg.setupStatus,
-		playStatus:                cfg.playStatus,
-		sendFrames:                cfg.sendFrames,
-		sendFramesTCPOnly:         cfg.sendFramesTCPOnly,
+		allowAll:                     cfg.allowAll,
+		describeAllowAll:             cfg.describeAllowAll,
+		describeAuthBeforeRouteCheck: cfg.describeAuthBeforeRouteCheck,
+		allowedRoute:                 cfg.allowedRoute,
+		requireAuth:                  cfg.requireAuth,
+		describeIgnoreAuth:           cfg.describeIgnoreAuth,
+		describeAcceptInvalidAuth:    cfg.describeAcceptInvalidAuth,
+		describeReturnNoStream:       cfg.describeReturnNoStream,
+		describeNoMediaCall:          cfg.describeNoMediaCall,
+		describeStatusSequence:       append([]base.StatusCode(nil), cfg.describeStatusSequence...),
+		username:                     cfg.username,
+		password:                     cfg.password,
+		failOnAuth:                   cfg.failOnAuth,
+		setupStatus:                  cfg.setupStatus,
+		playStatus:                   cfg.playStatus,
+		sendFrames:                   cfg.sendFrames,
+		sendFramesTCPOnly:            cfg.sendFramesTCPOnly,
 	}
 
 	if len(cfg.authHeader) > 0 {
